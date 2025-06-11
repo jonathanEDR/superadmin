@@ -7,6 +7,8 @@ const dotenv = require('dotenv');
 const authRoutes = require('./routes/auth');  // Importar las rutas de autenticación
 const notesRoutes = require('./routes/notes');  // Importa las rutas para las notas
 const adminRoutes = require('./routes/admin');  // Importa las rutas de admin
+const productoRoutes = require('./routes/productoRoutes');  // Importar las rutas de productos
+
 
 // Cargar las variables de entorno desde el archivo .env
 dotenv.config();
@@ -21,12 +23,16 @@ app.use(cors({
   methods: ['GET', 'POST', 'PUT', 'DELETE', 'PATCH', 'OPTIONS'],
   allowedHeaders: ['Content-Type', 'Authorization', 'Accept']
 }));
-app.use(bodyParser.json());// Analizar solicitudes con cuerpo JSON
 
-// Usar las rutas de autenticación
+// Configurar body-parser
+app.use(bodyParser.json());
+app.use(bodyParser.urlencoded({ extended: true }));
+
+// Rutas de la API
+app.use('/api/productos', productoRoutes);
 app.use('/api/auth', authRoutes);
-app.use('/api/notes', notesRoutes); 
-app.use('/api/admin', adminRoutes);  // Añade las rutas de admin
+app.use('/api/notes', notesRoutes);
+app.use('/api/admin', adminRoutes);
 
 // Rutas de prueba y health check
 app.get('/', (req, res) => {
