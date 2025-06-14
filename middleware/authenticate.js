@@ -5,66 +5,109 @@ const { clerkClient } = require('@clerk/clerk-sdk-node');
 // Middleware principal de autenticación
 const authenticate = async (req, res, next) => {
   try {
-    const token = req.headers['authorization']?.split(' ')[1];
-    
+    // Verificar el formato del header de autorización
+    const authHeader = req.headers['authorization'];
+    if (!authHeader || !authHeader.startsWith('Bearer ')) {
+      return res.status(401).json({ 
+        message: 'Formato de autorización inválido',
+        details: 'El header de autorización debe comenzar con "Bearer "' 
+      });
+    }
+
+    const token = authHeader.split(' ')[1];
     if (!token) {
-      return res.status(401).json({ message: 'Token no proporcionado' });
+      return res.status(401).json({ 
+        message: 'Token no proporcionado',
+        details: 'No se encontró un token en el header de autorización'
+      });
     }
 
     // Verificar token con Clerk
-    const session = await clerkClient.verifyToken(token);
-    
-    if (!session) {
-      return res.status(401).json({ message: 'Token inválido' });
+    let session;
+    try {
+      session = await clerkClient.verifyToken(token);
+      if (!session) {
+        return res.status(401).json({ 
+          message: 'Token inválido',
+          details: 'El token proporcionado no pudo ser verificado'
+        });
+      }
+    } catch (verifyError) {
+      console.error('Error al verificar token:', verifyError);
+      return res.status(401).json({ 
+        message: 'Token inválido',
+        details: 'Error al verificar el token'
+      });
     }
 
     // Obtener información del usuario de Clerk
-    const clerkUser = await clerkClient.users.getUser(session.sub);
-    
-    if (!clerkUser) {
-      return res.status(401).json({ message: 'Usuario no encontrado en Clerk' });
+    let clerkUser;
+    try {
+      clerkUser = await clerkClient.users.getUser(session.sub);
+      if (!clerkUser) {
+        return res.status(401).json({ 
+          message: 'Usuario no encontrado',
+          details: 'No se encontró el usuario en Clerk'
+        });
+      }
+    } catch (clerkError) {
+      console.error('Error al obtener usuario de Clerk:', clerkError);
+      return res.status(401).json({ 
+        message: 'Error al obtener información del usuario',
+        details: 'No se pudo obtener la información del usuario de Clerk'
+      });
     }
 
-    // Buscar usuario en la base de datos
-    let user = await User.findOne({ clerk_id: session.sub });
-    
-    if (!user) {
-      // Si el usuario no existe en nuestra base de datos, lo creamos
-      user = new User({
-        clerk_id: session.sub,
-        email: clerkUser.emailAddresses[0].emailAddress,
-        nombre_negocio: clerkUser.firstName || 'Usuario',
-        role: 'user', // Rol por defecto
-        is_active: true
-      });
+    // Buscar o crear usuario en nuestra base de datos
+    try {
+      let user = await User.findOne({ clerk_id: session.sub });
       
-      try {
+      if (!user) {
+        user = new User({
+          clerk_id: session.sub,
+          email: clerkUser.emailAddresses[0].emailAddress,
+          nombre_negocio: clerkUser.firstName || 'Usuario',
+          role: 'user',
+          is_active: true
+        });
+        
         await user.save();
         console.log('Nuevo usuario creado:', user);
-      } catch (error) {
-        console.error('Error al crear usuario:', error);
-        return res.status(500).json({ message: 'Error al crear usuario en la base de datos' });
       }
+
+      if (!user.is_active) {
+        return res.status(401).json({ 
+          message: 'Usuario desactivado',
+          details: 'Tu cuenta está desactivada. Contacta al administrador.'
+        });
+      }
+
+      // Agregar información del usuario a la request
+      req.user = {
+        _id: user._id,
+        id: user._id,
+        clerk_id: user.clerk_id,
+        email: user.email,
+        role: user.role,
+        nombre_negocio: user.nombre_negocio,
+        is_active: user.is_active
+      };
+
+      console.log('Usuario autenticado:', req.user);
+      next();
+    } catch (dbError) {
+      console.error('Error en la base de datos:', dbError);
+      return res.status(500).json({ 
+        message: 'Error interno del servidor',
+        details: 'Error al procesar la información del usuario en la base de datos'
+      });
     }
-
-    if (!user.is_active) {
-      return res.status(401).json({ message: 'Usuario desactivado' });
-    }    // Add user object to request
-    req.user = {
-      _id: user._id,  // Importante: usar _id en lugar de id
-      id: user._id,   // Mantener id por compatibilidad
-      clerk_id: user.clerk_id,
-      email: user.email,
-      role: user.role,
-      nombre_negocio: user.nombre_negocio,
-      is_active: user.is_active
-    };
-
-    console.log('User authenticated:', req.user);
-    next();
   } catch (error) {
-    console.error('Error en autenticación:', error);
-    res.status(500).json({ message: 'Error interno del servidor' });
+    console.error('Error general en autenticación:', error);
+    return res.status(500).json({ 
+      message: 'Error interno del servidor',
+      details: 'Error general en el proceso de autenticación'
+    });
   }
 };
 
@@ -92,19 +135,19 @@ const requireSuperAdmin = authorize('super_admin');
 const requireAdmin = authorize('admin', 'super_admin');
 const requireUser = authorize('user', 'admin', 'super_admin');
 
-// Función de utilidad para verificar permisos
+// Funciones de utilidad para verificar permisos
 const hasPermission = (userRole, requiredRoles) => {
   return requiredRoles.includes(userRole);
 };
 
-
-
-// Función para verificar si puede modificar notas de otros usuarios
 const canModifyAllNotes = (userRole) => {
   return ['admin', 'super_admin'].includes(userRole);
 };
 
-// Función para verificar si puede eliminar notas
+const canModifyAllVentas = (userRole) => {
+  return ['admin', 'super_admin'].includes(userRole);
+};
+
 const canDeleteNotes = (userRole) => {
   return ['admin', 'super_admin'].includes(userRole);
 };
@@ -117,5 +160,6 @@ module.exports = {
   requireUser,
   hasPermission,
   canModifyAllNotes,
-  canDeleteNotes
+  canDeleteNotes,
+  canModifyAllVentas
 };

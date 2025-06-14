@@ -8,7 +8,9 @@ const authRoutes = require('./routes/auth');  // Importar las rutas de autentica
 const notesRoutes = require('./routes/notes');  // Importa las rutas para las notas
 const adminRoutes = require('./routes/admin');  // Importa las rutas de admin
 const productoRoutes = require('./routes/productoRoutes');  // Importar las rutas de productos
-
+const ventaRoutes = require('./routes/ventaRoutes');  // Importar las rutas de ventas
+const devolucionRoutes = require('./routes/devolucionRoutes');  // Importar las rutas de devoluciones
+const cobroRoutes = require('./routes/cobroRoutes');  // Importar rutas de cobros
 
 // Cargar las variables de entorno desde el archivo .env
 dotenv.config();
@@ -21,7 +23,15 @@ app.use(cors({
   origin: ['http://localhost:5173', 'http://127.0.0.1:5173'],
   credentials: true,
   methods: ['GET', 'POST', 'PUT', 'DELETE', 'PATCH', 'OPTIONS'],
-  allowedHeaders: ['Content-Type', 'Authorization', 'Accept']
+  allowedHeaders: [
+    'Content-Type', 
+    'Authorization', 
+    'Accept',
+    'x-user-id',
+    'x-user-email',
+    'x-user-name',
+    'x-user-role'
+  ]
 }));
 
 // Configurar body-parser
@@ -30,6 +40,9 @@ app.use(bodyParser.urlencoded({ extended: true }));
 
 // Rutas de la API
 app.use('/api/productos', productoRoutes);
+app.use('/api/ventas', ventaRoutes);  // Rutas para ventas
+app.use('/api/devoluciones', devolucionRoutes);  // Rutas para devoluciones
+app.use('/api/cobros', cobroRoutes);  // Agregar rutas de cobros
 app.use('/api/auth', authRoutes);
 app.use('/api/notes', notesRoutes);
 app.use('/api/admin', adminRoutes);
