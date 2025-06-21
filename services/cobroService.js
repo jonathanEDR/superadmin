@@ -328,10 +328,9 @@ async function getCobrosHistorial(page = 1, limit = 10) {
           foreignField: '_id',
           as: 'ventas'
         }
-      },
-      {
+      },      {
         $addFields: {
-          creatorName: { $ifNull: [{ $arrayElemAt: ['$creator.name', 0] }, ''] },
+          creatorName: { $ifNull: [{ $arrayElemAt: ['$creator.nombre_negocio', 0] }, { $arrayElemAt: ['$creator.email', 0] }] },
           creatorEmail: { $ifNull: [{ $arrayElemAt: ['$creator.email', 0] }, ''] },
           montoTotal: { $ifNull: [{ $sum: '$ventas.montoTotal' }, 0] },          descripcion: {
             $ifNull: ['$descripcion', { $ifNull: ['$observaciones', ''] }]

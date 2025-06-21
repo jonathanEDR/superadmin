@@ -11,7 +11,9 @@ const productoSchema = new mongoose.Schema({
   nombre: {
     type: String,
     required: true,
-    trim: true
+    trim: true,
+    unique: true, // Asegurar unicidad del nombre
+    index: true   // Optimizar búsquedas por nombre
   },
   precio: {
     type: Number,

@@ -289,7 +289,7 @@ async function getChartData(userId, userRole, range) {
   const startDate = getStartDate(range);
   
   let query = {};
-  if (!canModifyAllNotes(userRole)) {
+  if (!canModifyAllVentas(userRole)) {
     query.userId = userId;
   }
   query.fechadeVenta = { $gte: startDate };

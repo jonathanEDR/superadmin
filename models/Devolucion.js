@@ -5,6 +5,22 @@ const devolucionSchema = new mongoose.Schema({
     type: String,
     required: true
   },
+  creatorName: {
+    type: String,
+    required: true
+  },
+  creatorEmail: {
+    type: String,
+    required: true
+  },
+  creatorName: {
+    type: String,
+    required: true
+  },
+  creatorEmail: {
+    type: String,
+    required: true
+  },
   ventaId: {
     type: mongoose.Schema.Types.ObjectId,
     ref: 'Venta',
@@ -33,7 +49,7 @@ const devolucionSchema = new mongoose.Schema({
   motivo: {
     type: String,
     required: true,
-    minlength: [10, 'El motivo debe tener al menos 10 caracteres']
+    minlength: [1, 'El motivo debe tener al menos 1 carácter']
   },
   estado: {
     type: String,

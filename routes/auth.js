@@ -385,4 +385,64 @@ router.put('/update-my-profile', authenticate, async (req, res) => {
   }
 });
 
+// Ruta para obtener lista de usuarios (para admins y super_admins)
+router.get('/users', authenticate, async (req, res) => {
+  try {
+    console.log('=== Users List Request ===');
+    console.log('User requesting:', req.user);
+    
+    if (!req.user || !req.user.role) {
+      return res.status(401).json({ 
+        message: 'Usuario no autenticado correctamente'
+      });
+    }
+
+    // Solo admins y super_admins pueden ver la lista de usuarios
+    if (!['admin', 'super_admin'].includes(req.user.role)) {
+      return res.status(403).json({ 
+        message: 'No tienes permisos para ver la lista de usuarios'
+      });
+    }
+
+    console.log('Fetching users for role:', req.user.role);
+      // Obtener todos los usuarios activos
+    let query = { is_active: true };
+    
+    // Si es admin, puede ver usuarios normales + sí mismo
+    // Si es super_admin, puede ver todos (users, admins) + sí mismo
+    if (req.user.role === 'admin') {
+      query.$or = [
+        { role: 'user' },
+        { clerk_id: req.user.clerk_id } // Incluir al admin actual
+      ];
+    } else if (req.user.role === 'super_admin') {
+      query.role = { $in: ['user', 'admin', 'super_admin'] }; // Incluir todos incluyendo super_admin actual
+    }
+
+    const users = await User.find(query)
+      .select('clerk_id email nombre_negocio role')
+      .sort({ nombre_negocio: 1, email: 1 });
+
+    console.log('Found users:', users.length);
+
+    // Mapear los usuarios a un formato consistente
+    const userList = users.map(user => ({
+      clerk_id: user.clerk_id,
+      email: user.email,
+      nombre_negocio: user.nombre_negocio,
+      role: user.role
+    }));
+
+    console.log('Sending user list:', userList.length, 'usuarios');
+
+    res.status(200).json(userList);
+  } catch (error) {
+    console.error('Error obteniendo usuarios:', error);
+    res.status(500).json({ 
+      message: 'Error al obtener la lista de usuarios',
+      error: error.message 
+    });
+  }
+});
+
 module.exports = router;

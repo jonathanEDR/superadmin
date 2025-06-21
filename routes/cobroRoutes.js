@@ -9,6 +9,16 @@ const mongoose = require('mongoose');
 const validateCobroData = (req, res, next) => {
   const { ventas, distribucionPagos, yape, efectivo, gastosImprevistos } = req.body;
 
+  console.log('=== VALIDACIÓN DE COBRO ===');
+  console.log('Datos recibidos:', {
+    ventas: ventas?.length,
+    distribucionPagos: distribucionPagos?.length,
+    yape,
+    efectivo,
+    gastosImprevistos,
+    body: req.body
+  });
+
   try {
     // Validar estructura de ventas
     if (!ventas || !Array.isArray(ventas) || ventas.length === 0) {
@@ -40,15 +50,25 @@ const validateCobroData = (req, res, next) => {
       if (isNaN(montoPendiente) || montoPendiente < 0) {
         throw new Error(`Monto pendiente inválido en distribución ${index}`);
       }
-    });
-
-    // Validar montos
-    const montoTotal = ventas.reduce((sum, v) => sum + v.montoPagado, 0);
+    });    // Validar montos - La suma de métodos de pago debe ser igual al total de montos pagados
+    const montoTotalPagado = ventas.reduce((sum, v) => sum + Number(v.montoPagado), 0);
     const totalMetodosPago = (parseFloat(yape) || 0) + (parseFloat(efectivo) || 0) + (parseFloat(gastosImprevistos) || 0);
 
+    console.log('Validación de montos:', {
+      montoTotalPagado: montoTotalPagado.toFixed(2),
+      totalMetodosPago: totalMetodosPago.toFixed(2),
+      diferencia: Math.abs(totalMetodosPago - montoTotalPagado).toFixed(2),
+      ventasDetalle: ventas.map(v => ({ ventaId: v.ventaId, montoPagado: v.montoPagado })),
+      metodosPago: { 
+        yape: parseFloat(yape) || 0, 
+        efectivo: parseFloat(efectivo) || 0, 
+        gastosImprevistos: parseFloat(gastosImprevistos) || 0 
+      }
+    });
+
     const tolerance = 0.01;
-    if (Math.abs(totalMetodosPago - montoTotal) > tolerance) {
-      throw new Error(`El total de los métodos de pago (${totalMetodosPago.toFixed(2)}) debe ser igual al monto total (${montoTotal.toFixed(2)})`);
+    if (Math.abs(totalMetodosPago - montoTotalPagado) > tolerance) {
+      throw new Error(`La suma de los métodos de pago (${totalMetodosPago.toFixed(2)}) debe ser igual al monto total pagado (${montoTotalPagado.toFixed(2)})`);
     }
 
     // Validar gastos imprevistos
@@ -62,8 +82,10 @@ const validateCobroData = (req, res, next) => {
       throw new Error('Uno o más IDs de venta no son válidos');
     }
 
+    console.log('Validación exitosa');
     next();
   } catch (error) {
+    console.error('Error de validación:', error.message);
     res.status(400).json({ 
       message: 'Error de validación', 
       error: error.message 

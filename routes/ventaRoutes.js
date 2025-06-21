@@ -4,6 +4,7 @@ const router = express.Router();
 const Venta = require('../models/Venta');
 const Producto = require('../models/Producto');
 const User = require('../models/User');
+const Cobro = require('../models/Cobro');
 const { authenticate, requireUser, canModifyAllVentas } = require('../middleware/authenticate');
 const { validateVentaAssignment, validateVentaCompletion } = require('../middleware/ventaPermissions');
 const Devolucion = require('../models/Devolucion');
@@ -46,6 +47,28 @@ async function processVentasWithUserInfo(ventas) {
     }
     return acc;
   }, {});
+  // Get all unique venta IDs to fetch cobros
+  const ventaIds = ventas.map(venta => venta._id).filter(Boolean);
+
+  // Get all cobros for these ventas
+  const cobros = await Cobro.find({ 
+    ventasId: { $in: ventaIds } 
+  }).select('ventasId yape efectivo gastosImprevistos fechaPago montoPagado');
+
+  // Create a map of cobros by venta ID
+  const cobrosMap = cobros.reduce((acc, cobro) => {
+    cobro.ventasId.forEach(ventaId => {
+      if (!acc[ventaId]) acc[ventaId] = [];
+      acc[ventaId].push({
+        yape: cobro.yape || 0,
+        efectivo: cobro.efectivo || 0,
+        gastosImprevistos: cobro.gastosImprevistos || 0,
+        fechaPago: cobro.fechaPago,
+        montoPagado: cobro.montoPagado
+      });
+    });
+    return acc;
+  }, {});
 
   // Process ventas to include complete information
   return ventas.map(venta => {
@@ -53,6 +76,12 @@ async function processVentasWithUserInfo(ventas) {
     
     const creator = venta.creatorId ? userMap[venta.creatorId] : null;
     const owner = venta.userId ? userMap[venta.userId] : null;
+    const ventaCobros = cobrosMap[venta._id] || [];
+    
+    // Calculate totals from cobros
+    const totalYape = ventaCobros.reduce((sum, cobro) => sum + cobro.yape, 0);
+    const totalEfectivo = ventaCobros.reduce((sum, cobro) => sum + cobro.efectivo, 0);
+    const totalGastosImprevistos = ventaCobros.reduce((sum, cobro) => sum + cobro.gastosImprevistos, 0);
     
     return {
       ...venta.toObject(),
@@ -67,7 +96,13 @@ async function processVentasWithUserInfo(ventas) {
         email: owner.email,
         role: owner.role || 'user',
         id: venta.userId
-      } : null
+      } : null,
+      cobros_detalle: {
+        yape: totalYape,
+        efectivo: totalEfectivo,
+        gastosImprevistos: totalGastosImprevistos,
+        historial: ventaCobros
+      }
     };
   }).filter(Boolean);
 }
@@ -90,9 +125,8 @@ router.get('/productos', authenticate, async (req, res) => {
 // Función para obtener ventas con todos los datos necesarios
 async function getVentasService(userId, userRole) {
   let query = {};
-  
-  // Si no es admin, solo ver sus propias ventas
-  if (!canModifyAllNotes(userRole)) {
+    // Si no es admin, solo ver sus propias ventas
+  if (!canModifyAllVentas(userRole)) {
     query.userId = userId;
   }    const ventas = await Venta.find(query)
       .populate('productos.productoId', 'nombre precio')
@@ -240,10 +274,10 @@ router.post('/', authenticate, requireUser, validateVentaAssignment, async (req,
         // Super admin puede asignar a cualquiera
         userId = targetUserId;
       } else if (req.user.role === 'admin') {
-        // Admin solo puede asignar a users
-        if (targetUser.role !== 'user') {
+        // Admin puede asignar a users, otros admins, pero no a super_admin
+        if (targetUser.role === 'super_admin') {
           return res.status(403).json({ 
-            message: 'Los administradores solo pueden crear ventas para usuarios regulares',
+            message: 'Los administradores no pueden crear ventas para super administradores',
             target_role: targetUser.role,
             your_role: req.user.role
           });
@@ -567,6 +601,102 @@ router.post('/:id/completion', authenticate, requireUser, validateVentaCompletio
     res.status(500).json({ 
       message: 'Error al procesar la solicitud',
       error: error.message
+    });
+  }
+});
+
+// Ruta para revertir una venta finalizada (quitar de finalizadas)
+router.post('/:id/revert', authenticate, requireUser, async (req, res) => {
+  try {
+    const { id } = req.params;
+    const userId = req.user.clerk_id;
+    const userRole = req.user.role;
+
+    console.log('Recibida solicitud de reversión:', {
+      ventaId: id,
+      userId,
+      userRole
+    });
+
+    // Solo admins y super_admins pueden revertir ventas
+    if (!['admin', 'super_admin'].includes(userRole)) {
+      return res.status(403).json({ 
+        message: 'No tienes permisos para revertir ventas finalizadas' 
+      });
+    }
+
+    // Buscar la venta
+    const venta = await Venta.findById(id);
+    if (!venta) {
+      console.log('Venta no encontrada:', id);
+      return res.status(404).json({ message: 'Venta no encontrada' });
+    }
+
+    // Verificar que la venta esté finalizada
+    if (!venta.isCompleted) {
+      return res.status(400).json({ 
+        message: 'La venta no está finalizada, no se puede revertir' 
+      });
+    }
+
+    // Los admins no pueden revertir ventas de super_admins
+    if (userRole === 'admin') {
+      // Obtener información del creador de la venta
+      const creator = await User.findOne({ clerk_id: venta.creatorId });
+      if (creator && creator.role === 'super_admin') {
+        return res.status(403).json({ 
+          message: 'Los administradores no pueden revertir ventas de super administradores' 
+        });
+      }
+    }
+
+    try {
+      // Revertir la venta a estado activo
+      const updateResult = await Venta.updateOne(
+        { _id: id },
+        {
+          $set: {
+            completionStatus: 'pending',
+            isCompleted: false,
+            completionDate: null,
+            completionNotes: `Venta revertida por ${userRole} el ${new Date().toISOString()}`,
+            reviewerId: userId
+          }
+        }
+      );
+
+      console.log('Resultado de la reversión:', updateResult);
+
+      if (updateResult.matchedCount === 0) {
+        return res.status(404).json({ message: 'Venta no encontrada' });
+      }
+
+      if (updateResult.modifiedCount === 0) {
+        console.log('No se pudo actualizar la venta');
+        return res.status(500).json({ message: 'No se pudo revertir la venta' });
+      }
+
+      // Obtener la venta actualizada con toda la información
+      const ventaActualizada = await Venta.findById(id)
+        .populate('productos.productoId', 'nombre precio');
+
+      console.log('Venta revertida exitosamente:', ventaActualizada);
+
+      res.json({
+        message: 'Venta revertida exitosamente',
+        venta: ventaActualizada
+      });
+
+    } catch (updateError) {
+      console.error('Error al actualizar venta:', updateError);
+      return res.status(500).json({ message: 'Error interno al revertir la venta' });
+    }
+
+  } catch (error) {
+    console.error('Error al revertir venta:', error);
+    res.status(500).json({ 
+      message: 'Error interno del servidor al revertir la venta',
+      error: error.message 
     });
   }
 });
