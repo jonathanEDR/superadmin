@@ -480,19 +480,41 @@ router.get('/finalizadas', authenticate, async (req, res) => {
   const userRole = req.user.role;
   
   try {
+    // Obtener parámetros de paginación
+    const limit = parseInt(req.query.limit) || 10;
+    const offset = parseInt(req.query.offset) || 0;
+
     let query = { isCompleted: true };
     if (!['super_admin', 'admin'].includes(userRole)) {
       query.userId = userId;
     }
 
+    // Obtener el total de ventas finalizadas para paginación
+    const totalVentas = await Venta.countDocuments(query);
+
+    // Obtener las ventas con límite y offset
     const ventas = await Venta.find(query)
       .populate('productos.productoId', 'nombre precio')
-      .sort({ completionDate: -1 });
+      .sort({ completionDate: -1 })
+      .limit(limit)
+      .skip(offset);    const ventasConInfo = await processVentasWithUserInfo(ventas);
 
-    const ventasConInfo = await processVentasWithUserInfo(ventas);
+    // Debug logs
+    console.log('Ventas finalizadas - Backend:', {
+      limit,
+      offset,
+      totalVentas,
+      ventasEncontradas: ventas.length,
+      hasMore: offset + limit < totalVentas,
+      query: JSON.stringify(query)
+    });
 
     res.json({
-      ventas: ventasConInfo
+      ventas: ventasConInfo,
+      totalVentas,
+      hasMore: offset + limit < totalVentas,
+      currentOffset: offset,
+      currentLimit: limit
     });
   } catch (error) {
     console.error('Error al obtener ventas finalizadas:', error);

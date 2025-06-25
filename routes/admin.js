@@ -254,10 +254,8 @@ router.get('/users-profiles', authenticate, async (req, res) => {
         { nombre_negocio: { $regex: search, $options: 'i' } },
         { email: { $regex: search, $options: 'i' } }
       ];
-    }
-    
-    const users = await User.find(filter)
-      .select('-__v')
+    }    const users = await User.find(filter)
+      .select('-password -__v')
       .sort({ fecha_creacion: -1 })
       .skip(skip)
       .limit(parseInt(limit));

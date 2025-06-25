@@ -9,6 +9,16 @@ const userSchema = new mongoose.Schema({
     enum: ['user', 'admin', 'super_admin'], 
     default: 'user' 
   }, // Sistema de roles
+  departamento: {
+    type: String,
+    enum: ['ventas', 'administracion', 'produccion', 'finanzas'],
+    default: 'ventas'
+  }, // Departamento del usuario
+  sueldo: {
+    type: Number,
+    default: 0,
+    min: 0
+  }, // Sueldo del usuario
   fecha_creacion: { type: Date, default: Date.now },
   updated_at: { type: Date, default: Date.now },
   is_active: { type: Boolean, default: true } // Para poder desactivar usuarios

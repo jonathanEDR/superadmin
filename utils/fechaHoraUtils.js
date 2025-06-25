@@ -4,6 +4,26 @@ const getFechaHoraActual = () => {
     return now.toISOString();
 };
 
+// Función para obtener la fecha actual en formato ISO (solo fecha)
+const obtenerFechaActual = () => {
+    const now = new Date();
+    return now.toISOString().split('T')[0];
+};
+
+// Función para convertir fecha a fecha local
+const convertirFechaAFechaLocal = (fecha) => {
+    if (!fecha) return null;
+    const fechaObj = new Date(fecha);
+    return fechaObj.toISOString().split('T')[0];
+};
+
+// Función para convertir fecha a UTC local
+const convertirFechaALocalUtc = (fecha) => {
+    if (!fecha) return null;
+    const fechaObj = new Date(fecha);
+    return fechaObj.toISOString();
+};
+
 // Función para validar formato de fecha
 const validarFormatoFecha = (fecha) => {
     if (!fecha) return false;
@@ -41,6 +61,9 @@ const getFinDia = (fecha) => {
 
 module.exports = {
     getFechaHoraActual,
+    obtenerFechaActual,
+    convertirFechaAFechaLocal,
+    convertirFechaALocalUtc,
     validarFormatoFecha,
     formatearFecha,
     getInicioDia,

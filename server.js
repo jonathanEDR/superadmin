@@ -11,6 +11,7 @@ const productoRoutes = require('./routes/productoRoutes');  // Importar las ruta
 const ventaRoutes = require('./routes/ventaRoutes');  // Importar las rutas de ventas
 const devolucionRoutes = require('./routes/devolucionRoutes');  // Importar las rutas de devoluciones
 const cobroRoutes = require('./routes/cobroRoutes');  // Importar rutas de cobros
+const gestionPersonalRoutes = require('./routes/gestionPersonalRoutes');  // Importar rutas de gestión personal
 
 // Cargar las variables de entorno desde el archivo .env
 dotenv.config();
@@ -46,6 +47,7 @@ app.use('/api/cobros', cobroRoutes);  // Agregar rutas de cobros
 app.use('/api/auth', authRoutes);
 app.use('/api/notes', notesRoutes);
 app.use('/api/admin', adminRoutes);
+app.use('/api/gestion-personal', gestionPersonalRoutes);  // Rutas de gestión personal
 
 // Rutas de prueba y health check
 app.get('/', (req, res) => {

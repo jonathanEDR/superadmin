@@ -18,17 +18,16 @@ router.get('/', authenticate, async (req, res) => {
     let query = {};
     if (userRole === 'user') {
       query.userId = userId;
-    }
-
-    const [devoluciones, totalDevoluciones] = await Promise.all([
+    }    const [devoluciones, totalDevoluciones] = await Promise.all([
       Devolucion.find(query)
         .populate('productoId', 'nombre precio')
+        .populate('ventaId', 'isCompleted')
         .lean()
         .sort({ fechaDevolucion: -1 })
         .skip(skip)
         .limit(parseInt(limit)),
       Devolucion.countDocuments(query)
-    ]);    // Formatear los datos para la respuesta
+    ]);// Formatear los datos para la respuesta
     const devolucionesFormateadas = devoluciones.map(dev => ({
       _id: dev._id,
       fechaDevolucion: dev.fechaDevolucion,
@@ -40,8 +39,16 @@ router.get('/', authenticate, async (req, res) => {
       cantidad: dev.cantidadDevuelta,
       monto: dev.montoDevolucion || 0,
       motivo: dev.motivo,
-      estado: dev.estado
-    }));    res.json({
+      estado: dev.estado,
+      ventaFinalizada: dev.ventaId ? dev.ventaId.isCompleted : false
+    }));    // Log para debug
+    console.log('Devoluciones formateadas:', devolucionesFormateadas.map(d => ({
+      id: d._id,
+      producto: d.producto,
+      ventaFinalizada: d.ventaFinalizada,
+      ventaId: devoluciones.find(orig => orig._id === d._id)?.ventaId?._id,
+      ventaIsCompleted: devoluciones.find(orig => orig._id === d._id)?.ventaId?.isCompleted
+    })));res.json({
       devoluciones: devolucionesFormateadas,
       totalDevoluciones,
       totalPages: Math.ceil(totalDevoluciones / parseInt(limit)),
@@ -120,11 +127,6 @@ router.post('/', authenticate, async (req, res) => {
         montoDevolucion,
         fechaDevolucion: fechaDevolucion || new Date(),
         motivo,
-        productoId,
-        cantidadDevuelta,
-        montoDevolucion,
-        motivo,
-        fechaDevolucion: fechaDevolucion || new Date(),
         estado: 'pendiente'
       });
 
@@ -173,15 +175,27 @@ router.delete('/:id', authenticate, async (req, res) => {
   const { id } = req.params;
   const userId = req.user.clerk_id;
   const userRole = req.user.role;
-
   try {
     // Construir la consulta basada en el rol
-    const query = userRole === 'user' ? { _id: id, userId } : { _id: id };
-    
-    // Buscar la devolución
-    const devolucion = await Devolucion.findOne(query);
+    const query = userRole === 'user' ? { _id: id, userId } : { _id: id };    // Buscar la devolución con información de la venta
+    const devolucion = await Devolucion.findOne(query).populate('ventaId', 'isCompleted');
     if (!devolucion) {
       return res.status(404).json({ message: 'Devolución no encontrada o no tienes permisos para eliminarla' });
+    }
+
+    console.log('Intentando eliminar devolución:', {
+      devolucionId: id,
+      ventaId: devolucion.ventaId?._id,
+      isCompleted: devolucion.ventaId?.isCompleted,
+      userRole
+    });
+
+    // Verificar si la venta está finalizada
+    if (devolucion.ventaId && devolucion.ventaId.isCompleted) {
+      console.log('Bloqueando eliminación: venta finalizada');
+      return res.status(400).json({ 
+        message: 'No se puede eliminar una devolución asociada a una venta finalizada' 
+      });
     }
 
     // Actualizar el stock del producto
