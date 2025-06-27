@@ -400,4 +400,29 @@ router.get('/export', authenticate, async (req, res) => {
   }
 });
 
+// Nuevo endpoint: Obtener resumen de pagos pendientes de un colaborador
+router.get('/resumen/:colaboradorUserId', async (req, res) => {
+  try {
+    const colaboradorUserId = req.params.colaboradorUserId;
+    const GestionPersonal = require('../models/GestionPersonal');
+    const PagoRealizado = require('../models/PagoRealizado');
+
+    // Sumar todos los montos de registros de gestion personal para el colaborador
+    const registros = await GestionPersonal.find({ colaboradorUserId });
+    const totalRegistros = registros.reduce((sum, reg) => sum + (reg.monto || 0), 0);
+
+    // Sumar todos los pagos realizados para el colaborador
+    const pagos = await PagoRealizado.find({ colaboradorUserId });
+    const totalPagos = pagos.reduce((sum, pago) => sum + (pago.monto || 0), 0);
+
+    // El monto pendiente es la diferencia
+    const montoPendiente = totalRegistros - totalPagos;
+
+    res.json({ montoPendiente });
+  } catch (error) {
+    console.error('Error al obtener resumen de colaborador:', error);
+    res.status(500).json({ message: 'Error al obtener resumen', error: error.message });
+  }
+});
+
 module.exports = router;
