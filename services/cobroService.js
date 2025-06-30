@@ -85,12 +85,14 @@ async function getVentasPendientes(userId, role) {
         creatorId: venta.creatorId,
         fechadeVenta: venta.fechadeVenta,
         montoTotal: montoTotal,
+        montoTotalDevuelto: venta.montoTotalDevuelto || 0,
+        montoTotalNeto: montoTotal - (venta.montoTotalDevuelto || 0),
         cantidadPagada: cantidadPagada,
-        montoPendiente: montoPendiente,
-        porcentajePagado: porcentajePagado,
+        montoPendiente: montoTotal - cantidadPagada,
+        porcentajePagado: montoTotal > 0 ? ((cantidadPagada / montoTotal) * 100).toFixed(2) : '0',
         estadoPago: venta.estadoPago,
         productos: productosValidos,
-        debe: venta.debe || montoPendiente
+        debe: venta.debe || (montoTotal - cantidadPagada)
       };
     }).filter(Boolean); // Eliminar ventas nulas
 

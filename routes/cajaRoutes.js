@@ -12,9 +12,10 @@ const GastoService = require('../services/GastoService');
 router.get('/resumen', authenticate, async (req, res) => {
   try {
     const userId = req.user.id;
+    const role = req.user.role;
     const { periodo = 'day' } = req.query;
 
-    const resumen = await CajaService.obtenerResumenCaja(userId, periodo);
+    const resumen = await CajaService.obtenerResumenCaja(userId, periodo, role);
     res.json(resumen);
 
   } catch (error) {
@@ -30,7 +31,8 @@ router.get('/resumen', authenticate, async (req, res) => {
 router.get('/saldo', authenticate, async (req, res) => {
   try {
     const userId = req.user.id;
-    const saldo = await CajaService.obtenerSaldoActual(userId);
+    const role = req.user.role;
+    const saldo = await CajaService.obtenerSaldoActual(userId, role);
     res.json({ saldo });
 
   } catch (error) {
@@ -46,7 +48,8 @@ router.get('/saldo', authenticate, async (req, res) => {
 router.get('/estadisticas', authenticate, async (req, res) => {
   try {
     const userId = req.user.id;
-    const estadisticas = await CajaService.obtenerEstadisticasRapidas(userId);
+    const role = req.user.role;
+    const estadisticas = await CajaService.obtenerEstadisticasRapidas(userId, role);
     res.json(estadisticas);
 
   } catch (error) {
@@ -62,6 +65,7 @@ router.get('/estadisticas', authenticate, async (req, res) => {
 router.get('/movimientos', authenticate, async (req, res) => {
   try {
     const userId = req.user.id;
+    const role = req.user.role;
     const filtros = {
       tipo: req.query.tipo,
       categoria: req.query.categoria,
@@ -71,7 +75,7 @@ router.get('/movimientos', authenticate, async (req, res) => {
       limit: parseInt(req.query.limit) || 50
     };
 
-    const resultado = await CajaService.obtenerMovimientos(userId, filtros);
+    const resultado = await CajaService.obtenerMovimientos(userId, filtros, role);
     res.json(resultado);
 
   } catch (error) {
@@ -158,18 +162,18 @@ router.post('/movimiento', authenticate, async (req, res) => {
         };
         // Usar el servicio centralizado
         const { gasto, movimientoCaja } = await GastoService.crearGastoAutomatico(gastoData, datosMovimiento);
-        // Lógica especial para Pago Personal: crear también PagoRealizado si tiene colaboradorId
-        if (datosMovimiento.categoria.includes('pago_personal') && req.body.colaboradorId) {
+        // Lógica especial para Pago Personal: crear también PagoRealizado si tiene colaboradorId o colaboradorUserId
+        const colaboradorId = req.body.colaboradorId || req.body.colaboradorUserId;
+        if (datosMovimiento.categoria.includes('pago_personal') && colaboradorId) {
           try {
             // Verificar que el colaborador existe
             const colaborador = await User.findOne({
-              _id: req.body.colaboradorId,
+              _id: colaboradorId,
               userId: userId
             });
-            
             if (colaborador) {
               const pagoRealizado = new PagoRealizado({
-                colaboradorId: req.body.colaboradorId,
+                colaboradorId: colaboradorId,
                 fechaPago: datosMovimiento.fecha,
                 montoTotal: datosMovimiento.monto,
                 metodoPago: datosMovimiento.metodoPago,
@@ -178,18 +182,13 @@ router.post('/movimiento', authenticate, async (req, res) => {
                 creadoPor: userId,
                 referenciaMovimiento: movimientoCaja._id // Referencia al movimiento de caja
               });
-              
               await pagoRealizado.save();
-              console.log(`PagoRealizado automático creado: ${pagoRealizado._id} para colaborador: ${colaborador.nombre_negocio || colaborador.email}`);
-              
               // Actualizar la referencia del gasto para que apunte al PagoRealizado en lugar del MovimientoCaja
               await Gasto.findByIdAndUpdate(gasto._id, {
                 referenciaId: pagoRealizado._id,
                 referenciaModelo: 'PagoRealizado',
                 descripcion: `Pago a ${colaborador.nombre_negocio || colaborador.email}`
               });
-              
-              console.log(`Gasto actualizado para referenciar PagoRealizado: ${pagoRealizado._id}`);
             } else {
               console.log('Colaborador no encontrado, solo se creó el gasto');
             }

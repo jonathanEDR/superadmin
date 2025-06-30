@@ -40,7 +40,8 @@ router.get('/', authenticate, async (req, res) => {
       monto: dev.montoDevolucion || 0,
       motivo: dev.motivo,
       estado: dev.estado,
-      ventaFinalizada: dev.ventaId ? dev.ventaId.isCompleted : false
+      ventaFinalizada: dev.ventaId ? dev.ventaId.isCompleted : false,
+      ventaId: dev.ventaId?._id || dev.ventaId // <-- Campo necesario para el frontend
     }));    // Log para debug
     console.log('Devoluciones formateadas:', devolucionesFormateadas.map(d => ({
       id: d._id,
