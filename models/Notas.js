@@ -1,7 +1,6 @@
 const mongoose = require('mongoose');
 
 // Esquema de la Nota
-
 const noteSchema = new mongoose.Schema({
   userId: {
     type: String,  // Cambiar de ObjectId a String

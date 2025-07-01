@@ -176,7 +176,6 @@ cobroSchema.methods.getUserRole = async function() {
 // Índices para mejorar el rendimiento de las consultas
 cobroSchema.index({ userId: 1, fechaPago: -1 });
 cobroSchema.index({ ventasId: 1 });
-cobroSchema.index({ creatorId: 1 });
 cobroSchema.index({ estado: 1 });
 
 const Cobro = mongoose.model('Cobro', cobroSchema);
