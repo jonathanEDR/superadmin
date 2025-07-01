@@ -8,6 +8,7 @@
     "dev": "nodemon server.js",
     "build": "npm ci --omit=dev || npm install --only=production",
     "check-deploy": "node check-deploy-ready.js",
+    "test-mongodb": "node test-mongodb.js",
     "test": "echo \"Error: no test specified\" && exit 1"
   },
   "keywords": [],

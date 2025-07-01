@@ -1,0 +1,17 @@
+# INSTRUCCIONES PARA CONFIGURAR MONGODB ATLAS
+
+# 1. COPIA TU CONNECTION STRING DE ATLAS AQUÍ:
+# mongodb+srv://<username>:<password>@cluster0.xxxxx.mongodb.net/?retryWrites=true&w=majority
+
+# 2. REEMPLAZA:
+# <username> = tu usuario de MongoDB Atlas
+# <password> = tu contraseña de MongoDB Atlas
+# Agrega el nombre de tu base de datos antes de "?retryWrites"
+
+# EJEMPLO FINAL:
+# mongodb+srv://miusuario:mipassword@cluster0.abc123.mongodb.net/loginSystem?retryWrites=true&w=majority
+
+# 3. COPIA LA CADENA FINAL AQUÍ PARA USARLA:
+MONGODB_URI_PRODUCTION=
+
+# 4. ESTA SERÁ TU CADENA FINAL PARA RENDER
