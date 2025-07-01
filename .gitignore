@@ -1,6 +1,6 @@
 # Dependencies
 /node_modules
-/package-lock.json
+# package-lock.json (NO excluir para producción)
 
 # Environment variables
 .env
