@@ -26,11 +26,14 @@ if (process.env.NODE_ENV === 'production') {
 }
 
 // Lista de orígenes permitidos para CORS
-const allowedOrigins = process.env.CORS_ORIGINS 
-  ? process.env.CORS_ORIGINS.split(',').map(origin => origin.trim())
-  : ['http://localhost:5173', 'http://127.0.0.1:5173'];
+const allowedOrigins = [
+  'http://localhost:5173',
+  'http://127.0.0.1:5173',
+  'https://fsuperadmin.vercel.app'
+];
 
 console.log('Allowed CORS origins:', allowedOrigins);
+console.log('Environment CORS_ORIGINS:', process.env.CORS_ORIGINS);
 
 // Middleware para CORS y Body Parser
 app.use(cors({
@@ -38,7 +41,12 @@ app.use(cors({
     // Permitir requests sin origin (como aplicaciones móviles o Postman)
     if (!origin) return callback(null, true);
     
-    if (allowedOrigins.indexOf(origin) !== -1) {
+    // En desarrollo, permitir cualquier localhost
+    if (process.env.NODE_ENV !== 'production' && origin.includes('localhost')) {
+      return callback(null, true);
+    }
+    
+    if (allowedOrigins.includes(origin)) {
       callback(null, true);
     } else {
       console.log('CORS blocked origin:', origin);
@@ -54,8 +62,11 @@ app.use(cors({
     'x-user-id',
     'x-user-email',
     'x-user-name',
-    'x-user-role'
-  ]
+    'x-user-role',
+    'Origin',
+    'X-Requested-With'
+  ],
+  exposedHeaders: ['Content-Length', 'X-Foo', 'X-Bar']
 }));
 
 // Middleware adicional para seguridad y parsing
