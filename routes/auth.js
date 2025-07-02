@@ -5,6 +5,99 @@ const { clerkClient } = require('@clerk/clerk-sdk-node');
 const { authenticate } = require('../middleware/authenticate');
 const router = express.Router();
 
+// Ruta especial para verificar el rol del usuario sin restricciones de 'de_baja'
+// Esta ruta se usa específicamente para la redirección basada en roles
+router.get('/user-role-check', async (req, res) => {
+  try {
+    // Verificar el formato del header de autorización
+    const authHeader = req.headers['authorization'];
+    if (!authHeader || !authHeader.startsWith('Bearer ')) {
+      return res.status(401).json({ 
+        message: 'Formato de autorización inválido',
+        details: 'El header de autorización debe comenzar con "Bearer "' 
+      });
+    }
+
+    const token = authHeader.split(' ')[1];
+    if (!token) {
+      return res.status(401).json({ 
+        message: 'Token no proporcionado',
+        details: 'No se encontró un token en el header de autorización'
+      });
+    }
+
+    // Verificar token con Clerk
+    let session;
+    try {
+      session = await clerkClient.verifyToken(token);
+      if (!session) {
+        return res.status(401).json({ 
+          message: 'Token inválido',
+          details: 'El token proporcionado no pudo ser verificado'
+        });
+      }
+    } catch (verifyError) {
+      console.error('Error al verificar token:', verifyError);
+      return res.status(401).json({ 
+        message: 'Token inválido',
+        details: 'Error al verificar el token'
+      });
+    }
+
+    // Obtener información del usuario de Clerk
+    let clerkUser;
+    try {
+      clerkUser = await clerkClient.users.getUser(session.sub);
+      if (!clerkUser) {
+        return res.status(401).json({ 
+          message: 'Usuario no encontrado',
+          details: 'No se encontró el usuario en Clerk'
+        });
+      }
+    } catch (clerkError) {
+      console.error('Error al obtener usuario de Clerk:', clerkError);
+      return res.status(401).json({ 
+        message: 'Error al obtener información del usuario',
+        details: 'No se pudo obtener la información del usuario de Clerk'
+      });
+    }
+
+    // Buscar usuario en nuestra base de datos
+    let user = await User.findOne({ clerk_id: session.sub });
+    
+    if (!user) {
+      // Crear usuario si no existe
+      user = new User({
+        clerk_id: session.sub,
+        email: clerkUser.emailAddresses[0].emailAddress,
+        nombre_negocio: clerkUser.firstName || 'Usuario',
+        role: 'user',
+        is_active: true
+      });
+      
+      await user.save();
+      console.log('Nuevo usuario creado:', user);
+    }
+
+    // Devolver información del usuario SIN restricciones de rol
+    // Esto permite que los usuarios de_baja sean redirigidos a la página correcta
+    res.json({ 
+      message: 'Información de rol obtenida exitosamente',
+      user: {
+        _id: user._id,
+        clerk_id: user.clerk_id,
+        email: user.email,
+        role: user.role,
+        nombre_negocio: user.nombre_negocio,
+        is_active: user.is_active
+      }
+    });
+  } catch (error) {
+    console.error('Error en verificación de rol:', error);
+    res.status(500).json({ message: 'Error al verificar rol', error: error.message });
+  }
+});
+
 // Ruta protegida para obtener perfil del usuario
 router.get('/user-profile', authenticate, async (req, res) => {
   try {

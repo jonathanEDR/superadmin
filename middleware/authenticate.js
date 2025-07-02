@@ -75,6 +75,15 @@ const authenticate = async (req, res, next) => {
         console.log('Nuevo usuario creado:', user);
       }
 
+      // Verificar si el usuario está dado de baja
+      if (user.role === 'de_baja') {
+        return res.status(403).json({ 
+          message: 'Acceso restringido',
+          details: 'Tu cuenta está dada de baja. No tienes acceso al sistema. Contacta al administrador.',
+          user_status: 'de_baja'
+        });
+      }
+
       if (!user.is_active) {
         return res.status(401).json({ 
           message: 'Usuario desactivado',

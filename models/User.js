@@ -6,9 +6,9 @@ const userSchema = new mongoose.Schema({
   email: { type: String, required: true, unique: true },
   role: { 
     type: String, 
-    enum: ['user', 'admin', 'super_admin'], 
+    enum: ['user', 'admin', 'super_admin', 'de_baja'], 
     default: 'user' 
-  }, // Sistema de roles
+  }, // Sistema de roles - 'de_baja' restringe acceso completo
   departamento: {
     type: String,
     enum: ['ventas', 'administracion', 'produccion', 'finanzas'],
