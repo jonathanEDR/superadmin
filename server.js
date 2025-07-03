@@ -16,6 +16,13 @@ const gestionPersonalRoutes = require('./routes/gestionPersonalRoutes');
 const pagosRealizadosRoutes = require('./routes/pagosRealizadosRoutes');
 const gastoRoutes = require('./routes/GastoRoutes');
 const cajaRoutes = require('./routes/cajaRoutes');
+// Rutas del módulo de producción
+const ingredienteRoutes = require('./routes/ingredienteRoutes');
+const recetaRoutes = require('./routes/recetaRoutes');
+const produccionRoutes = require('./routes/produccionRoutes');
+const movimientoRoutes = require('./routes/movimientoRoutes');
+const dashboardRoutes = require('./routes/dashboardRoutes');
+const estadisticasRoutes = require('./routes/estadisticasRoutes');
 
 const app = express();
 const port = process.env.PORT || 5000;
@@ -87,6 +94,13 @@ app.use('/api/gestion-personal', gestionPersonalRoutes);
 app.use('/api/pagos-realizados', pagosRealizadosRoutes);
 app.use('/api/gastos', gastoRoutes);
 app.use('/api/caja', cajaRoutes);
+// Rutas del módulo de producción
+app.use('/api/ingredientes', ingredienteRoutes);
+app.use('/api/recetas', recetaRoutes);
+app.use('/api/produccion', produccionRoutes);
+app.use('/api/movimientos', movimientoRoutes);
+app.use('/api/dashboard', dashboardRoutes);
+app.use('/api/estadisticas', estadisticasRoutes);
 
 // Rutas de prueba y health check
 app.get('/', (req, res) => {
