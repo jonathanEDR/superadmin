@@ -47,7 +47,9 @@ router.post('/', authenticate, requireAdmin, async (req, res) => {
       });
     }    const userId = req.user.clerk_id; // Usando clerk_id en lugar de id
     const creatorId = req.user.clerk_id;
-    const creatorRole = req.user.role;    const nuevoProducto = await productService.createProducto({
+    const creatorRole = req.user.role;
+
+    const nuevoProducto = await productService.createProducto({
       userId,
       creatorId,
       creatorRole,
@@ -55,8 +57,7 @@ router.post('/', authenticate, requireAdmin, async (req, res) => {
       precio: Number(precio),
       cantidad: Number(cantidad),
       creatorName: creatorName || req.user.email.split('@')[0],
-      creatorEmail: creatorEmail || req.user.email,
-      cantidad: Number(cantidad)
+      creatorEmail: creatorEmail || req.user.email
     });
 
     res.status(201).json(nuevoProducto);

@@ -16,6 +16,7 @@ const gestionPersonalRoutes = require('./routes/gestionPersonalRoutes');
 const pagosRealizadosRoutes = require('./routes/pagosRealizadosRoutes');
 const gastoRoutes = require('./routes/GastoRoutes');
 const cajaRoutes = require('./routes/cajaRoutes');
+const reservaRoutes = require('./routes/reservaRoutes');
 // Rutas del módulo de producción
 const ingredienteRoutes = require('./routes/ingredienteRoutes');
 const recetaRoutes = require('./routes/recetaRoutes');
@@ -94,6 +95,7 @@ app.use('/api/gestion-personal', gestionPersonalRoutes);
 app.use('/api/pagos-realizados', pagosRealizadosRoutes);
 app.use('/api/gastos', gastoRoutes);
 app.use('/api/caja', cajaRoutes);
+app.use('/api/reservas', reservaRoutes);
 // Rutas del módulo de producción
 app.use('/api/ingredientes', ingredienteRoutes);
 app.use('/api/recetas', recetaRoutes);

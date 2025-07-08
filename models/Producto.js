@@ -49,6 +49,27 @@ const productoSchema = new mongoose.Schema({
     type: String,
     required: true
   },
+  creatorEmail: {
+    type: String,
+    default: ''
+  },
+  creatorRole: {
+    type: String,
+    default: 'user'
+  },
+  status: {
+    type: String,
+    enum: ['activo', 'terminado', 'inactivo'],
+    default: 'activo'
+  },
+  fechaAgotamiento: {
+    type: Date,
+    default: null
+  },
+  stock_usado: {
+    type: String,
+    default: '0%'
+  },
   productoNumero: {
     type: Number,
     default: 0
@@ -57,6 +78,15 @@ const productoSchema = new mongoose.Schema({
   timestamps: true, // Añadir createdAt y updatedAt
   toJSON: { virtuals: true }, // Incluir campos virtuales en JSON
   toObject: { virtuals: true }
+});
+
+// Campo virtual para creatorInfo (compatibilidad con frontend)
+productoSchema.virtual('creatorInfo').get(function() {
+  return {
+    name: this.creatorName,
+    email: this.creatorEmail,
+    role: this.creatorRole
+  };
 });
 
 // Middleware pre-save para generar el número de producto
