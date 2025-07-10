@@ -66,6 +66,15 @@ router.post('/', authenticate, async (req, res) => {
   const { ventaId, productos, motivo, fechaDevolucion } = req.body;
   const userId = req.user.clerk_id;
 
+  // Log para debugging
+  console.log('Datos recibidos para devolución:', {
+    ventaId,
+    productos: productos?.length,
+    motivo: motivo?.substring(0, 50),
+    fechaDevolucion,
+    fechaDevolucionType: typeof fechaDevolucion
+  });
+
   try {
     // Get user information
     const User = require('../models/User');
@@ -80,6 +89,36 @@ router.post('/', authenticate, async (req, res) => {
         message: 'El motivo es requerido' 
       });
     }
+
+    // Validar y procesar la fecha de devolución
+    let fechaDevolucionFinal;
+    if (fechaDevolucion) {
+      fechaDevolucionFinal = new Date(fechaDevolucion);
+      // Verificar si la fecha es válida
+      if (isNaN(fechaDevolucionFinal.getTime())) {
+        return res.status(400).json({ 
+          message: 'La fecha de devolución no es válida' 
+        });
+      }
+      // Verificar que no sea fecha futura
+      const hoy = new Date();
+      hoy.setHours(23, 59, 59, 999);
+      if (fechaDevolucionFinal > hoy) {
+        return res.status(400).json({ 
+          message: 'La fecha de devolución no puede ser futura' 
+        });
+      }
+    } else {
+      return res.status(400).json({ 
+        message: 'La fecha de devolución es requerida' 
+      });
+    }
+
+    console.log('Fecha procesada para devolución:', {
+      fechaOriginal: fechaDevolucion,
+      fechaProcesada: fechaDevolucionFinal,
+      fechaISO: fechaDevolucionFinal.toISOString()
+    });
 
     // Validar que la venta existe y pertenece al usuario
     const venta = await Venta.findOne({ _id: ventaId });
@@ -126,7 +165,7 @@ router.post('/', authenticate, async (req, res) => {
         productoId,
         cantidadDevuelta,
         montoDevolucion,
-        fechaDevolucion: fechaDevolucion || new Date(),
+        fechaDevolucion: fechaDevolucionFinal, // Usar la fecha procesada y validada
         motivo,
         estado: 'pendiente'
       });

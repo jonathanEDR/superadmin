@@ -256,7 +256,7 @@ async function createCobro(cobroData) {
       yape: cobroData.yape || 0,
       efectivo: cobroData.efectivo || 0,
       gastosImprevistos: cobroData.gastosImprevistos || 0,
-      fechaPago: new Date(),      distribucionPagos: cobroData.distribucionPagos.map(v => ({
+      fechaCobro: new Date(cobroData.fechaCobro),      distribucionPagos: cobroData.distribucionPagos.map(v => ({
         ventaId: v.ventaId,
         montoPagado: Number(v.montoPagado) || 0,
         montoOriginal: Number(v.montoOriginal) || 0,
@@ -342,7 +342,7 @@ async function getCobrosHistorial(page = 1, limit = 10) {
       {
         $project: {
           _id: 1,
-          fechaPago: 1,
+          fechaCobro: 1,
           montoPagado: { $ifNull: ['$montoPagado', 0] },
           yape: { $ifNull: ['$yape', 0] },
           efectivo: { $ifNull: ['$efectivo', 0] },
@@ -357,7 +357,7 @@ async function getCobrosHistorial(page = 1, limit = 10) {
           montoTotal: 1
         }
       },
-      { $sort: { fechaPago: -1 } },
+      { $sort: { fechaCobro: -1 } },
       { $skip: skip },
       { $limit: limit }
     ]);

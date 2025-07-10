@@ -7,7 +7,7 @@ const mongoose = require('mongoose');
 
 // Middleware de validación mejorado
 const validateCobroData = (req, res, next) => {
-  const { ventas, distribucionPagos, yape, efectivo, gastosImprevistos } = req.body;
+  const { ventas, distribucionPagos, yape, efectivo, gastosImprevistos, fechaCobro } = req.body;
 
   console.log('=== VALIDACIÓN DE COBRO ===');
   console.log('Datos recibidos:', {
@@ -16,10 +16,27 @@ const validateCobroData = (req, res, next) => {
     yape,
     efectivo,
     gastosImprevistos,
+    fechaCobro,
     body: req.body
   });
 
   try {
+    // Validar fecha de cobro
+    if (!fechaCobro) {
+      throw new Error('La fecha de cobro es requerida');
+    }
+
+    const fechaCobroDate = new Date(fechaCobro);
+    const hoy = new Date();
+    hoy.setHours(23, 59, 59, 999); // Permitir hasta el final del día actual
+    
+    if (isNaN(fechaCobroDate.getTime())) {
+      throw new Error('La fecha de cobro no es válida');
+    }
+    
+    if (fechaCobroDate > hoy) {
+      throw new Error('La fecha de cobro no puede ser en el futuro');
+    }
     // Validar estructura de ventas
     if (!ventas || !Array.isArray(ventas) || ventas.length === 0) {
       throw new Error('Debe seleccionar al menos una venta');
@@ -161,6 +178,7 @@ router.get('/historial', authenticate, async (req, res) => {
 router.post('/', authenticate, validateCobroData, async (req, res) => {
   try {
     const { clerk_id: userId, name: userName, email: userEmail } = req.user;
+    const { fechaCobro } = req.body;
     
     // Preparar los datos del cobro
     const cobroData = {
@@ -169,8 +187,8 @@ router.post('/', authenticate, validateCobroData, async (req, res) => {
       creatorId: userId,
       creatorName: userName || 'Usuario',
       creatorEmail: userEmail,
-      descripcion: req.body.descripcion || '', // Asegurarnos de incluir la descripción
-      fechaCobro: new Date(),
+      descripcion: req.body.descripcion || '',
+      fechaCobro: new Date(fechaCobro)
     };    console.log('Datos de cobro preparados:', {
       userId,
       creatorName: cobroData.creatorName,
@@ -272,7 +290,7 @@ router.put('/:id', authenticate, async (req, res) => {
     // Formatear la fecha en la respuesta
     const cobroResponse = {
       ...cobroActualizado,
-      fechaPago: moment(cobroActualizado.fechaPago)
+      fechaCobro: moment(cobroActualizado.fechaCobro)
         .tz('America/Lima')
         .format('YYYY-MM-DD')
     };

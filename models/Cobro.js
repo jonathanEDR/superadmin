@@ -66,10 +66,9 @@ const cobroSchema = new mongoose.Schema({
     default: 0,
     min: [0, 'Los gastos imprevistos no pueden ser negativos']
   },
-  fechaPago: {
+  fechaCobro: {
     type: Date,
-    default: Date.now,
-    required: [true, 'La fecha de pago es requerida']
+    required: [true, 'La fecha de cobro es requerida']
   },  distribucionPagos: [{
     ventaId: {
       type: mongoose.Schema.Types.ObjectId,
@@ -129,9 +128,9 @@ cobroSchema.pre('save', async function(next) {
       throw new Error('El monto pagado no puede ser mayor al total de las ventas');
     }
 
-    // Validar que la fecha de pago no sea futura
-    if (this.fechaPago > new Date()) {
-      throw new Error('La fecha de pago no puede ser futura');
+    // Validar que la fecha de cobro no sea futura
+    if (this.fechaCobro > new Date()) {
+      throw new Error('La fecha de cobro no puede ser futura');
     }
 
     // Si es un documento nuevo, validar las ventas
@@ -174,7 +173,7 @@ cobroSchema.methods.getUserRole = async function() {
 };
 
 // Índices para mejorar el rendimiento de las consultas
-cobroSchema.index({ userId: 1, fechaPago: -1 });
+cobroSchema.index({ userId: 1, fechaCobro: -1 });
 cobroSchema.index({ ventasId: 1 });
 cobroSchema.index({ estado: 1 });
 
