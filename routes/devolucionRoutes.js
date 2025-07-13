@@ -241,7 +241,7 @@ router.delete('/:id', authenticate, async (req, res) => {
     // Actualizar el stock del producto
     const producto = await Producto.findById(devolucion.productoId);
     if (producto) {
-      producto.cantidadRestante -= devolucion.cantidadDevuelta;
+      // Solo modificar cantidadVendida, el pre-save recalcula cantidadRestante
       producto.cantidadVendida += devolucion.cantidadDevuelta;
       await producto.save();
     }
