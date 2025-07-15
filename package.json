@@ -9,7 +9,7 @@
     "build": "npm ci --omit=dev || npm install --only=production",
     "check-deploy": "node check-deploy-ready.js",
     "test-mongodb": "node test-mongodb.js",
-    "test": "echo \"Error: no test specified\" && exit 1"
+    "test": "jest"
   },
   "keywords": [],
   "author": "",
@@ -28,5 +28,9 @@
     "jsonwebtoken": "^9.0.2",
     "moment-timezone": "^0.6.0",
     "mongoose": "^8.14.0"
+  },
+  "devDependencies": {
+    "jest": "^30.0.4",
+    "supertest": "^7.1.3"
   }
 }

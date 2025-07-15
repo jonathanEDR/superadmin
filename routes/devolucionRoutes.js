@@ -21,7 +21,7 @@ router.get('/', authenticate, async (req, res) => {
     }    const [devoluciones, totalDevoluciones] = await Promise.all([
       Devolucion.find(query)
         .populate('productoId', 'nombre precio')
-        .populate('ventaId', 'isCompleted')
+        .populate('ventaId', 'isCompleted estadoPago')
         .lean()
         .sort({ fechaDevolucion: -1 })
         .skip(skip)
@@ -41,6 +41,7 @@ router.get('/', authenticate, async (req, res) => {
       motivo: dev.motivo,
       estado: dev.estado,
       ventaFinalizada: dev.ventaId ? dev.ventaId.isCompleted : false,
+      ventaEstadoPago: dev.ventaId ? dev.ventaId.estadoPago : undefined,
       ventaId: dev.ventaId?._id || dev.ventaId // <-- Campo necesario para el frontend
     }));    // Log para debug
     console.log('Devoluciones formateadas:', devolucionesFormateadas.map(d => ({

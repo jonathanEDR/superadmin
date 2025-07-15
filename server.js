@@ -17,6 +17,7 @@ const pagosRealizadosRoutes = require('./routes/pagosRealizadosRoutes');
 const gastoRoutes = require('./routes/GastoRoutes');
 const cajaRoutes = require('./routes/cajaRoutes');
 const reservaRoutes = require('./routes/reservaRoutes');
+const inventarioRoutes = require('./routes/inventarioRoutes');
 // Rutas del módulo de producción
 const ingredienteRoutes = require('./routes/ingredienteRoutes');
 const recetaRoutes = require('./routes/recetaRoutes');
@@ -84,6 +85,7 @@ app.use(bodyParser.json());
 app.use(bodyParser.urlencoded({ extended: true }));
 
 // Rutas de la API
+app.use('/api/inventario', inventarioRoutes);
 app.use('/api/productos', productoRoutes);
 app.use('/api/ventas', ventaRoutes);
 app.use('/api/devoluciones', devolucionRoutes);
@@ -191,8 +193,13 @@ process.on('SIGINT', async () => {
   process.exit(0);
 });
 
-app.listen(port, '0.0.0.0', () => {
-  console.log(`🚀 Server running on port ${port}`);
-  console.log(`📝 Environment: ${process.env.NODE_ENV || 'development'}`);
-  console.log(`🔗 Health check: http://localhost:${port}/health`);
-});
+
+if (require.main === module) {
+  app.listen(port, '0.0.0.0', () => {
+    console.log(`🚀 Server running on port ${port}`);
+    console.log(`📝 Environment: ${process.env.NODE_ENV || 'development'}`);
+    console.log(`🔗 Health check: http://localhost:${port}/health`);
+  });
+}
+
+module.exports = app;
