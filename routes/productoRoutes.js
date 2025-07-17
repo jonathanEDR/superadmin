@@ -34,7 +34,7 @@ router.get('/:id', authenticate, requireUser, async (req, res) => {
 // Ruta para agregar un producto (admin y super_admin)
 router.post('/', authenticate, requireAdmin, async (req, res) => {
   try {
-    const { nombre, precio, cantidad, creatorName, creatorEmail } = req.body;
+    const { nombre, precio, cantidad, creatorName, creatorEmail, categoryId } = req.body;
     
     if (!nombre || !precio || !cantidad) {
       return res.status(400).json({ 
@@ -56,6 +56,7 @@ router.post('/', authenticate, requireAdmin, async (req, res) => {
       nombre,
       precio: Number(precio),
       cantidad: Number(cantidad),
+      categoryId,
       creatorName: creatorName || req.user.email.split('@')[0],
       creatorEmail: creatorEmail || req.user.email
     });
@@ -149,11 +150,13 @@ router.put('/:id', authenticate, requireAdmin, async (req, res) => {
 // Ruta para obtener informe de inventario
 router.get('/reportes/inventario', authenticate, requireAdmin, async (req, res) => {
   try {
-    const productos = await getProductos();
+    // Usar el servicio para obtener productos con categoría poblada
+    const productos = await productService.getProductos();
     const reporteInventario = productos.map((producto) => ({
       nombre: producto.nombre,
       cantidad: producto.cantidad,
       precio: producto.precio,
+      categoria: producto.categoryId?.nombre || 'Sin categoría',
       valorTotal: producto.precio * producto.cantidad
     }));
 

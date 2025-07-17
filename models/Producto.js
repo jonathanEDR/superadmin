@@ -15,6 +15,17 @@ const productoSchema = new mongoose.Schema({
     unique: true, // Asegurar unicidad del nombre
     index: true   // Optimizar búsquedas por nombre
   },
+  categoryId: {
+    type: mongoose.Schema.Types.ObjectId,
+    ref: 'Category',
+    required: true,
+    index: true
+  },
+  categoryName: {
+    type: String,
+    required: true,
+    index: true
+  },
   precio: {
     type: Number,
     required: true,

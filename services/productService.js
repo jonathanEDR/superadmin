@@ -1,13 +1,17 @@
 const Producto = require('../models/Producto');
+const Category = require('../models/Category');
 
 // Función auxiliar para normalizar el nombre
 const normalizarNombre = (nombre) => nombre.trim().toLowerCase();
 
 const productService = {
   // Obtener todos los productos
-  async getProductos() {
+  async getProductos(categoryId = null) {
     try {
-      return await Producto.find().sort({ nombre: 1 });
+      const query = categoryId ? { categoryId } : {};
+      return await Producto.find(query)
+        .sort({ nombre: 1 })
+        .populate('categoryId', 'nombre descripcion');
     } catch (error) {
       throw { status: 500, message: 'Error al obtener los productos' };
     }
@@ -23,11 +27,18 @@ const productService = {
         throw { status: 409, message: 'Ya existe un producto con este nombre' };
       }
 
+      // Verificar que la categoría existe
+      const categoria = await Category.findById(productData.categoryId);
+      if (!categoria) {
+        throw { status: 404, message: 'La categoría especificada no existe' };
+      }
+
       const producto = new Producto({
         ...productData,
         nombre: nombreNormalizado,
         cantidadVendida: 0,
-        cantidadDevuelta: 0
+        cantidadDevuelta: 0,
+        categoryName: categoria.nombre
       });
 
       return await producto.save();
@@ -45,24 +56,28 @@ const productService = {
           nombre: nombreNormalizado,
           _id: { $ne: id }
         });
-        
         if (productoExistente) {
           throw { status: 409, message: 'Ya existe otro producto con este nombre' };
         }
         updateData.nombre = nombreNormalizado;
       }
-
+      // Validar nueva categoría si se actualiza
+      if (updateData.categoryId) {
+        const categoria = await Category.findById(updateData.categoryId);
+        if (!categoria) {
+          throw { status: 404, message: 'La categoría especificada no existe' };
+        }
+      }
       const producto = await Producto.findByIdAndUpdate(
         id,
         { ...updateData, updatedAt: new Date() },
         { new: true, runValidators: true }
       );
-
       if (!producto) {
         throw { status: 404, message: 'Producto no encontrado' };
       }
-
-      return producto;
+      // Retornar con populate
+      return await Producto.findById(producto._id).populate('categoryId', 'nombre descripcion');
     } catch (error) {
       throw error.status ? error : { status: 500, message: 'Error al actualizar el producto' };
     }
@@ -110,7 +125,7 @@ const productService = {
   // Obtener todos los productos
   async getAllProducts() {
     try {
-      return await Producto.find().sort({ createdAt: -1 });
+      return await Producto.find().sort({ createdAt: -1 }).populate('categoryId', 'nombre descripcion');
     } catch (error) {
       throw { status: 500, message: 'Error al obtener los productos' };
     }
@@ -119,7 +134,7 @@ const productService = {
   // Obtener un producto por ID
   async getProductById(id) {
     try {
-      const producto = await Producto.findById(id);
+      const producto = await Producto.findById(id).populate('categoryId', 'nombre descripcion');
       if (!producto) {
         throw { status: 404, message: 'Producto no encontrado' };
       }

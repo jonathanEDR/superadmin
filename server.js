@@ -17,7 +17,6 @@ const pagosRealizadosRoutes = require('./routes/pagosRealizadosRoutes');
 const gastoRoutes = require('./routes/GastoRoutes');
 const cajaRoutes = require('./routes/cajaRoutes');
 const reservaRoutes = require('./routes/reservaRoutes');
-const inventarioRoutes = require('./routes/inventarioRoutes');
 // Rutas del módulo de producción
 const ingredienteRoutes = require('./routes/ingredienteRoutes');
 const recetaRoutes = require('./routes/recetaRoutes');
@@ -25,6 +24,7 @@ const produccionRoutes = require('./routes/produccionRoutes');
 const movimientoRoutes = require('./routes/movimientoRoutes');
 const dashboardRoutes = require('./routes/dashboardRoutes');
 const estadisticasRoutes = require('./routes/estadisticasRoutes');
+const categoryRoutes = require('./routes/categoryRoutes');
 
 const app = express();
 const port = process.env.PORT || 5000;
@@ -85,7 +85,6 @@ app.use(bodyParser.json());
 app.use(bodyParser.urlencoded({ extended: true }));
 
 // Rutas de la API
-app.use('/api/inventario', inventarioRoutes);
 app.use('/api/productos', productoRoutes);
 app.use('/api/ventas', ventaRoutes);
 app.use('/api/devoluciones', devolucionRoutes);
@@ -105,6 +104,7 @@ app.use('/api/produccion', produccionRoutes);
 app.use('/api/movimientos', movimientoRoutes);
 app.use('/api/dashboard', dashboardRoutes);
 app.use('/api/estadisticas', estadisticasRoutes);
+app.use('/api/categories', categoryRoutes);
 
 // Rutas de prueba y health check
 app.get('/', (req, res) => {
