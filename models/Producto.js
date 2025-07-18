@@ -8,32 +8,44 @@ const counterSchema = new mongoose.Schema({
 const Counter = mongoose.model('Counter', counterSchema);
 
 const productoSchema = new mongoose.Schema({
+  codigoProducto: {
+    type: String,
+    required: true,
+    unique: true,
+    trim: true,
+    index: true
+  },
   nombre: {
     type: String,
     required: true,
     trim: true,
-    unique: true, // Asegurar unicidad del nombre
-    index: true   // Optimizar búsquedas por nombre
+    index: true
   },
   categoryId: {
     type: mongoose.Schema.Types.ObjectId,
     ref: 'Category',
-    required: true,
+    required: false,
     index: true
   },
   categoryName: {
     type: String,
-    required: true,
+    required: false,
+    index: true
+  },
+  catalogoProductoId: {
+    type: mongoose.Schema.Types.ObjectId,
+    ref: 'CatalogoProducto',
+    required: false,
     index: true
   },
   precio: {
     type: Number,
-    required: true,
+    required: false,
     min: 0
   },
   cantidad: {
     type: Number,
-    required: true,
+    required: false,
     min: 0
   },
   cantidadVendida: {
@@ -44,21 +56,21 @@ const productoSchema = new mongoose.Schema({
   cantidadRestante: {
     type: Number,
     default: function() {
-      return this.cantidad - (this.cantidadVendida || 0);
+      return (this.cantidad || 0) - (this.cantidadVendida || 0);
     }
   },
   userId: {
     type: String,
-    required: true
+    required: false
   },
   creatorId: {
     type: String,
-    required: true,
+    required: false,
     index: true // Añadir índice para búsquedas más rápidas
   },
   creatorName: {
     type: String,
-    required: true
+    required: false
   },
   creatorEmail: {
     type: String,
@@ -67,6 +79,11 @@ const productoSchema = new mongoose.Schema({
   creatorRole: {
     type: String,
     default: 'user'
+  },
+  activo: {
+    type: Boolean,
+    default: true,
+    index: true
   },
   status: {
     type: String,

@@ -8,6 +8,7 @@ const Cobro = require('../models/Cobro');
 const { authenticate, requireUser, canModifyAllVentas } = require('../middleware/authenticate');
 const { validateVentaAssignment, validateVentaCompletion } = require('../middleware/ventaPermissions');
 const Devolucion = require('../models/Devolucion');
+const ventaService = require('../services/ventaService');
 
 // Ruta de prueba para verificar que el router funciona
 router.get('/test', (req, res) => {
@@ -129,7 +130,14 @@ async function getVentasService(userId, userRole) {
   if (!canModifyAllVentas(userRole)) {
     query.userId = userId;
   }    const ventas = await Venta.find(query)
-      .populate('productos.productoId', 'nombre precio')
+      .populate({
+        path: 'productos.productoId',
+        select: 'nombre precio cantidadRestante categoryId',
+        populate: {
+          path: 'categoryId',
+          select: 'nombre'
+        }
+      })
       .sort({ fechadeVenta: -1 });
 
   return await processVentasWithUserInfo(ventas);
@@ -149,7 +157,14 @@ async function createVentaService(ventaData) {
       await producto.save();
     }
   }const ventaCompleta = await Venta.findById(nuevaVenta._id)
-    .populate('productos.productoId', 'nombre precio');
+    .populate({
+      path: 'productos.productoId',
+      select: 'nombre precio cantidadRestante categoryId',
+      populate: {
+        path: 'categoryId',
+        select: 'nombre'
+      }
+    });
   
   // Procesar con información de usuario
   const [ventaConInfo] = await processVentasWithUserInfo([ventaCompleta]);
@@ -173,8 +188,19 @@ async function deleteVentaService(id, userId) {
   for (const productoVenta of venta.productos) {
     const producto = await Producto.findById(productoVenta.productoId);
     if (producto) {
-      producto.cantidadVendida -= productoVenta.cantidad;
+      // Asegurar que cantidadVendida no sea negativa
+      const nuevaCantidadVendida = Math.max(0, producto.cantidadVendida - productoVenta.cantidad);
+      producto.cantidadVendida = nuevaCantidadVendida;
       producto.cantidadRestante = producto.cantidad - producto.cantidadVendida;
+      
+      console.log('🔄 Actualizando stock al eliminar venta:', {
+        productoId: producto._id,
+        nombre: producto.nombre,
+        cantidadVendidaAnterior: producto.cantidadVendida + productoVenta.cantidad,
+        cantidadVendidaNueva: nuevaCantidadVendida,
+        cantidadRestante: producto.cantidadRestante
+      });
+      
       await producto.save();
     }
   }
@@ -201,7 +227,14 @@ router.get('/', authenticate, requireUser, async (req, res) => {
 
     // Obtener ventas y total
     const [ventas, totalVentas] = await Promise.all([      Venta.find(query)
-        .populate('productos.productoId', 'nombre precio')
+        .populate({
+          path: 'productos.productoId',
+          select: 'nombre precio cantidadRestante categoryId',
+          populate: {
+            path: 'categoryId',
+            select: 'nombre'
+          }
+        })
         .sort({ fechadeVenta: -1 })
         .skip(skip)
         .limit(parseInt(limit)),
@@ -393,7 +426,54 @@ router.delete('/:id', authenticate, async (req, res) => {
 
 // Las rutas de devoluciones se han movido a devolucionRoutes.js
 
-
+// Ruta para actualizar cantidad de un producto en una venta con historial
+router.put('/:ventaId/productos/:productoId/cantidad', authenticate, async (req, res) => {
+  const { ventaId, productoId } = req.params;
+  const { nuevaCantidad, operacion } = req.body;
+  const userId = req.user.clerk_id;
+  
+  // Usar nuevaCantidad si está disponible, sino usar operacion para compatibilidad
+  const cantidadFinal = nuevaCantidad !== undefined ? Number(nuevaCantidad) : Number(operacion);
+  
+  console.log('🔍 Debug - Ruta de cantidad recibida:', {
+    ventaId,
+    productoId,
+    nuevaCantidad,
+    operacion,
+    cantidadFinal,
+    userId,
+    body: req.body,
+    params: req.params,
+    isNaN_cantidadFinal: isNaN(cantidadFinal)
+  });
+  
+  // Validar que cantidadFinal sea un número válido
+  if (isNaN(cantidadFinal) || cantidadFinal < 0) {
+    return res.status(400).json({
+      error: 'Cantidad inválida',
+      mensaje: `La cantidad debe ser un número válido mayor o igual a 0. Recibido: ${cantidadFinal}`
+    });
+  }
+  
+  try {
+    const ventaActualizada = await ventaService.updateProductQuantityInVenta(
+      ventaId, 
+      productoId, 
+      cantidadFinal, 
+      userId
+    );
+    
+    console.log('✅ Venta actualizada exitosamente:', ventaActualizada._id);
+    
+    res.json({
+      message: 'Cantidad actualizada exitosamente',
+      venta: ventaActualizada
+    });
+  } catch (error) {
+    console.error('❌ Error al actualizar cantidad:', error);
+    res.status(400).json({ message: error.message });
+  }
+});
 
 // ===== FUNCIONES PARA REPORTES =====
 
@@ -404,7 +484,14 @@ router.get('/reportes/resumen', authenticate, async (req, res) => {
   try {
     const ventas = await Venta.find({ userId })
       .populate('colaboradorId', 'nombre')
-      .populate('productos.productoId', 'nombre precio');
+      .populate({
+        path: 'productos.productoId',
+        select: 'nombre precio cantidadRestante categoryId',
+        populate: {
+          path: 'categoryId',
+          select: 'nombre'
+        }
+      });
     
     const resumen = ventas.reduce((acc, venta) => {
       const nombre = venta.colaboradorId?.nombre || 'Sin colaborador';
@@ -494,7 +581,14 @@ router.get('/finalizadas', authenticate, async (req, res) => {
 
     // Obtener las ventas con límite y offset
     const ventas = await Venta.find(query)
-      .populate('productos.productoId', 'nombre precio')
+      .populate({
+        path: 'productos.productoId',
+        select: 'nombre precio cantidadRestante categoryId',
+        populate: {
+          path: 'categoryId',
+          select: 'nombre'
+        }
+      })
       .sort({ completionDate: -1 })
       .limit(limit)
       .skip(offset);    const ventasConInfo = await processVentasWithUserInfo(ventas);
@@ -700,7 +794,14 @@ router.post('/:id/revert', authenticate, requireUser, async (req, res) => {
 
       // Obtener la venta actualizada con toda la información
       const ventaActualizada = await Venta.findById(id)
-        .populate('productos.productoId', 'nombre precio');
+        .populate({
+          path: 'productos.productoId',
+          select: 'nombre precio cantidadRestante categoryId',
+          populate: {
+            path: 'categoryId',
+            select: 'nombre'
+          }
+        });
 
       console.log('Venta revertida exitosamente:', ventaActualizada);
 
@@ -719,6 +820,90 @@ router.post('/:id/revert', authenticate, requireUser, async (req, res) => {
     res.status(500).json({ 
       message: 'Error interno del servidor al revertir la venta',
       error: error.message 
+    });
+  }
+});
+
+// ===== RUTAS PARA MODIFICAR PRODUCTOS EN VENTAS =====
+
+// Agregar producto a una venta existente
+router.post('/:id/productos', authenticate, requireUser, async (req, res) => {
+  try {
+    const { id } = req.params;
+    const { productoId, cantidad } = req.body;
+    const userId = req.user.clerk_id;
+    const userRole = req.user.role;
+
+    // Validaciones básicas
+    if (!productoId || !cantidad || cantidad <= 0) {
+      return res.status(400).json({
+        message: 'Producto ID y cantidad son requeridos, y la cantidad debe ser mayor a 0'
+      });
+    }
+
+    // Usar el servicio para agregar el producto
+    const ventaActualizada = await ventaService.agregarProductoAVenta(id, productoId, cantidad, userId, userRole);
+
+    res.json({
+      message: 'Producto agregado exitosamente',
+      venta: ventaActualizada
+    });
+  } catch (error) {
+    console.error('Error al agregar producto a venta:', error);
+    res.status(error.status || 500).json({
+      message: error.message || 'Error interno del servidor'
+    });
+  }
+});
+
+// Actualizar cantidad de un producto en una venta
+router.put('/:id/productos/:productoId', authenticate, requireUser, async (req, res) => {
+  try {
+    const { id, productoId } = req.params;
+    const { cantidad } = req.body;
+    const userId = req.user.clerk_id;
+    const userRole = req.user.role;
+
+    // Validaciones básicas
+    if (!cantidad || cantidad <= 0) {
+      return res.status(400).json({
+        message: 'La cantidad debe ser mayor a 0'
+      });
+    }
+
+    // Usar el servicio para actualizar la cantidad
+    const ventaActualizada = await ventaService.actualizarCantidadProducto(id, productoId, cantidad, userId, userRole);
+
+    res.json({
+      message: 'Cantidad actualizada exitosamente',
+      venta: ventaActualizada
+    });
+  } catch (error) {
+    console.error('Error al actualizar cantidad de producto:', error);
+    res.status(error.status || 500).json({
+      message: error.message || 'Error interno del servidor'
+    });
+  }
+});
+
+// Eliminar producto de una venta
+router.delete('/:id/productos/:productoId', authenticate, requireUser, async (req, res) => {
+  try {
+    const { id, productoId } = req.params;
+    const userId = req.user.clerk_id;
+    const userRole = req.user.role;
+
+    // Usar el servicio para eliminar el producto
+    const ventaActualizada = await ventaService.eliminarProductoDeVenta(id, productoId, userId, userRole);
+
+    res.json({
+      message: 'Producto eliminado exitosamente',
+      venta: ventaActualizada
+    });
+  } catch (error) {
+    console.error('Error al eliminar producto de venta:', error);
+    res.status(error.status || 500).json({
+      message: error.message || 'Error interno del servidor'
     });
   }
 });

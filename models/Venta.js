@@ -36,7 +36,25 @@ const ventaSchema = new mongoose.Schema({
     subtotal: { 
       type: Number, 
       required: true 
-    }
+    },
+    historial: [{
+      operacion: {
+        type: Number,
+        required: true
+      },
+      fecha: {
+        type: Date,
+        default: Date.now
+      },
+      cantidadAnterior: {
+        type: Number,
+        required: true
+      },
+      cantidadNueva: {
+        type: Number,
+        required: true
+      }
+    }]
   }],
   montoTotal: { type: Number, required: true },
   montoTotalDevuelto: { 

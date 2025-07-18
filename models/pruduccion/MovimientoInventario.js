@@ -65,5 +65,5 @@ movimientoInventarioSchema.statics.registrarMovimiento = async function(datos) {
     return movimiento;
 };
 
-module.exports = mongoose.models.MovimientoInventario
-  || mongoose.model('MovimientoInventario', movimientoInventarioSchema);
+module.exports = mongoose.models.MovimientoInventarioProduccion
+  || mongoose.model('MovimientoInventarioProduccion', movimientoInventarioSchema);

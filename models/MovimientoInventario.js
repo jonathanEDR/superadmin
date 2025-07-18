@@ -32,4 +32,4 @@ const movimientoInventarioSchema = new mongoose.Schema({
   timestamps: true
 });
 
-module.exports = mongoose.model('MovimientoInventario', movimientoInventarioSchema);
+module.exports = mongoose.models.MovimientoInventario || mongoose.model('MovimientoInventario', movimientoInventarioSchema);

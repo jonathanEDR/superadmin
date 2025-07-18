@@ -6,7 +6,8 @@ const inventarioProductoService = {
   // Crear o incrementar inventario
   async agregarStock({ codigoCatalogo, cantidad, userData }) {
     // Buscar producto en catálogo
-    let catalogo = await CatalogoProducto.findOne({ codigoCatalogo });
+    let catalogo = await CatalogoProducto.findOne({ codigoproducto: codigoCatalogo });
+    console.log('[DEBUG] Datos del catálogo encontrado:', catalogo ? catalogo.toObject() : null);
     if (!catalogo) {
       throw { status: 404, message: 'Producto no existe en el catálogo' };
     }
@@ -27,19 +28,77 @@ const inventarioProductoService = {
       });
       await inventario.save();
     }
-    // Registrar movimiento
-    await MovimientoInventario.create({
-      inventario: inventario._id,
-      tipo: 'ingreso',
-      cantidad,
-      usuario: userData.creatorName
-    });
+
+    // --- ACTUALIZAR PRODUCTO GESTIONADO USANDO catalogoProductoId O codigoProducto ---
+    const Producto = require('../models/Producto');
+    let producto;
+    try {
+      // Buscar primero por catalogoProductoId
+      producto = await Producto.findOne({ catalogoProductoId: catalogo._id });
+      console.log('[INVENTARIO] Buscando producto gestionado por catalogoProductoId:', catalogo._id);
+      if (!producto) {
+        // Si no existe, buscar por codigoProducto
+        producto = await Producto.findOne({ codigoProducto: codigoCatalogo });
+        console.log('[INVENTARIO] Buscando producto gestionado por codigoProducto:', codigoCatalogo);
+      }
+      if (producto) {
+        console.log('[INVENTARIO] Producto gestionado encontrado:', producto ? producto.toObject() : null);
+        producto.cantidad = (producto.cantidad || 0) + cantidad;
+        // Si no tiene catalogoProductoId, lo asignamos
+        if (!producto.catalogoProductoId) {
+          producto.catalogoProductoId = catalogo._id;
+        }
+        await producto.save();
+        console.log('[INVENTARIO] Cantidad actualizada:', producto.cantidad);
+      } else {
+        console.log('[INVENTARIO] Producto gestionado NO encontrado, creando uno nuevo.');
+        producto = new Producto({
+          codigoProducto: codigoCatalogo,
+          catalogoProductoId: catalogo._id,
+          nombre: catalogo.nombre,
+          cantidad: cantidad,
+          precio: 0,
+          categoryId: null,
+          creatorId: userData.creatorId,
+          creatorName: userData.creatorName,
+          creatorEmail: userData.creatorEmail,
+          creatorRole: userData.creatorRole
+        });
+        await producto.save();
+        console.log('[INVENTARIO] Producto gestionado creado:', producto ? producto.toObject() : null);
+      }
+    } catch (err) {
+      console.error('[INVENTARIO] Error actualizando producto gestionado:', err);
+    }
+
+    // Registrar movimiento SOLO si el modelo es el correcto
+    if (MovimientoInventario.schema.paths.inventario) {
+      await MovimientoInventario.create({
+        inventario: inventario._id,
+        tipo: 'ingreso',
+        cantidad,
+        usuario: userData.creatorName
+      });
+    } else {
+      // No registrar movimiento si el modelo no es el esperado
+      console.log('[INVENTARIO] MovimientoInventario no tiene campo inventario, se omite registro de movimiento.');
+    }
     return inventario;
   },
 
   // Consultar inventario
   async listarInventario() {
-    return Inventario.find().populate('catalogo');
+    const entradas = await Inventario.find().populate('catalogo');
+    return entradas.map(e => ({
+      _id: e._id,
+      fecha: e.createdAt || e.fechaEntrada || null,
+      productoNombre: e.catalogo?.nombre || '',
+      codigoproducto: e.catalogo?.codigoproducto || '',
+      cantidad: e.cantidad,
+      precio: typeof e.precio === 'number' ? e.precio : (e.catalogo?.precio ?? 0),
+      lote: e.lote ?? '-',
+      observaciones: e.observaciones ?? '-'
+    }));
   },
 
   // Registrar venta

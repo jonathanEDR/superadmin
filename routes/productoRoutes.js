@@ -34,45 +34,69 @@ router.get('/:id', authenticate, requireUser, async (req, res) => {
 // Ruta para agregar un producto (admin y super_admin)
 router.post('/', authenticate, requireAdmin, async (req, res) => {
   try {
-    const { nombre, precio, cantidad, creatorName, creatorEmail, categoryId } = req.body;
+    console.log('[DEBUG] POST /api/productos - Request body:', req.body);
+    console.log('[DEBUG] POST /api/productos - User:', req.user);
     
-    if (!nombre || !precio || !cantidad) {
+    const { precio, cantidad, creatorName, creatorEmail, categoryId, catalogoProductoId } = req.body;
+    // Validar campos requeridos
+    if (!precio || !cantidad || !categoryId || !catalogoProductoId) {
+      console.error('[DEBUG] POST /api/productos - Missing required fields:', {
+        precio: !precio ? 'Missing' : 'OK',
+        cantidad: !cantidad ? 'Missing' : 'OK',
+        categoryId: !categoryId ? 'Missing' : 'OK',
+        catalogoProductoId: !catalogoProductoId ? 'Missing' : 'OK'
+      });
       return res.status(400).json({ 
         message: 'Faltan campos requeridos',
         details: {
-          nombre: !nombre ? 'El nombre es requerido' : null,
           precio: !precio ? 'El precio es requerido' : null,
-          cantidad: !cantidad ? 'La cantidad es requerida' : null
+          cantidad: !cantidad ? 'La cantidad es requerida' : null,
+          categoryId: !categoryId ? 'La categoría es requerida' : null,
+          catalogoProductoId: !catalogoProductoId ? 'El producto de catálogo es requerido' : null
         }
       });
-    }    const userId = req.user.clerk_id; // Usando clerk_id en lugar de id
+    }
+    const userId = req.user.clerk_id;
     const creatorId = req.user.clerk_id;
     const creatorRole = req.user.role;
 
-    const nuevoProducto = await productService.createProducto({
+    const productData = {
       userId,
       creatorId,
       creatorRole,
-      nombre,
       precio: Number(precio),
       cantidad: Number(cantidad),
       categoryId,
+      catalogoProductoId,
       creatorName: creatorName || req.user.email.split('@')[0],
       creatorEmail: creatorEmail || req.user.email
-    });
+    };
 
+    console.log('[DEBUG] POST /api/productos - Product data to create:', productData);
+
+    const nuevoProducto = await productService.createProducto(productData);
+
+    console.log('[DEBUG] POST /api/productos - Product created successfully:', nuevoProducto);
     res.status(201).json(nuevoProducto);
   } catch (error) {
-    console.error('Error al crear producto:', error);
+    console.error('[ERROR] POST /api/productos - Error creating product:', error);
+    console.error('[ERROR] POST /api/productos - Error stack:', error.stack);
+    
+    // Manejar errores específicos del servicio
+    if (error.status) {
+      return res.status(error.status).json({ 
+        message: error.message,
+        error: error.message 
+      });
+    }
     
     // Manejar error específico de duplicado
-    if (error.message.includes('Ya existe un producto con este nombre')) {
+    if (error.message && error.message.includes('Ya existe un producto con este nombre')) {
       return res.status(409).json({ 
         message: 'Ya existe un producto con este nombre',
         error: error.message 
       });
     }
-    
     // Manejar error de mongoose unique
     if (error.code === 11000) {
       return res.status(409).json({ 
@@ -80,10 +104,10 @@ router.post('/', authenticate, requireAdmin, async (req, res) => {
         error: 'Duplicate key error'
       });
     }
-
     res.status(500).json({ 
       message: 'Error al crear el producto', 
-      error: error.message 
+      error: error.message,
+      details: error.stack
     });
   }
 });
@@ -168,6 +192,68 @@ router.get('/reportes/inventario', authenticate, requireAdmin, async (req, res) 
       message: 'Error al obtener el informe de inventario', 
       error: error.message 
     });
+  }
+});
+
+// --- Catálogo de productos ---
+// GET /api/productos/catalogo → lista de productos del catálogo (solo código, nombre, activo)
+router.get('/catalogo', authenticate, requireAdmin, async (req, res) => {
+  try {
+    const productos = await productService.getCatalogoProductos();
+    // Solo devolver los campos requeridos
+    const catalogo = productos.map(p => ({
+      _id: p._id,
+      codigoProducto: p.codigoProducto,
+      nombre: p.nombre,
+      activo: p.activo
+    }));
+    res.json(catalogo);
+  } catch (error) {
+    res.status(500).json({ message: 'Error al obtener el catálogo', error: error.message });
+  }
+});
+
+// POST /api/productos/catalogo → agregar producto al catálogo
+router.post('/catalogo', authenticate, requireAdmin, async (req, res) => {
+  try {
+    const { codigoProducto, nombre, activo } = req.body;
+    if (!codigoProducto || !nombre) {
+      return res.status(400).json({ message: 'Faltan campos requeridos: código y nombre' });
+    }
+    const nuevoProducto = await productService.createCatalogoProducto({ codigoProducto, nombre, activo });
+    res.status(201).json(nuevoProducto);
+  } catch (error) {
+    if (error.code === 11000) {
+      return res.status(409).json({ message: 'El código o nombre ya existe', error: 'Duplicate key error' });
+    }
+    res.status(500).json({ message: 'Error al agregar producto al catálogo', error: error.message });
+  }
+});
+
+// PUT /api/productos/catalogo/:id → editar producto del catálogo
+router.put('/catalogo/:id', authenticate, requireAdmin, async (req, res) => {
+  try {
+    const { id } = req.params;
+    const { codigoProducto, nombre, activo } = req.body;
+    const actualizado = await productService.updateCatalogoProducto(id, { codigoProducto, nombre, activo });
+    res.json(actualizado);
+  } catch (error) {
+    res.status(500).json({ message: 'Error al editar producto del catálogo', error: error.message });
+  }
+});
+
+// PUT /api/productos/catalogo/:id/estado → activar/desactivar producto
+router.put('/catalogo/:id/estado', authenticate, requireAdmin, async (req, res) => {
+  try {
+    const { id } = req.params;
+    const { activo } = req.body;
+    if (typeof activo !== 'boolean') {
+      return res.status(400).json({ message: 'El campo "activo" debe ser booleano' });
+    }
+    const actualizado = await productService.updateCatalogoEstado(id, activo);
+    res.json(actualizado);
+  } catch (error) {
+    res.status(500).json({ message: 'Error al cambiar estado del producto', error: error.message });
   }
 });
 

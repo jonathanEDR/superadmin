@@ -1,12 +1,10 @@
 const mongoose = require('mongoose');
 
-const catalogoProductoSchema = new mongoose.Schema({
-  codigoCatalogo: { type: String, required: true, unique: true, trim: true }, // SKU o código único
-  nombre: { type: String, required: true, unique: true, trim: true },
-  descripcion: { type: String, default: '' },
-  categoria: { type: String, default: '' }
-}, {
-  timestamps: true
+const CatalogoProductoSchema = new mongoose.Schema({
+  codigoproducto: { type: String, required: true, unique: true },
+  nombre: { type: String, required: true },
+  activo: { type: Boolean, default: true }
+  // Puedes agregar más campos aquí si lo necesitas
 });
 
-module.exports = mongoose.model('CatalogoProducto', catalogoProductoSchema);
+module.exports = mongoose.model('CatalogoProducto', CatalogoProductoSchema);

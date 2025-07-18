@@ -9,6 +9,7 @@ const authRoutes = require('./routes/auth');
 const notasRoutes = require('./routes/notasRouter'); // Asegúrate de usar el nombre correcto
 const adminRoutes = require('./routes/admin');
 const productoRoutes = require('./routes/productoRoutes');
+const catalogoRoutes = require('./routes/catalogoRoutes');
 const ventaRoutes = require('./routes/ventaRoutes');
 const devolucionRoutes = require('./routes/devolucionRoutes');
 const cobroRoutes = require('./routes/cobroRoutes');
@@ -25,6 +26,8 @@ const movimientoRoutes = require('./routes/movimientoRoutes');
 const dashboardRoutes = require('./routes/dashboardRoutes');
 const estadisticasRoutes = require('./routes/estadisticasRoutes');
 const categoryRoutes = require('./routes/categoryRoutes');
+const inventarioRoutes = require('./routes/inventarioRoutes');
+const inventarioProductoRoutes = require('./routes/inventarioProductoRoutes');
 
 const app = express();
 const port = process.env.PORT || 5000;
@@ -86,6 +89,7 @@ app.use(bodyParser.urlencoded({ extended: true }));
 
 // Rutas de la API
 app.use('/api/productos', productoRoutes);
+app.use('/api/catalogo', catalogoRoutes);
 app.use('/api/ventas', ventaRoutes);
 app.use('/api/devoluciones', devolucionRoutes);
 app.use('/api/cobros', cobroRoutes);
@@ -105,6 +109,8 @@ app.use('/api/movimientos', movimientoRoutes);
 app.use('/api/dashboard', dashboardRoutes);
 app.use('/api/estadisticas', estadisticasRoutes);
 app.use('/api/categories', categoryRoutes);
+app.use('/api/inventario', inventarioRoutes);
+app.use('/api/inventario-producto', inventarioProductoRoutes);
 
 // Rutas de prueba y health check
 app.get('/', (req, res) => {

@@ -1,463 +1,363 @@
 const Venta = require('../models/Venta');
 const Producto = require('../models/Producto');
-const Devolucion = require('../models/Devolucion');
 const User = require('../models/User');
-const { canModifyAllVentas } = require('../middleware/authenticate');
+const { getNextSequenceValue } = require('../utils/counter');
 
-/**
- * Obtiene todas las ventas para un usuario específico
- * @param {string} userId - ID del usuario
- * @returns {Promise<Array>} Lista de ventas
- */
-async function getVentas(userId) {
-  const ventas = await Venta.find({ userId })
-    .populate('productos.productoId', 'nombre precio');
-  
-  // Obtener información de usuarios
-  const userIds = ventas.reduce((acc, venta) => {
-    if (venta.creatorId) acc.push(venta.creatorId);
-    if (venta.userId) acc.push(venta.userId);
-    return [...new Set(acc)];
-  }, []);
-
-  const users = await User.find({ 
-    clerk_id: { $in: userIds } 
-  }).select('clerk_id email nombre_negocio role');
-
-  const userMap = users.reduce((acc, user) => {
-    if (user && user.clerk_id) {
-      acc[user.clerk_id] = user;
+const createVenta = async (data) => {
+  try {
+    // Generar número de venta
+    const numeroVenta = await getNextSequenceValue('venta');
+    
+    // Inicializar historial para cada producto
+    if (data.productos && data.productos.length > 0) {
+      data.productos = data.productos.map(producto => ({
+        ...producto,
+        historial: [{
+          operacion: producto.cantidad,
+          fecha: new Date(),
+          cantidadAnterior: 0,
+          cantidadNueva: producto.cantidad
+        }]
+      }));
     }
-    return acc;
-  }, {});
+    
+    // Crear nueva venta
+    const venta = new Venta({
+      numeroVenta,
+      ...data,
+      fechaVenta: new Date(),
+      estadoVenta: 'completada'
+    });
 
-  return ventas.map(venta => {
-    const creator = venta.creatorId ? userMap[venta.creatorId] : null;
-    const owner = venta.userId ? userMap[venta.userId] : null;
+    // Guardar venta
+    const savedVenta = await venta.save();
 
-    return {
-      ...venta.toObject(),
-      creator_info: creator ? {
-        nombre_negocio: creator.nombre_negocio || 'No especificado',
-        email: creator.email,
-        role: creator.role || 'user',
-        id: venta.creatorId
-      } : null,
-      user_info: owner ? {
-        nombre_negocio: owner.nombre_negocio || 'No especificado',
-        email: owner.email,
-        role: owner.role || 'user',
-        id: venta.userId
-      } : null
-    };
-  });
-}
-
-/**
- * Crea una nueva venta
- * @param {Object} ventaData - Datos de la venta
- * @returns {Promise<Object>} Venta creada
- */
-
-async function createVenta(ventaData) {
-  const {
-    creatorId,
-    userId,
-    productos,
-    montoTotal,
-    estadoPago,
-    cantidadPagada,
-    fechadeVenta
-  } = ventaData;
-
-  // Validar productos
-  for (const producto of productos) {
-    const productoDb = await Producto.findById(producto.productoId);
-    if (!productoDb) {
-      throw new Error(`Producto ${producto.productoId} no encontrado`);
-    }
-    if (producto.cantidad > productoDb.cantidadRestante) {
-      throw new Error(`Stock insuficiente para ${productoDb.nombre}. Disponible: ${productoDb.cantidadRestante}`);
-    }
-  }
-
-  // Crear la venta
-  const nuevaVenta = new Venta({
-    creatorId,
-    userId,
-    productos,
-    montoTotal,
-    estadoPago,
-    cantidadPagada,
-    fechadeVenta: fechadeVenta || new Date()
-  });
-
-  const ventaGuardada = await nuevaVenta.save();
-
-  // Actualizar stock de productos
-  for (const producto of productos) {
-    await Producto.findByIdAndUpdate(
-      producto.productoId,
-      {
-        $inc: {
-          cantidadVendida: producto.cantidad,
-          cantidadRestante: -producto.cantidad
-        }
+    // Actualizar stock de productos
+    if (data.productos && data.productos.length > 0) {
+      for (const producto of data.productos) {
+        await Producto.findByIdAndUpdate(
+          producto.productoId,
+          { $inc: { stock: -producto.cantidad } }
+        );
       }
-    );
-  }
-
-  // Retornar la venta con información completa
-  const ventaCompleta = await Venta.findById(ventaGuardada._id)
-    .populate('productos.productoId', 'nombre precio');
-
-  const [ventaConInfo] = await processUserInfo([ventaCompleta]);
-  return ventaConInfo;
-}
-
-/**
- * Actualiza una venta existente
- * @param {string} id - ID de la venta
- * @param {Object} datosActualizados - Datos a actualizar
- * @param {string} userId - ID del usuario
- * @returns {Promise<Object>} Venta actualizada
- */
-async function updateVenta(id, datosActualizados, userId) {
-  const venta = await Venta.findOne({ _id: id, userId });
-  if (!venta) return null;
-
-  const { cantidad, estadoPago, cantidadPagada, fechadeVenta } = datosActualizados;
-
-  // Verificar si tiene devoluciones antes de actualizar cualquier dato
-  const tieneDevoluciones = await Devolucion.findOne({ ventaId: id });
-  if (tieneDevoluciones) {
-    throw new Error('No se puede editar una venta que tiene devoluciones asociadas');
-  }
-
-  // Actualizar fechadeVenta si viene
-  if (fechadeVenta) {
-    venta.fechadeVenta = convertirFechaALocalUtc(fechadeVenta);
-    venta.markModified('fechadeVenta');
-  }
-
-  // Buscar el producto relacionado
-  const producto = await Producto.findById(venta.productoId);
-  if (!producto) throw new Error('Producto relacionado no encontrado');
-
-  // Actualizar cantidad si es necesario
-  if (cantidad !== undefined && cantidad !== venta.cantidad) {
-    const nuevaCantidadVendida = producto.cantidadVendida - venta.cantidad + cantidad;
-
-    if (nuevaCantidadVendida < 0) {
-      throw new Error('La cantidad vendida no puede ser negativa.');
     }
 
-    if (nuevaCantidadVendida > producto.cantidad) {
-      throw new Error(`No hay suficiente stock. Solo hay ${producto.cantidad - producto.cantidadVendida + venta.cantidad} unidades disponibles.`);
-    }
-
-    // Actualizar producto
-    producto.cantidadVendida = nuevaCantidadVendida;
-    producto.cantidadRestante = producto.cantidad - producto.cantidadVendida;
-    await producto.save();
-
-    // Actualizar venta
-    venta.cantidad = cantidad;
-    venta.montoTotal = producto.precio * cantidad;
-  }
-
-  // Actualizar estado de pago y cantidad pagada
-  if (estadoPago) venta.estadoPago = estadoPago;
-  if (cantidadPagada !== undefined) venta.cantidadPagada = cantidadPagada;
-  await venta.save();
-
-  const ventaActualizada = await Venta.findById(id)
-    .populate('productoId', 'nombre precio');
-  
-  const [ventaConInfo] = await processUserInfo([ventaActualizada]);
-  return ventaConInfo;
-}
-
-/**
- * Valida que una fecha sea válida y esté en un rango razonable
- * @param {string|Date} fecha - La fecha a validar
- * @returns {boolean} true si la fecha es válida, false en caso contrario
- */
-function validarFecha(fecha) {
-  const fechaDate = new Date(fecha);
-  if (!(fechaDate instanceof Date) || isNaN(fechaDate)) {
-    return false;
-  }
-
-  // Validar que la fecha no esté muy en el pasado o futuro
-  const ahora = new Date();
-  const unAnioAntes = new Date();
-  unAnioAntes.setFullYear(ahora.getFullYear() - 1);
-  const unAnioDespues = new Date();
-  unAnioDespues.setFullYear(ahora.getFullYear() + 1);
-
-  return fechaDate >= unAnioAntes && fechaDate <= unAnioDespues;
-}
-
-
-// Función updateVentaC eliminada ya que sus funcionalidades están incluidas en updateVenta
-
-
-/**
- * Elimina una venta
- * @param {string} id - ID de la venta
- * @param {string} userId - ID del usuario
- * @returns {Promise<boolean>} Resultado de la operación
- */
-async function deleteVenta(id, userId) {
-  // Buscar la venta
-  const venta = await Venta.findOne({ _id: id, userId });
-  if (!venta) return false;
-
-  // Verificar si tiene devoluciones
-  const tieneDevoluciones = await Devolucion.findOne({ ventaId: id });
-  if (tieneDevoluciones) {
-    throw new Error('No se puede eliminar una venta que tiene devoluciones asociadas');
-  }
-
-  // Actualizar el producto
-  const producto = await Producto.findById(venta.productoId);
-  if (producto) {
-
-    const nuevaCantidadVendida = producto.cantidadVendida - venta.cantidad;
-    if (nuevaCantidadVendida < 0) {
-      throw new Error('La cantidad vendida no puede ser negativa');
-    }
-    producto.cantidadVendida = nuevaCantidadVendida;
-    producto.cantidadRestante = producto.cantidad - nuevaCantidadVendida;
-    await producto.save();
-  }
-
-  // Eliminar la venta
-  await Venta.findByIdAndDelete(id);
-  return true;
-}
-
-// Funciones relacionadas con colaboradores eliminadas ya que ahora usamos el sistema de usuarios de Clerk
-
-// Función para gestionar la devolución de una venta
-async function registrarDevolucion(ventaId, productoId, cantidadDevuelta, motivo, userId) {
-  // Verificar que la venta exista
-  const venta = await Venta.findById(ventaId);
-  if (!venta || venta.userId !== userId) {
-    throw new Error("Venta no encontrada");
-  }
-
-  // Verificar que el producto esté relacionado con la venta
-  const producto = await Producto.findById(productoId);
-  if (!producto) {
-    throw new Error("Producto no encontrado");
-  }
-
-  // Verificar que la cantidad a devolver no sea mayor a la vendida
-  if (cantidadDevuelta > venta.cantidad) {
-    throw new Error(`No se puede devolver más productos que los vendidos. Vendidos: ${venta.cantidad}`);
-  }
-
-  // Actualizar la venta
-  venta.cantidadVendida -= cantidadDevuelta;
-  venta.montoTotal -= (producto.precio * cantidadDevuelta);
-  await venta.save();
-
-  // Actualizar el inventario
-  producto.cantidadRestante += cantidadDevuelta;
-  await producto.save();
-
-  // Registrar la devolución
-  const montoDevolucion = producto.precio * cantidadDevuelta;
-  const nuevaDevolucion = new Devolucion({
-    ventaId,
-    productoId,
-    cantidadDevuelta,
-    montoDevolucion,
-    motivo,
-    userId
-  });
-
-  await nuevaDevolucion.save();
-  return nuevaDevolucion;
-}
-
-
-// Agregar nueva función para obtener datos del gráfico
-async function getChartData(userId, userRole, range) {
-  const startDate = getStartDate(range);
-  
-  let query = {};
-  if (!canModifyAllVentas(userRole)) {
-    query.userId = userId;
-  }
-  query.fechadeVenta = { $gte: startDate };
-
-  const [ventas, devoluciones] = await Promise.all([
-    Venta.find(query)
-      .sort({ fechadeVenta: 1 })
-      .populate('productoId', 'nombre precio'),
-    
-    Devolucion.find({
-      ...query,
-      createdAt: { $gte: startDate }
-    })
-      .populate('ventaId')
-      .populate('productoId')
-  ]);
-
-  return {
-    ventas,
-    devoluciones
-  };
-}
-
-// Modificar la función getVentas para soportar paginación
-async function getVentas(userId, page = 1, limit = 10) {
-  const skip = (page - 1) * limit;
-  
-  const [ventas, total] = await Promise.all([
-    Venta.find({ userId })
-      .sort({ fechadeVenta: -1 })
-      .skip(skip)
-      .limit(limit)
-      .populate('colaboradorId', 'nombre')
-      .populate('productoId', 'nombre precio'),
-    Venta.countDocuments({ userId })
-  ]);
-
-  return {
-    ventas,
-    totalPages: Math.ceil(total / limit),
-    currentPage: page,
-    totalRecords: total,
-    itemsPerPage: limit
-  };
-}
-
-async function getAllVentas(userId, userRole) {
-  try {
-    let query = {};
-    if (!canModifyAllVentas(userRole)) {
-      query.userId = userId;
-    }    const ventas = await Venta.find(query)
-      .sort({ fechadeVenta: -1 })
-      .populate('productos.productoId', 'nombre precio');
-
-    return await processUserInfo(ventas);
+    return savedVenta;
   } catch (error) {
-    console.error('Error en getAllVentas:', error);
-    throw error;
+    throw new Error('Error al crear la venta: ' + error.message);
   }
-}
+};
 
-// Helper function to process user info
-async function processUserInfo(ventas) {
-  if (!Array.isArray(ventas)) {
-    console.warn('processUserInfo received non-array:', ventas);
-    return [];
-  }
-
-  const userIds = [...new Set(ventas.reduce((acc, venta) => {
-    if (venta?.creatorId) acc.push(venta.creatorId);
-    if (venta?.userId) acc.push(venta.userId);
-    return acc;
-  }, []))];
-
-  if (userIds.length === 0) {
-    return ventas;
-  }
-
-  const users = await User.find({ 
-    clerk_id: { $in: userIds } 
-  }).select('clerk_id email nombre_negocio role');
-
-  const userMap = users.reduce((acc, user) => {
-    if (user?.clerk_id) {
-      acc[user.clerk_id] = user;
-    }
-    return acc;
-  }, {});
-
-  return ventas.map(venta => {
-    if (!venta) return null;
-    
-    const creator = venta.creatorId ? userMap[venta.creatorId] : null;
-    const owner = venta.userId ? userMap[venta.userId] : null;
-
-    return {
-      ...venta.toObject(),
-      creator_info: creator ? {
-        nombre_negocio: creator.nombre_negocio || 'No especificado',
-        email: creator.email,
-        role: creator.role || 'user',
-        id: venta.creatorId
-      } : null,
-      user_info: owner ? {
-        nombre_negocio: owner.nombre_negocio || 'No especificado',
-        email: owner.email,
-        role: owner.role || 'user',
-        id: venta.userId
-      } : null
-    };
-  }).filter(Boolean);
-}
-
-/**
- * Actualiza el estado de finalización de una venta
- * @param {string} ventaId - ID de la venta
- * @param {Object} updateData - Datos de actualización
- * @param {string} userId - ID del usuario que actualiza
- * @returns {Promise<Object>} Venta actualizada con información de usuario
- */
-async function updateVentaCompletion(ventaId, updateData, userId) {
+const getAllVentas = async (userId, userRole) => {
   try {
-    const { completionStatus, isCompleted, completionDate, completionNotes } = updateData;
+    let filter = {};
+    
+    if (userRole === 'user') {
+      filter.userId = userId;
+    }
+    
+    const ventas = await Venta.find(filter)
+      .populate('userId', 'firstName lastName email')
+      .populate('productos.productoId', 'nombre precio categoria')
+      .sort({ fechaVenta: -1 });
+    
+    return ventas;
+  } catch (error) {
+    throw new Error('Error al obtener las ventas: ' + error.message);
+  }
+};
 
-    const venta = await Venta.findById(ventaId).populate('productos.productoId');
+const getVentaById = async (ventaId) => {
+  try {
+    const venta = await Venta.findById(ventaId)
+      .populate('userId', 'firstName lastName email')
+      .populate('productos.productoId', 'nombre precio categoria stock');
+    
     if (!venta) {
       throw new Error('Venta no encontrada');
     }
-
-    // Validar estado actual
-    if (venta.isCompleted && venta.completionStatus === 'approved') {
-      throw new Error('No se puede modificar una venta que ya ha sido aprobada');
-    }
-
-    // Para ventas rechazadas que se están reenviando
-    if (venta.completionStatus === 'rejected' && completionStatus === 'pending') {
-      venta.isCompleted = false;
-    } else {
-      // Para otros casos
-      venta.isCompleted = completionStatus === 'approved';
-    }
-
-    // Actualizar campos de la venta
-    venta.completionStatus = completionStatus;
-    venta.completionDate = completionDate || new Date();
-    venta.completionNotes = completionNotes || '';
-    venta.updatedAt = new Date();
-    venta.updatedBy = userId;
-
-    const ventaGuardada = await venta.save();
-    if (!ventaGuardada) {
-      throw new Error('Error al guardar la venta');
-    }
-
-    // Procesar y retornar la venta con información de usuario
-    const [ventaConInfo] = await processUserInfo([ventaGuardada]);
-    return ventaConInfo;
+    
+    return venta;
   } catch (error) {
-    console.error('Error en updateVentaCompletion:', error);
-    throw new Error(`Error al actualizar estado de venta: ${error.message}`);
+    throw new Error('Error al obtener la venta: ' + error.message);
   }
-}
+};
+
+const updateVenta = async (ventaId, data) => {
+  try {
+    const venta = await Venta.findByIdAndUpdate(ventaId, data, { new: true });
+    
+    if (!venta) {
+      throw new Error('Venta no encontrada');
+    }
+    
+    return venta;
+  } catch (error) {
+    throw new Error('Error al actualizar la venta: ' + error.message);
+  }
+};
+
+const deleteVenta = async (ventaId) => {
+  try {
+    const venta = await Venta.findByIdAndDelete(ventaId);
+    
+    if (!venta) {
+      throw new Error('Venta no encontrada');
+    }
+    
+    return venta;
+  } catch (error) {
+    throw new Error('Error al eliminar la venta: ' + error.message);
+  }
+};
+
+const updateProductQuantityInVenta = async (ventaId, productoId, nuevaCantidad, userId) => {
+  try {
+    console.log('🔍 Actualizando cantidad en venta:', { ventaId, productoId, nuevaCantidad, userId });
+    
+    // Verificar permisos del usuario con múltiples campos
+    console.log('🔍 Buscando usuario con clerkId:', userId);
+    let user = await User.findOne({ clerkId: userId });
+    
+    if (!user) {
+      console.log('🔍 Buscando usuario con clerk_id:', userId);
+      user = await User.findOne({ clerk_id: userId });
+    }
+    
+    if (!user) {
+      // Mostrar todos los usuarios para debug
+      const allUsers = await User.find({}).select('clerkId clerk_id email firstName lastName');
+      console.log('🔍 Todos los usuarios en la BD:', allUsers);
+      throw new Error('Usuario no encontrado en la base de datos');
+    }
+    
+    console.log('✅ Usuario encontrado:', { 
+      id: user._id, 
+      role: user.role, 
+      email: user.email,
+      clerkId: user.clerkId || user.clerk_id
+    });
+    
+    // Buscar la venta
+    const venta = await Venta.findById(ventaId);
+    if (!venta) {
+      throw new Error('Venta no encontrada');
+    }
+    
+    console.log('✅ Venta encontrada:', venta.numeroVenta);
+    
+    // Verificar permisos: super_admin y admin pueden modificar cualquier venta
+    // user solo puede modificar sus propias ventas
+    if (user.role === 'user' && venta.userId.toString() !== user._id.toString()) {
+      throw new Error('No tienes permisos para modificar esta venta');
+    }
+    
+    // Buscar el producto en la venta
+    const productoEnVenta = venta.productos.find(p => p.productoId.toString() === productoId);
+    if (!productoEnVenta) {
+      throw new Error('Producto no encontrado en la venta');
+    }
+    
+    // Obtener el producto completo
+    const producto = await Producto.findById(productoId);
+    if (!producto) {
+      throw new Error('Producto no encontrado');
+    }
+    
+    // Calcular diferencia de cantidad
+    const cantidadAnterior = productoEnVenta.cantidad;
+    const diferencia = nuevaCantidad - cantidadAnterior;
+    
+    console.log('🔍 Diferencia de cantidad:', diferencia);
+    
+    // Verificar stock disponible si aumentamos la cantidad
+    if (diferencia > 0 && producto.stock < diferencia) {
+      throw new Error('Stock insuficiente');
+    }
+    
+    // Validar que los valores sean números válidos
+    const cantidadNum = Number(nuevaCantidad);
+    const precioNum = Number(productoEnVenta.precioUnitario || productoEnVenta.precio);
+    
+    console.log('🔍 Validando valores:', {
+      nuevaCantidad: nuevaCantidad,
+      cantidadNum: cantidadNum,
+      precio: productoEnVenta.precio,
+      precioUnitario: productoEnVenta.precioUnitario,
+      precioNum: precioNum,
+      isNaN_cantidad: isNaN(cantidadNum),
+      isNaN_precio: isNaN(precioNum),
+      productoEnVenta: productoEnVenta
+    });
+    
+    if (isNaN(cantidadNum) || isNaN(precioNum) || cantidadNum < 0 || precioNum < 0) {
+      throw new Error(`Valores inválidos: cantidad=${nuevaCantidad}, precio=${productoEnVenta.precioUnitario || productoEnVenta.precio}`);
+    }
+    
+    // Actualizar cantidad en la venta
+    productoEnVenta.cantidad = cantidadNum;
+    productoEnVenta.subtotal = cantidadNum * precioNum;
+    
+    console.log('✅ Subtotal calculado:', productoEnVenta.subtotal);
+    
+    // Agregar entrada al historial del producto en la venta
+    if (!productoEnVenta.historial) {
+      productoEnVenta.historial = [];
+    }
+    
+    productoEnVenta.historial.push({
+      operacion: diferencia,
+      fecha: new Date(),
+      cantidadAnterior: cantidadAnterior,
+      cantidadNueva: cantidadNum
+    });
+    
+    console.log('✅ Historial agregado:', {
+      operacion: diferencia,
+      cantidadAnterior: cantidadAnterior,
+      cantidadNueva: cantidadNum
+    });
+    
+    // Recalcular total de la venta
+    venta.total = venta.productos.reduce((sum, p) => {
+      const subtotalNum = Number(p.subtotal);
+      return sum + (isNaN(subtotalNum) ? 0 : subtotalNum);
+    }, 0);
+    
+    // Actualizar stock del producto
+    const productoActualizado = await Producto.findById(productoId);
+    if (productoActualizado) {
+      // Actualizar stock y cantidades
+      productoActualizado.stock -= diferencia;
+      productoActualizado.cantidadVendida += diferencia;
+      productoActualizado.cantidadRestante = productoActualizado.cantidad - productoActualizado.cantidadVendida;
+      
+      // Asegurar que no haya valores negativos
+      if (productoActualizado.cantidadVendida < 0) {
+        productoActualizado.cantidadVendida = 0;
+      }
+      if (productoActualizado.cantidadRestante < 0) {
+        productoActualizado.cantidadRestante = 0;
+      }
+      
+      console.log('🔄 Actualizando stock del producto:', {
+        productoId: productoId,
+        nombre: productoActualizado.nombre,
+        diferencia: diferencia,
+        stockAnterior: productoActualizado.stock + diferencia,
+        stockNuevo: productoActualizado.stock,
+        cantidadVendida: productoActualizado.cantidadVendida,
+        cantidadRestante: productoActualizado.cantidadRestante
+      });
+      
+      await productoActualizado.save();
+    }
+    
+    // Agregar entrada al historial del producto
+    if (!producto.historial) {
+      producto.historial = [];
+    }
+    
+    producto.historial.push({
+      fecha: new Date(),
+      tipo: 'modificacion_venta',
+      cantidad: diferencia,
+      stockAnterior: producto.stock,
+      stockNuevo: producto.stock - diferencia,
+      observaciones: `Modificación en venta ${venta.numeroVenta} por ${user.firstName} ${user.lastName}`,
+      usuario: user._id
+    });
+    
+    await producto.save();
+    await venta.save();
+    
+    console.log('✅ Venta actualizada exitosamente');
+    
+    return await Venta.findById(ventaId)
+      .populate('userId', 'firstName lastName email')
+      .populate('productos.productoId', 'nombre precio categoria stock');
+    
+  } catch (error) {
+    console.error('❌ Error en updateProductQuantityInVenta:', error);
+    throw new Error('Error al actualizar cantidad del producto: ' + error.message);
+  }
+};
+
+const getVentasByDateRange = async (startDate, endDate, userId, userRole) => {
+  try {
+    let filter = {
+      fechaVenta: {
+        $gte: new Date(startDate),
+        $lte: new Date(endDate)
+      }
+    };
+    
+    if (userRole === 'user') {
+      filter.userId = userId;
+    }
+    
+    const ventas = await Venta.find(filter)
+      .populate('userId', 'firstName lastName email')
+      .populate('productos.productoId', 'nombre precio categoria')
+      .sort({ fechaVenta: -1 });
+    
+    return ventas;
+  } catch (error) {
+    throw new Error('Error al obtener las ventas por rango de fechas: ' + error.message);
+  }
+};
+
+const getVentasByUser = async (targetUserId, requestingUserId, userRole) => {
+  try {
+    // Solo admin y super_admin pueden ver ventas de otros usuarios
+    if (userRole === 'user' && targetUserId !== requestingUserId) {
+      throw new Error('No tienes permisos para ver las ventas de otros usuarios');
+    }
+    
+    const ventas = await Venta.find({ userId: targetUserId })
+      .populate('userId', 'firstName lastName email')
+      .populate('productos.productoId', 'nombre precio categoria')
+      .sort({ fechaVenta: -1 });
+    
+    return ventas;
+  } catch (error) {
+    throw new Error('Error al obtener las ventas del usuario: ' + error.message);
+  }
+};
+
+const getTotalVentas = async (userId, userRole) => {
+  try {
+    let filter = {};
+    
+    if (userRole === 'user') {
+      filter.userId = userId;
+    }
+    
+    const result = await Venta.aggregate([
+      { $match: filter },
+      {
+        $group: {
+          _id: null,
+          total: { $sum: '$total' },
+          cantidad: { $sum: 1 }
+        }
+      }
+    ]);
+    
+    return result.length > 0 ? result[0] : { total: 0, cantidad: 0 };
+  } catch (error) {
+    throw new Error('Error al obtener el total de ventas: ' + error.message);
+  }
+};
 
 module.exports = {
-  getVentas,
   createVenta,
+  getAllVentas,
+  getVentaById,
   updateVenta,
-  updateVentaCompletion,
-  validarFecha
+  deleteVenta,
+  updateProductQuantityInVenta,
+  getVentasByDateRange,
+  getVentasByUser,
+  getTotalVentas
 };

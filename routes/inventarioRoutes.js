@@ -4,10 +4,10 @@ const router = express.Router();
 const inventarioService = require('../services/inventarioproductoserviceservices');
 const { authenticate, requireAdmin, requireUser } = require('../middleware/authenticate');
 
-// Alta o incremento de stock
-router.post('/ingreso', authenticate, requireAdmin, async (req, res) => {
+// Alta o incremento de stock (POST /api/inventario)
+router.post('/', authenticate, requireAdmin, async (req, res) => {
   try {
-    const { codigoCatalogo, cantidad } = req.body;
+    const { codigoCatalogo, cantidad, precio, lote, observaciones } = req.body;
     const userData = {
       userId: req.user.clerk_id || req.user.id,
       creatorId: req.user.clerk_id || req.user.id,
@@ -15,10 +15,20 @@ router.post('/ingreso', authenticate, requireAdmin, async (req, res) => {
       creatorEmail: req.user.email,
       creatorRole: req.user.role
     };
-    const inventario = await inventarioService.agregarStock({ codigoCatalogo, cantidad, userData });
+    // Puedes pasar los campos extra si tu servicio los usa
+    const inventario = await inventarioService.agregarStock({ codigoCatalogo, cantidad, precio, lote, observaciones, userData });
     res.status(201).json(inventario);
   } catch (error) {
     res.status(error.status || 500).json({ message: error.message });
+  }
+});
+// Historial de entradas de inventario (GET /api/inventario/historial)
+router.get('/historial', authenticate, requireUser, async (req, res) => {
+  try {
+    const historial = await inventarioService.listarInventario();
+    res.json(historial);
+  } catch (error) {
+    res.status(500).json({ message: error.message });
   }
 });
 
