@@ -42,7 +42,10 @@ router.get('/', authenticate, async (req, res) => {
       estado: dev.estado,
       ventaFinalizada: dev.ventaId ? dev.ventaId.isCompleted : false,
       ventaEstadoPago: dev.ventaId ? dev.ventaId.estadoPago : undefined,
-      ventaId: dev.ventaId?._id || dev.ventaId // <-- Campo necesario para el frontend
+      ventaId: dev.ventaId?._id || dev.ventaId, // <-- Campo necesario para el frontend
+      // ✅ AGREGAR EL productoId COMPLETO PARA ProductCard
+      productoId: dev.productoId, // <-- Campo necesario para detectar devoluciones por producto
+      cantidadDevuelta: dev.cantidadDevuelta // <-- Asegurar que esté disponible
     }));    // Log para debug
     console.log('Devoluciones formateadas:', devolucionesFormateadas.map(d => ({
       id: d._id,
@@ -121,8 +124,21 @@ router.post('/', authenticate, async (req, res) => {
       fechaISO: fechaDevolucionFinal.toISOString()
     });
 
-    // Validar que la venta existe y pertenece al usuario
-    const venta = await Venta.findOne({ _id: ventaId });
+    // Validar que la venta existe y pertenece al usuario - CON POPULATE
+    const venta = await Venta.findOne({ _id: ventaId }).populate({
+      path: 'productos.productoId',
+      select: 'nombre precio'
+    });
+    console.log('🔍 Backend - Venta encontrada:', {
+      id: venta?._id,
+      productosCount: venta?.productos?.length || 0,
+      productos: venta?.productos?.map(p => ({
+        id: p.productoId?._id,
+        cantidad: p.cantidad,
+        poblado: !!p.productoId?.nombre
+      }))
+    });
+    
     if (!venta) {
       return res.status(404).json({ message: 'Venta no encontrada' });
     }
@@ -141,21 +157,46 @@ router.post('/', authenticate, async (req, res) => {
     for (const item of productos) {
       const { productoId, cantidadDevuelta, montoDevolucion } = item;
 
-      // Validar que el producto existe en la venta
+      // Validar que el producto existe en la venta - MEJORAR BÚSQUEDA
       const productoEnVenta = venta.productos.find(
-        p => p.productoId.toString() === productoId
+        p => {
+          const productoIdString = p.productoId?._id?.toString() || p.productoId?.toString();
+          console.log('🔍 Comparando productos:', {
+            buscado: productoId,
+            encontrado: productoIdString,
+            coincide: productoIdString === productoId
+          });
+          return productoIdString === productoId;
+        }
       );
       
+      console.log('🔍 Producto en venta encontrado:', {
+        encontrado: !!productoEnVenta,
+        cantidad: productoEnVenta?.cantidad
+      });
+      
       if (!productoEnVenta) {
+        console.log('❌ Producto no encontrado. Productos disponibles:', 
+          venta.productos.map(p => ({
+            id: p.productoId?._id?.toString() || p.productoId?.toString(),
+            nombre: p.productoId?.nombre
+          }))
+        );
         return res.status(400).json({ 
           message: `Producto no encontrado en la venta` 
         });
       }
 
-      // Validar cantidad a devolver
+      // ✅ VALIDACIÓN MEJORADA DE CANTIDAD A DEVOLVER
       if (cantidadDevuelta > productoEnVenta.cantidad) {
         return res.status(400).json({ 
-          message: `La cantidad a devolver no puede ser mayor a la cantidad vendida` 
+          message: `La cantidad a devolver (${cantidadDevuelta}) no puede ser mayor a la cantidad vendida (${productoEnVenta.cantidad})` 
+        });
+      }
+
+      if (cantidadDevuelta <= 0) {
+        return res.status(400).json({ 
+          message: 'La cantidad a devolver debe ser mayor a 0' 
         });
       }      // Crear la devolución para este producto
       const nuevaDevolucion = new Devolucion({
@@ -174,11 +215,31 @@ router.post('/', authenticate, async (req, res) => {
       await nuevaDevolucion.save();
       devoluciones.push(nuevaDevolucion);
 
-      // Actualizar el stock del producto
+      // ✅ ACTUALIZACIÓN MEJORADA DEL STOCK EN DEVOLUCIONES
       const producto = await Producto.findById(productoId);
       if (producto) {
-        producto.cantidadRestante += cantidadDevuelta;
-        producto.cantidadVendida -= cantidadDevuelta;
+        const cantidadVendidaAnterior = producto.cantidadVendida || 0;
+        const cantidadVendidaNueva = cantidadVendidaAnterior - cantidadDevuelta;
+        
+        // Validar que la cantidad vendida no sea negativa
+        if (cantidadVendidaNueva < 0) {
+          return res.status(400).json({ 
+            message: 'Error en cálculo de stock: cantidad vendida resultante sería negativa' 
+          });
+        }
+        
+        // Actualizar stock correctamente
+        producto.cantidadVendida = cantidadVendidaNueva;
+        producto.cantidadRestante = producto.cantidad - cantidadVendidaNueva;
+        
+        console.log('🔄 Actualizando stock por devolución:', {
+          productoNombre: producto.nombre,
+          cantidadDevuelta,
+          cantidadVendidaAnterior,
+          cantidadVendidaNueva,
+          cantidadRestante: producto.cantidadRestante
+        });
+        
         await producto.save();
       }
 
@@ -190,9 +251,87 @@ router.post('/', authenticate, async (req, res) => {
     // Actualizar la venta
     venta.cantidadDevuelta = (venta.cantidadDevuelta || 0) + productos.reduce((sum, p) => sum + p.cantidadDevuelta, 0);
     venta.montoTotalDevuelto = (venta.montoTotalDevuelto || 0) + montoTotalDevolucion;
+    
+    // ✅ RECALCULAR SUBTOTALES INDIVIDUALES CONSIDERANDO DEVOLUCIONES
+    for (const producto of venta.productos) {
+      // Buscar todas las devoluciones para este producto en esta venta
+      const devolucionesProducto = await Devolucion.find({
+        ventaId: ventaId,
+        productoId: producto.productoId,
+        estado: { $in: ['aprobada', 'completada'] }
+      });
+      
+      // Calcular total devuelto para este producto
+      const cantidadTotalDevuelta = devolucionesProducto.reduce((sum, dev) => sum + dev.cantidadDevuelta, 0);
+      
+      // Calcular cantidad efectiva (original - devuelta)
+      const cantidadEfectiva = Math.max(0, producto.cantidad - cantidadTotalDevuelta);
+      
+      // Actualizar subtotal basado en cantidad efectiva
+      const precioUnitario = producto.precioUnitario || producto.precio || 0;
+      const subtotalEfectivo = cantidadEfectiva * precioUnitario;
+      
+      console.log(`💰 Recalculando subtotal para ${producto.productoId}:`, {
+        cantidadOriginal: producto.cantidad,
+        cantidadDevuelta: cantidadTotalDevuelta,
+        cantidadEfectiva: cantidadEfectiva,
+        precioUnitario: precioUnitario,
+        subtotalAnterior: producto.subtotal,
+        subtotalNuevo: subtotalEfectivo
+      });
+      
+      // Actualizar el subtotal del producto
+      producto.subtotal = subtotalEfectivo;
+    }
+    
+    // ✅ RECALCULAR MONTO TOTAL BASADO EN SUBTOTALES ACTUALIZADOS
+    const montoTotalCalculado = venta.productos.reduce((sum, p) => {
+      const subtotalNum = Number(p.subtotal);
+      return sum + (isNaN(subtotalNum) ? 0 : subtotalNum);
+    }, 0);
+    
+    // ✅ ACTUALIZAR MONTO TOTAL Y DEUDA
+    venta.montoTotal = montoTotalCalculado;
+    venta.debe = venta.montoTotal - (venta.cantidadPagada || 0);
+    
+    
+    console.log('💰 Recálculo completo tras devolución:', {
+      montoTotalCalculado: montoTotalCalculado,
+      montoTotalDevuelto: venta.montoTotalDevuelto,
+      cantidadPagada: venta.cantidadPagada || 0,
+      debeNuevo: venta.debe,
+      subtotalesActualizados: venta.productos.map(p => ({
+        producto: p.productoId,
+        cantidad: p.cantidad,
+        precioUnitario: p.precioUnitario || p.precio,
+        subtotal: p.subtotal
+      }))
+    });
+    
     await venta.save();
 
-    // Devolver las devoluciones creadas
+    // Poblar la venta actualizada con toda la información necesaria
+    const ventaActualizada = await Venta.findById(ventaId)
+      .populate({
+        path: 'productos.productoId',
+        select: 'nombre precio codigoProducto categoryId cantidadRestante'
+      });
+      // ❌ REMOVIDO: .populate('clienteId', 'nombre email') - NO EXISTE
+      // ❌ REMOVIDO: .populate('usuarioId', 'nombre email') - NO EXISTE
+      // El modelo Venta solo tiene userId y creatorId como strings (Clerk IDs)
+
+    console.log('✅ Backend - Venta actualizada tras devolución:', {
+      ventaId: ventaActualizada._id,
+      cantidadDevuelta: ventaActualizada.cantidadDevuelta,
+      montoTotalDevuelto: ventaActualizada.montoTotalDevuelto,
+      productos: ventaActualizada.productos.map(p => ({
+        id: p.productoId._id,
+        cantidad: p.cantidad,
+        nombre: p.productoId.nombre
+      }))
+    });
+
+    // Devolver las devoluciones creadas Y la venta actualizada
     const devolucionesPopuladas = await Promise.all(
       devoluciones.map(dev => 
         Devolucion.findById(dev._id)
@@ -203,7 +342,8 @@ router.post('/', authenticate, async (req, res) => {
 
     res.status(201).json({
       message: 'Devoluciones creadas exitosamente',
-      devoluciones: devolucionesPopuladas
+      devoluciones: devolucionesPopuladas,
+      venta: ventaActualizada // ✅ AGREGAR VENTA ACTUALIZADA
     });
   } catch (error) {
     console.error('Error al crear devolución:', error);
@@ -216,9 +356,17 @@ router.delete('/:id', authenticate, async (req, res) => {
   const { id } = req.params;
   const userId = req.user.clerk_id;
   const userRole = req.user.role;
+  
+  // Validar que el ID sea válido
+  if (!id || !id.match(/^[0-9a-fA-F]{24}$/)) {
+    return res.status(400).json({ message: 'ID de devolución inválido' });
+  }
+  
   try {
     // Construir la consulta basada en el rol
-    const query = userRole === 'user' ? { _id: id, userId } : { _id: id };    // Buscar la devolución con información de la venta
+    const query = userRole === 'user' ? { _id: id, userId } : { _id: id };
+
+    // Buscar la devolución con información de la venta
     const devolucion = await Devolucion.findOne(query).populate('ventaId', 'isCompleted');
     if (!devolucion) {
       return res.status(404).json({ message: 'Devolución no encontrada o no tienes permisos para eliminarla' });
@@ -239,35 +387,94 @@ router.delete('/:id', authenticate, async (req, res) => {
       });
     }
 
-    // Actualizar el stock del producto
-    const producto = await Producto.findById(devolucion.productoId);
+    // Eliminar la devolución ANTES de hacer las actualizaciones
+    // para prevenir condiciones de carrera
+    const devolucionEliminada = await Devolucion.findByIdAndDelete(id);
+    
+    if (!devolucionEliminada) {
+      return res.status(404).json({ message: 'La devolución ya fue eliminada' });
+    }
+
+    // Actualizar el stock del producto usando la devolución eliminada
+    const producto = await Producto.findById(devolucionEliminada.productoId);
     if (producto) {
       // Solo modificar cantidadVendida, el pre-save recalcula cantidadRestante
-      producto.cantidadVendida += devolucion.cantidadDevuelta;
+      producto.cantidadVendida += devolucionEliminada.cantidadDevuelta;
       await producto.save();
     }
 
-    // Actualizar la venta
-    const venta = await Venta.findById(devolucion.ventaId);
+    // Actualizar la venta usando la devolución eliminada
+    const venta = await Venta.findById(devolucionEliminada.ventaId);
     if (venta) {
       const productoEnVenta = venta.productos.find(
-        p => p.productoId.toString() === devolucion.productoId.toString()
+        p => p.productoId.toString() === devolucionEliminada.productoId.toString()
       );
       
       if (productoEnVenta) {
-        productoEnVenta.cantidad += devolucion.cantidadDevuelta;
-        venta.cantidadDevuelta -= devolucion.cantidadDevuelta;
-        venta.montoTotalDevuelto = (venta.montoTotalDevuelto || 0) - devolucion.montoDevolucion;
+        productoEnVenta.cantidad += devolucionEliminada.cantidadDevuelta;
+        venta.cantidadDevuelta -= devolucionEliminada.cantidadDevuelta;
+        venta.montoTotalDevuelto = (venta.montoTotalDevuelto || 0) - devolucionEliminada.montoDevolucion;
+        
+        // ✅ RECALCULAR SUBTOTALES INDIVIDUALES TRAS ELIMINAR DEVOLUCIÓN
+        for (const producto of venta.productos) {
+          // Buscar todas las devoluciones restantes para este producto en esta venta
+          const devolucionesProducto = await Devolucion.find({
+            ventaId: devolucionEliminada.ventaId,
+            productoId: producto.productoId,
+            estado: { $in: ['aprobada', 'completada'] }
+          });
+          
+          // Calcular total devuelto para este producto (tras eliminar la devolución)
+          const cantidadTotalDevuelta = devolucionesProducto.reduce((sum, dev) => sum + dev.cantidadDevuelta, 0);
+          
+          // Calcular cantidad efectiva (original - devuelta restante)
+          const cantidadEfectiva = Math.max(0, producto.cantidad - cantidadTotalDevuelta);
+          
+          // Actualizar subtotal basado en cantidad efectiva
+          const precioUnitario = producto.precioUnitario || producto.precio || 0;
+          const subtotalEfectivo = cantidadEfectiva * precioUnitario;
+          
+          console.log(`💰 Recalculando subtotal tras eliminar devolución para ${producto.productoId}:`, {
+            cantidadOriginal: producto.cantidad,
+            cantidadDevueltaRestante: cantidadTotalDevuelta,
+            cantidadEfectiva: cantidadEfectiva,
+            precioUnitario: precioUnitario,
+            subtotalAnterior: producto.subtotal,
+            subtotalNuevo: subtotalEfectivo
+          });
+          
+          // Actualizar el subtotal del producto
+          producto.subtotal = subtotalEfectivo;
+        }
+        
+        // ✅ RECALCULAR MONTO TOTAL BASADO EN SUBTOTALES ACTUALIZADOS
+        const montoTotalCalculado = venta.productos.reduce((sum, p) => {
+          const subtotalNum = Number(p.subtotal);
+          return sum + (isNaN(subtotalNum) ? 0 : subtotalNum);
+        }, 0);
+        
+        // ✅ ACTUALIZAR MONTO TOTAL Y DEUDA
+        venta.montoTotal = montoTotalCalculado;
+        venta.debe = venta.montoTotal - (venta.cantidadPagada || 0);
+        
         await venta.save();
       }
     }
 
-    // Eliminar la devolución
-    await Devolucion.findByIdAndDelete(id);
-
-    res.json({ message: 'Devolución eliminada correctamente' });
+    console.log('Devolución eliminada exitosamente:', id);
+    res.json({ 
+      message: 'Devolución eliminada correctamente',
+      devolucionId: id
+    });
+    
   } catch (error) {
     console.error('Error al eliminar devolución:', error);
+    
+    // Error específico para ID inválido
+    if (error.name === 'CastError') {
+      return res.status(400).json({ message: 'ID de devolución inválido' });
+    }
+    
     res.status(500).json({ message: 'Error al eliminar la devolución' });
   }
 });

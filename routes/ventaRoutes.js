@@ -429,7 +429,7 @@ router.delete('/:id', authenticate, async (req, res) => {
 // Ruta para actualizar cantidad de un producto en una venta con historial
 router.put('/:ventaId/productos/:productoId/cantidad', authenticate, async (req, res) => {
   const { ventaId, productoId } = req.params;
-  const { nuevaCantidad, operacion } = req.body;
+  const { nuevaCantidad, operacion, tipoOperacion = 'manual', motivo = '' } = req.body;
   const userId = req.user.clerk_id;
   
   // Usar nuevaCantidad si está disponible, sino usar operacion para compatibilidad
@@ -441,6 +441,8 @@ router.put('/:ventaId/productos/:productoId/cantidad', authenticate, async (req,
     nuevaCantidad,
     operacion,
     cantidadFinal,
+    tipoOperacion,
+    motivo,
     userId,
     body: req.body,
     params: req.params,
@@ -460,14 +462,18 @@ router.put('/:ventaId/productos/:productoId/cantidad', authenticate, async (req,
       ventaId, 
       productoId, 
       cantidadFinal, 
-      userId
+      userId,
+      tipoOperacion,
+      motivo
     );
     
     console.log('✅ Venta actualizada exitosamente:', ventaActualizada._id);
     
     res.json({
       message: 'Cantidad actualizada exitosamente',
-      venta: ventaActualizada
+      venta: ventaActualizada,
+      tipoOperacion,
+      motivo: motivo || `Cambio ${tipoOperacion}`
     });
   } catch (error) {
     console.error('❌ Error al actualizar cantidad:', error);

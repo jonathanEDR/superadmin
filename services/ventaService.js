@@ -163,19 +163,44 @@ const updateProductQuantityInVenta = async (ventaId, productoId, nuevaCantidad, 
     if (!producto) {
       throw new Error('Producto no encontrado');
     }
-    
+
     // Calcular diferencia de cantidad
     const cantidadAnterior = productoEnVenta.cantidad;
     const diferencia = nuevaCantidad - cantidadAnterior;
     
-    console.log('🔍 Diferencia de cantidad:', diferencia);
-    
-    // Verificar stock disponible si aumentamos la cantidad
-    if (diferencia > 0 && producto.stock < diferencia) {
-      throw new Error('Stock insuficiente');
+    console.log('🔍 Análisis de stock:', {
+      productoNombre: producto.nombre,
+      cantidadAnterior,
+      nuevaCantidad,
+      diferencia,
+      stockTotal: producto.cantidad,
+      stockDisponible: producto.cantidadRestante || (producto.cantidad - producto.cantidadVendida),
+      cantidadVendida: producto.cantidadVendida
+    });
+
+    // ✅ VALIDACIÓN MEJORADA DE STOCK
+    if (diferencia > 0) {
+      // Si aumentamos la cantidad, verificar stock disponible
+      const stockDisponible = producto.cantidadRestante || (producto.cantidad - (producto.cantidadVendida || 0));
+      
+      if (diferencia > stockDisponible) {
+        throw new Error(`Stock insuficiente. Disponible: ${stockDisponible}, solicitado: ${diferencia}`);
+      }
+      
+      if (stockDisponible <= 0) {
+        throw new Error(`Producto sin stock disponible`);
+      }
     }
     
-    // Validar que los valores sean números válidos
+    // ✅ VALIDACIÓN PARA EVITAR CANTIDADES NEGATIVAS
+    if (nuevaCantidad < 0) {
+      throw new Error('La cantidad no puede ser negativa');
+    }
+    
+    // ✅ VALIDACIÓN PARA EVITAR EXCEDER STOCK TOTAL
+    if (nuevaCantidad > producto.cantidad) {
+      throw new Error(`La cantidad (${nuevaCantidad}) no puede exceder el stock total (${producto.cantidad})`);
+    }    // Validar que los valores sean números válidos
     const cantidadNum = Number(nuevaCantidad);
     const precioNum = Number(productoEnVenta.precioUnitario || productoEnVenta.precio);
     
@@ -218,35 +243,64 @@ const updateProductQuantityInVenta = async (ventaId, productoId, nuevaCantidad, 
       cantidadNueva: cantidadNum
     });
     
-    // Recalcular total de la venta
-    venta.total = venta.productos.reduce((sum, p) => {
+    // ✅ RECALCULAR MONTO TOTAL DE LA VENTA (CORREGIDO)
+    const montoTotalCalculado = venta.productos.reduce((sum, p) => {
       const subtotalNum = Number(p.subtotal);
       return sum + (isNaN(subtotalNum) ? 0 : subtotalNum);
     }, 0);
     
-    // Actualizar stock del producto
+    // ✅ ACTUALIZAR EL CAMPO CORRECTO (montoTotal, no total)
+    venta.montoTotal = montoTotalCalculado;
+    
+    // ✅ ACTUALIZAR DEUDA PENDIENTE
+    venta.debe = venta.montoTotal - (venta.cantidadPagada || 0);
+    
+    console.log('💰 Monto total recalculado:', {
+      montoAnterior: venta.montoTotal !== montoTotalCalculado ? 'diferente' : 'igual',
+      montoNuevo: montoTotalCalculado,
+      cantidadPagada: venta.cantidadPagada || 0,
+      debeNuevo: venta.debe,
+      subtotales: venta.productos.map(p => ({
+        producto: p.productoId,
+        cantidad: p.cantidad,
+        precioUnitario: p.precioUnitario,
+        subtotal: p.subtotal
+      }))
+    });
+    
+    // ✅ ACTUALIZACIÓN MEJORADA DEL STOCK
     const productoActualizado = await Producto.findById(productoId);
     if (productoActualizado) {
-      // Actualizar stock y cantidades
-      productoActualizado.stock -= diferencia;
-      productoActualizado.cantidadVendida += diferencia;
-      productoActualizado.cantidadRestante = productoActualizado.cantidad - productoActualizado.cantidadVendida;
+      // Calcular nuevos valores
+      const cantidadVendidaAnterior = productoActualizado.cantidadVendida || 0;
+      const cantidadVendidaNueva = cantidadVendidaAnterior + diferencia;
       
-      // Asegurar que no haya valores negativos
-      if (productoActualizado.cantidadVendida < 0) {
-        productoActualizado.cantidadVendida = 0;
+      // ✅ VALIDACIÓN FINAL ANTES DE ACTUALIZAR
+      if (cantidadVendidaNueva < 0) {
+        throw new Error('No se puede reducir más la cantidad vendida');
       }
+      
+      if (cantidadVendidaNueva > productoActualizado.cantidad) {
+        throw new Error(`La cantidad vendida (${cantidadVendidaNueva}) no puede exceder el stock total (${productoActualizado.cantidad})`);
+      }
+      
+      // Actualizar campos
+      productoActualizado.cantidadVendida = cantidadVendidaNueva;
+      productoActualizado.cantidadRestante = productoActualizado.cantidad - cantidadVendidaNueva;
+      
+      // ✅ VALIDACIÓN DE CONSISTENCIA
       if (productoActualizado.cantidadRestante < 0) {
         productoActualizado.cantidadRestante = 0;
+        console.warn('⚠️ Ajustando cantidadRestante a 0 para evitar valores negativos');
       }
       
-      console.log('🔄 Actualizando stock del producto:', {
+      console.log('🔄 Stock actualizado correctamente:', {
         productoId: productoId,
         nombre: productoActualizado.nombre,
         diferencia: diferencia,
-        stockAnterior: productoActualizado.stock + diferencia,
-        stockNuevo: productoActualizado.stock,
-        cantidadVendida: productoActualizado.cantidadVendida,
+        cantidadTotal: productoActualizado.cantidad,
+        cantidadVendidaAnterior: cantidadVendidaAnterior,
+        cantidadVendidaNueva: cantidadVendidaNueva,
         cantidadRestante: productoActualizado.cantidadRestante
       });
       
@@ -273,9 +327,26 @@ const updateProductQuantityInVenta = async (ventaId, productoId, nuevaCantidad, 
     
     console.log('✅ Venta actualizada exitosamente');
     
-    return await Venta.findById(ventaId)
-      .populate('userId', 'firstName lastName email')
-      .populate('productos.productoId', 'nombre precio categoria stock');
+    // ✅ RETORNAR VENTA ACTUALIZADA CON POPULATE COMPLETO
+    const ventaActualizada = await Venta.findById(ventaId)
+      .populate({
+        path: 'productos.productoId',
+        select: 'nombre precio categoria stock cantidadRestante categoryId'
+      });
+    
+    console.log('🔄 Retornando venta actualizada:', {
+      ventaId: ventaActualizada._id,
+      montoTotal: ventaActualizada.montoTotal,
+      debe: ventaActualizada.debe,
+      productos: ventaActualizada.productos.map(p => ({
+        id: p.productoId._id,
+        nombre: p.productoId.nombre,
+        cantidad: p.cantidad,
+        subtotal: p.subtotal
+      }))
+    });
+    
+    return ventaActualizada;
     
   } catch (error) {
     console.error('❌ Error en updateProductQuantityInVenta:', error);
@@ -350,6 +421,135 @@ const getTotalVentas = async (userId, userRole) => {
   }
 };
 
+const agregarProductoAVenta = async (ventaId, productoId, cantidad, userId, userRole) => {
+  try {
+    console.log('🔍 Agregando producto a venta:', { ventaId, productoId, cantidad, userId });
+    
+    // Verificar permisos del usuario
+    let user = await User.findOne({ clerkId: userId });
+    if (!user) {
+      user = await User.findOne({ clerk_id: userId });
+    }
+    if (!user) {
+      throw new Error('Usuario no encontrado en la base de datos');
+    }
+    
+    console.log('✅ Usuario encontrado:', { id: user._id, role: user.role, email: user.email });
+    
+    // Buscar la venta
+    const venta = await Venta.findById(ventaId);
+    if (!venta) {
+      throw new Error('Venta no encontrada');
+    }
+    
+    // Verificar permisos
+    if (user.role === 'user' && venta.userId.toString() !== user._id.toString()) {
+      throw new Error('No tienes permisos para modificar esta venta');
+    }
+    
+    // Buscar el producto
+    const producto = await Producto.findById(productoId);
+    if (!producto) {
+      throw new Error('Producto no encontrado');
+    }
+    
+    // Validar cantidad
+    const cantidadNum = Number(cantidad);
+    if (isNaN(cantidadNum) || cantidadNum <= 0) {
+      throw new Error('La cantidad debe ser un número mayor a 0');
+    }
+    
+    // Validar stock disponible
+    const stockDisponible = producto.cantidadRestante || (producto.cantidad - (producto.cantidadVendida || 0));
+    if (cantidadNum > stockDisponible) {
+      throw new Error(`Stock insuficiente. Disponible: ${stockDisponible}, solicitado: ${cantidadNum}`);
+    }
+    
+    // Verificar si el producto ya existe en la venta
+    const productoExistente = venta.productos.find(p => p.productoId.toString() === productoId);
+    
+    if (productoExistente) {
+      // Si existe, actualizar cantidad
+      const nuevaCantidad = productoExistente.cantidad + cantidadNum;
+      productoExistente.cantidad = nuevaCantidad;
+      productoExistente.subtotal = nuevaCantidad * producto.precio;
+      
+      // Agregar al historial
+      if (!productoExistente.historial) {
+        productoExistente.historial = [];
+      }
+      productoExistente.historial.push({
+        operacion: cantidadNum,
+        fecha: new Date(),
+        cantidadAnterior: productoExistente.cantidad - cantidadNum,
+        cantidadNueva: nuevaCantidad
+      });
+    } else {
+      // Si no existe, agregarlo
+      const nuevoProducto = {
+        productoId: productoId,
+        cantidad: cantidadNum,
+        precioUnitario: producto.precio,
+        subtotal: cantidadNum * producto.precio,
+        historial: [{
+          operacion: cantidadNum,
+          fecha: new Date(),
+          cantidadAnterior: 0,
+          cantidadNueva: cantidadNum
+        }]
+      };
+      
+      venta.productos.push(nuevoProducto);
+    }
+    
+    // ✅ RECALCULAR MONTO TOTAL DE LA VENTA
+    const montoTotalCalculado = venta.productos.reduce((sum, p) => {
+      const subtotalNum = Number(p.subtotal);
+      return sum + (isNaN(subtotalNum) ? 0 : subtotalNum);
+    }, 0);
+    
+    // ✅ ACTUALIZAR EL CAMPO CORRECTO
+    venta.montoTotal = montoTotalCalculado;
+    venta.debe = venta.montoTotal - (venta.cantidadPagada || 0);
+    
+    // Actualizar stock del producto
+    producto.cantidadVendida = (producto.cantidadVendida || 0) + cantidadNum;
+    producto.cantidadRestante = producto.cantidad - producto.cantidadVendida;
+    
+    // Agregar al historial del producto
+    if (!producto.historial) {
+      producto.historial = [];
+    }
+    producto.historial.push({
+      fecha: new Date(),
+      tipo: 'agregado_venta',
+      cantidad: cantidadNum,
+      stockAnterior: producto.cantidadRestante + cantidadNum,
+      stockNuevo: producto.cantidadRestante,
+      observaciones: `Agregado a venta ${venta.numeroVenta} por ${user.firstName} ${user.lastName}`,
+      usuario: user._id
+    });
+    
+    // Guardar cambios
+    await producto.save();
+    await venta.save();
+    
+    // Retornar venta actualizada con populate
+    const ventaActualizada = await Venta.findById(ventaId)
+      .populate({
+        path: 'productos.productoId',
+        select: 'nombre precio categoria stock cantidadRestante categoryId'
+      });
+    
+    console.log('✅ Producto agregado exitosamente a la venta');
+    return ventaActualizada;
+    
+  } catch (error) {
+    console.error('❌ Error en agregarProductoAVenta:', error);
+    throw new Error('Error al agregar producto a la venta: ' + error.message);
+  }
+};
+
 module.exports = {
   createVenta,
   getAllVentas,
@@ -359,5 +559,6 @@ module.exports = {
   updateProductQuantityInVenta,
   getVentasByDateRange,
   getVentasByUser,
-  getTotalVentas
+  getTotalVentas,
+  agregarProductoAVenta
 };
