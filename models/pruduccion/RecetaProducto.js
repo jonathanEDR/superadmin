@@ -47,9 +47,73 @@ const recetaProductoSchema = new mongoose.Schema({
     categoria: {
         type: String,
         enum: ['producto_terminado', 'producto_intermedio', 'preparado'],
-        default: 'producto_terminado'
+        default: 'preparado' // Cambiar default para que inicie en preparado
     },
-    // Control de inventario de recetas
+    
+    // NUEVOS CAMPOS PARA EVOLUCIÓN GRADUAL
+    // Estado del proceso actual
+    estadoProceso: {
+        type: String,
+        enum: ['borrador', 'en_proceso', 'completado', 'pausado'],
+        default: 'borrador'
+    },
+    
+    // Fase actual del proceso (para flujo de trabajo)
+    faseActual: {
+        type: String,
+        enum: ['preparado', 'intermedio', 'terminado'],
+        default: 'preparado'
+    },
+    
+    // Historial de transiciones entre fases
+    historicoFases: [{
+        fase: {
+            type: String,
+            enum: ['preparado', 'intermedio', 'terminado'],
+            required: true
+        },
+        fechaInicio: {
+            type: Date,
+            required: true
+        },
+        fechaFinalizacion: {
+            type: Date
+        },
+        notas: {
+            type: String,
+            trim: true
+        },
+        ingredientesAgregados: [{
+            ingrediente: {
+                type: mongoose.Schema.Types.ObjectId,
+                ref: 'Ingrediente'
+            },
+            cantidad: {
+                type: Number,
+                min: 0
+            },
+            unidadMedida: {
+                type: String
+            },
+            motivo: {
+                type: String,
+                enum: ['inicial', 'mejora', 'ajuste', 'sabor', 'textura', 'conservante'],
+                default: 'inicial'
+            },
+            fechaAgregado: {
+                type: Date,
+                default: Date.now
+            }
+        }]
+    }],
+    
+    // Configuración del proceso
+    puedeAvanzar: {
+        type: Boolean,
+        default: true
+    },
+    
+    // Control de inventario de recetas (extendido por fase)
     inventario: {
         cantidadProducida: {
             type: Number,
@@ -62,6 +126,23 @@ const recetaProductoSchema = new mongoose.Schema({
             min: 0
         }
     },
+    
+    // Control de inventario por fase
+    inventarioPorFase: {
+        preparado: {
+            cantidadProducida: { type: Number, default: 0, min: 0 },
+            cantidadUtilizada: { type: Number, default: 0, min: 0 }
+        },
+        intermedio: {
+            cantidadProducida: { type: Number, default: 0, min: 0 },
+            cantidadUtilizada: { type: Number, default: 0, min: 0 }
+        },
+        terminado: {
+            cantidadProducida: { type: Number, default: 0, min: 0 },
+            cantidadUtilizada: { type: Number, default: 0, min: 0 }
+        }
+    },
+    
     activo: {
         type: Boolean,
         default: true
@@ -76,6 +157,169 @@ const recetaProductoSchema = new mongoose.Schema({
 recetaProductoSchema.virtual('inventarioDisponible').get(function() {
     return this.inventario.cantidadProducida - this.inventario.cantidadUtilizada;
 });
+
+// NUEVOS VIRTUALS Y MÉTODOS PARA FLUJO DE TRABAJO
+// Virtual para obtener la fase actual del historial
+recetaProductoSchema.virtual('faseActualInfo').get(function() {
+    const fasesActivas = this.historicoFases.filter(f => !f.fechaFinalizacion);
+    return fasesActivas.length > 0 ? fasesActivas[fasesActivas.length - 1] : null;
+});
+
+// Virtual para verificar si puede avanzar de fase
+recetaProductoSchema.virtual('puedeAvanzarFase').get(function() {
+    const fasesOrden = ['preparado', 'intermedio', 'terminado'];
+    const indiceActual = fasesOrden.indexOf(this.faseActual);
+    return this.estadoProceso === 'en_proceso' && 
+           this.puedeAvanzar && 
+           indiceActual < fasesOrden.length - 1;
+});
+
+// Virtual para obtener la siguiente fase
+recetaProductoSchema.virtual('siguienteFase').get(function() {
+    const fasesOrden = ['preparado', 'intermedio', 'terminado'];
+    const indiceActual = fasesOrden.indexOf(this.faseActual);
+    return indiceActual < fasesOrden.length - 1 ? fasesOrden[indiceActual + 1] : null;
+});
+
+// Método para iniciar el proceso (cambiar de borrador a en_proceso)
+recetaProductoSchema.methods.iniciarProceso = async function() {
+    if (this.estadoProceso !== 'borrador') {
+        throw new Error('El proceso ya ha sido iniciado');
+    }
+    
+    this.estadoProceso = 'en_proceso';
+    this.faseActual = 'preparado';
+    this.categoria = 'preparado'; // 🎯 AGREGAR: Asegurar que categoría esté sincronizada
+    
+    // Agregar la fase inicial al historial
+    this.historicoFases.push({
+        fase: 'preparado',
+        fechaInicio: new Date(),
+        notas: 'Proceso iniciado',
+        ingredientesAgregados: []
+    });
+    
+    return await this.save();
+};
+
+// Método para avanzar a la siguiente fase
+recetaProductoSchema.methods.avanzarAProximaFase = async function(datosAdicionales = {}) {
+    const fasesOrden = ['preparado', 'intermedio', 'terminado'];
+    const indiceActual = fasesOrden.indexOf(this.faseActual);
+    
+    if (!this.puedeAvanzarFase) {
+        throw new Error('No se puede avanzar de fase en el estado actual');
+    }
+    
+    if (indiceActual >= fasesOrden.length - 1) {
+        throw new Error('Ya se encuentra en la última fase del proceso');
+    }
+    
+    // Finalizar fase actual
+    const faseActual = this.faseActualInfo;
+    if (faseActual) {
+        faseActual.fechaFinalizacion = new Date();
+        if (datosAdicionales.notas) {
+            faseActual.notas = datosAdicionales.notas;
+        }
+    }
+    
+    // Avanzar a la siguiente fase
+    const siguienteFase = fasesOrden[indiceActual + 1];
+    this.faseActual = siguienteFase;
+    this.categoria = siguienteFase === 'terminado' ? 'producto_terminado' : 
+                    siguienteFase === 'intermedio' ? 'producto_intermedio' : 'preparado';
+    
+    // Agregar nueva fase al historial
+    this.historicoFases.push({
+        fase: siguienteFase,
+        fechaInicio: new Date(),
+        notas: datosAdicionales.notasNuevaFase || `Avance a fase ${siguienteFase}`,
+        ingredientesAgregados: datosAdicionales.ingredientesAdicionales || []
+    });
+    
+    // Si llegamos a terminado, marcar como completado
+    if (siguienteFase === 'terminado') {
+        this.estadoProceso = 'completado';
+    }
+    
+    return await this.save();
+};
+
+// Método para agregar ingredientes a la fase actual
+recetaProductoSchema.methods.agregarIngredienteAFaseActual = async function(ingredienteData) {
+    const faseActual = this.faseActualInfo;
+    if (!faseActual) {
+        throw new Error('No hay una fase activa para agregar ingredientes');
+    }
+    
+    faseActual.ingredientesAgregados.push({
+        ...ingredienteData,
+        fechaAgregado: new Date()
+    });
+    
+    return await this.save();
+};
+
+// Método para pausar el proceso
+recetaProductoSchema.methods.pausarProceso = async function(motivo = '') {
+    if (this.estadoProceso !== 'en_proceso') {
+        throw new Error('Solo se pueden pausar procesos que están en curso');
+    }
+    
+    this.estadoProceso = 'pausado';
+    const faseActual = this.faseActualInfo;
+    if (faseActual && motivo) {
+        faseActual.notas = (faseActual.notas || '') + `\nPausado: ${motivo}`;
+    }
+    
+    return await this.save();
+};
+
+// Método para reanudar el proceso
+recetaProductoSchema.methods.reanudarProceso = async function() {
+    if (this.estadoProceso !== 'pausado') {
+        throw new Error('Solo se pueden reanudar procesos pausados');
+    }
+    
+    this.estadoProceso = 'en_proceso';
+    return await this.save();
+};
+
+// 🎯 NUEVO: Método para reiniciar receta a estado inicial
+recetaProductoSchema.methods.reiniciarReceta = async function(motivo = 'Reinicio manual') {
+    // Solo permitir reinicio si no está en borrador
+    if (this.estadoProceso === 'borrador') {
+        throw new Error('La receta ya se encuentra en estado inicial');
+    }
+    
+    // Finalizar fase actual si existe
+    const faseActual = this.faseActualInfo;
+    if (faseActual && !faseActual.fechaFinalizacion) {
+        faseActual.fechaFinalizacion = new Date();
+        faseActual.notas = (faseActual.notas || '') + `\nReiniciado: ${motivo}`;
+    }
+    
+    // Resetear estado y fase
+    this.estadoProceso = 'borrador';
+    this.faseActual = 'preparado';
+    this.categoria = 'preparado';
+    this.puedeAvanzar = true;
+    
+    // Agregar entrada de reinicio al historial
+    this.historicoFases.push({
+        fase: 'preparado',
+        fechaInicio: new Date(),
+        notas: `Receta reiniciada - ${motivo}`,
+        ingredientesAgregados: []
+    });
+    
+    // TODO: Aquí podríamos restaurar inventario si es necesario
+    // this.inventario.cantidadProducida = 0;
+    // this.inventario.cantidadUtilizada = 0;
+    
+    return await this.save();
+};
 
 // Método para verificar disponibilidad de inventario de receta
 recetaProductoSchema.methods.verificarDisponibilidadInventario = function(cantidadRequerida) {

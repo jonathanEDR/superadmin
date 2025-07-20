@@ -333,16 +333,61 @@ class ProduccionService {
 
             console.log(`📋 Producción a eliminar: "${produccion.nombre}" - Estado: ${produccion.estado}`);
 
-            // Permitir eliminar producciones en cualquier estado
-            // Si está completada, se puede eliminar sin problemas
+            // Si la producción está completada, necesitamos revertir el inventario
             if (produccion.estado === 'completada') {
-                console.log('⚠️ Eliminando producción completada - se permite la operación');
+                console.log('⚠️ Producción completada - revirtiendo inventario...');
+                
+                // Mapear ingredientes para revertir (compatible con estructura antigua y nueva)
+                const ingredientesParaRevertir = [];
+                
+                // Estructura nueva: ingredientesUtilizados
+                if (produccion.ingredientesUtilizados && produccion.ingredientesUtilizados.length > 0) {
+                    ingredientesParaRevertir.push(...produccion.ingredientesUtilizados.map(item => ({
+                        ingrediente: item.ingrediente,
+                        cantidadUtilizada: item.cantidadUtilizada || 0
+                    })));
+                }
+                
+                // Estructura antigua: items (para compatibilidad)
+                if (produccion.items && produccion.items.length > 0) {
+                    ingredientesParaRevertir.push(...produccion.items.map(item => ({
+                        ingrediente: item.ingrediente,
+                        cantidadUtilizada: item.cantidadUtilizada || 0
+                    })));
+                }
+                
+                // Mapear recetas para revertir
+                const recetasParaRevertir = (produccion.recetasUtilizadas || []).map(item => ({
+                    receta: item.receta,
+                    cantidadUtilizada: item.cantidadUtilizada || 0
+                }));
+                
+                console.log('📦 Ingredientes a revertir:', ingredientesParaRevertir);
+                console.log('🍳 Recetas a revertir:', recetasParaRevertir);
+                
+                // Solo revertir si hay algo que revertir
+                if (ingredientesParaRevertir.length > 0 || recetasParaRevertir.length > 0) {
+                    // Revertir inventario usando el servicio
+                    await inventarioService.revertirProduccion(
+                        ingredientesParaRevertir,
+                        recetasParaRevertir,
+                        produccion._id,
+                        'sistema'
+                    );
+                    
+                    console.log('✅ Inventario revertido exitosamente');
+                } else {
+                    console.log('ℹ️ No hay ingredientes o recetas que revertir');
+                }
             }
 
             await Produccion.findByIdAndDelete(id);
             
             console.log(`✅ Producción "${produccion.nombre}" eliminada exitosamente`);
-            return { message: 'Producción eliminada exitosamente' };
+            return { 
+                message: 'Producción eliminada exitosamente',
+                inventarioRevertido: produccion.estado === 'completada'
+            };
         } catch (error) {
             console.error('❌ Error al eliminar producción:', error);
             throw new Error(`Error al eliminar producción: ${error.message}`);

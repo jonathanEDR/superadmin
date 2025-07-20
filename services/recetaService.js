@@ -107,7 +107,7 @@ class RecetaService {
             const datosLimpios = {
                 nombre: datosReceta.nombre.trim(),
                 descripcion: datosReceta.descripcion || '',
-                categoria: datosReceta.categoria || 'producto_terminado',
+                categoria: 'preparado', // 🎯 CORRECCIÓN: Siempre empezar en preparado
                 tiempoPreparacion: Number(datosReceta.tiempoPreparacion) || 0,
                 rendimiento: {
                     cantidad: Number(datosReceta.rendimiento.cantidad),
@@ -118,7 +118,10 @@ class RecetaService {
                     cantidad: Number(item.cantidad),
                     unidadMedida: item.unidadMedida
                 })),
-                activo: datosReceta.activo !== undefined ? datosReceta.activo : true
+                activo: datosReceta.activo !== undefined ? datosReceta.activo : true,
+                // 🎯 AGREGAR: Estados iniciales del flujo de trabajo
+                estadoProceso: 'borrador',
+                faseActual: 'preparado'
             };
 
             console.log('📝 Datos limpios para MongoDB:', JSON.stringify(datosLimpios, null, 2));
@@ -420,6 +423,344 @@ class RecetaService {
             console.error('❌ Error al desactivar receta:', error);
             throw new Error(`Error al desactivar receta: ${error.message}`);
         }
+    }
+
+    // ============= NUEVOS MÉTODOS PARA FLUJO DE TRABAJO =============
+    
+    // Iniciar proceso de producción
+    async iniciarProceso(recetaId) {
+        try {
+            console.log('🚀 Iniciando proceso para receta:', recetaId);
+            
+            const receta = await RecetaProducto.findById(recetaId);
+            if (!receta) {
+                throw new Error('Receta no encontrada');
+            }
+            
+            if (!receta.activo) {
+                throw new Error('No se puede iniciar proceso en una receta inactiva');
+            }
+            
+            const recetaActualizada = await receta.iniciarProceso();
+            await recetaActualizada.populate('ingredientes.ingrediente');
+            
+            console.log('✅ Proceso iniciado exitosamente');
+            return recetaActualizada;
+        } catch (error) {
+            console.error('❌ Error al iniciar proceso:', error);
+            throw new Error(`Error al iniciar proceso: ${error.message}`);
+        }
+    }
+
+    // Avanzar a la siguiente fase del proceso
+    async avanzarFase(recetaId, datosAdicionales = {}) {
+        try {
+            console.log('⏭️ Avanzando fase para receta:', recetaId);
+            console.log('📋 Datos adicionales:', JSON.stringify(datosAdicionales, null, 2));
+            
+            const receta = await RecetaProducto.findById(recetaId);
+            if (!receta) {
+                throw new Error('Receta no encontrada');
+            }
+            
+            // Validar ingredientes adicionales si se proporcionan
+            if (datosAdicionales.ingredientesAdicionales && datosAdicionales.ingredientesAdicionales.length > 0) {
+                const ingredientesIds = datosAdicionales.ingredientesAdicionales.map(item => item.ingrediente);
+                const ingredientesExistentes = await Ingrediente.find({
+                    _id: { $in: ingredientesIds },
+                    activo: true
+                });
+                
+                if (ingredientesExistentes.length !== ingredientesIds.length) {
+                    throw new Error('Uno o más ingredientes adicionales no existen o están inactivos');
+                }
+                
+                // Verificar disponibilidad de ingredientes adicionales
+                for (const itemReceta of datosAdicionales.ingredientesAdicionales) {
+                    const ingrediente = ingredientesExistentes.find(
+                        ing => ing._id.toString() === itemReceta.ingrediente.toString()
+                    );
+                    
+                    if (ingrediente) {
+                        const disponible = ingrediente.cantidad - ingrediente.procesado;
+                        if (disponible < itemReceta.cantidad) {
+                            throw new Error(
+                                `Ingrediente adicional ${ingrediente.nombre}: cantidad insuficiente. ` +
+                                `Disponible: ${disponible} ${ingrediente.unidadMedida}, ` +
+                                `Requerido: ${itemReceta.cantidad} ${itemReceta.unidadMedida}`
+                            );
+                        }
+                    }
+                }
+            }
+            
+            const recetaActualizada = await receta.avanzarAProximaFase(datosAdicionales);
+            await recetaActualizada.populate('ingredientes.ingrediente');
+            
+            console.log('✅ Fase avanzada exitosamente a:', recetaActualizada.faseActual);
+            return recetaActualizada;
+        } catch (error) {
+            console.error('❌ Error al avanzar fase:', error);
+            throw new Error(`Error al avanzar fase: ${error.message}`);
+        }
+    }
+
+    // Agregar ingrediente a la fase actual
+    async agregarIngredienteAFaseActual(recetaId, ingredienteData) {
+        try {
+            console.log('➕ Agregando ingrediente a fase actual:', recetaId);
+            
+            const receta = await RecetaProducto.findById(recetaId);
+            if (!receta) {
+                throw new Error('Receta no encontrada');
+            }
+            
+            // Validar ingrediente
+            const ingrediente = await Ingrediente.findById(ingredienteData.ingrediente);
+            if (!ingrediente || !ingrediente.activo) {
+                throw new Error('Ingrediente no encontrado o inactivo');
+            }
+            
+            // Verificar disponibilidad
+            const disponible = ingrediente.cantidad - ingrediente.procesado;
+            if (disponible < ingredienteData.cantidad) {
+                throw new Error(
+                    `Ingrediente ${ingrediente.nombre}: cantidad insuficiente. ` +
+                    `Disponible: ${disponible} ${ingrediente.unidadMedida}, ` +
+                    `Requerido: ${ingredienteData.cantidad} ${ingredienteData.unidadMedida}`
+                );
+            }
+            
+            const recetaActualizada = await receta.agregarIngredienteAFaseActual(ingredienteData);
+            await recetaActualizada.populate('ingredientes.ingrediente');
+            
+            console.log('✅ Ingrediente agregado exitosamente a la fase actual');
+            return recetaActualizada;
+        } catch (error) {
+            console.error('❌ Error al agregar ingrediente a fase actual:', error);
+            throw new Error(`Error al agregar ingrediente: ${error.message}`);
+        }
+    }
+
+    // Pausar proceso
+    async pausarProceso(recetaId, motivo = '') {
+        try {
+            console.log('⏸️ Pausando proceso para receta:', recetaId);
+            
+            const receta = await RecetaProducto.findById(recetaId);
+            if (!receta) {
+                throw new Error('Receta no encontrada');
+            }
+            
+            const recetaActualizada = await receta.pausarProceso(motivo);
+            await recetaActualizada.populate('ingredientes.ingrediente');
+            
+            console.log('✅ Proceso pausado exitosamente');
+            return recetaActualizada;
+        } catch (error) {
+            console.error('❌ Error al pausar proceso:', error);
+            throw new Error(`Error al pausar proceso: ${error.message}`);
+        }
+    }
+
+    // Reanudar proceso
+    async reanudarProceso(recetaId) {
+        try {
+            console.log('▶️ Reanudando proceso para receta:', recetaId);
+            
+            const receta = await RecetaProducto.findById(recetaId);
+            if (!receta) {
+                throw new Error('Receta no encontrada');
+            }
+            
+            const recetaActualizada = await receta.reanudarProceso();
+            await recetaActualizada.populate('ingredientes.ingrediente');
+            
+            console.log('✅ Proceso reanudado exitosamente');
+            return recetaActualizada;
+        } catch (error) {
+            console.error('❌ Error al reanudar proceso:', error);
+            throw new Error(`Error al reanudar proceso: ${error.message}`);
+        }
+    }
+
+    // 🎯 NUEVO: Reiniciar receta al estado inicial
+    async reiniciarReceta(recetaId, motivo = 'Reinicio manual') {
+        try {
+            console.log('🔄 Reiniciando receta:', recetaId);
+            
+            const receta = await RecetaProducto.findById(recetaId);
+            if (!receta) {
+                throw new Error('Receta no encontrada');
+            }
+            
+            const recetaActualizada = await receta.reiniciarReceta(motivo);
+            await recetaActualizada.populate('ingredientes.ingrediente');
+            
+            console.log('✅ Receta reiniciada exitosamente');
+            return recetaActualizada;
+        } catch (error) {
+            console.error('❌ Error al reiniciar receta:', error);
+            throw new Error(`Error al reiniciar receta: ${error.message}`);
+        }
+    }
+
+    // ============= MÉTODOS PARA FLUJO DE TRABAJO =============
+    
+    // Avanzar fase del proceso de producción
+    async avanzarFase(recetaId, datosAdicionales = {}) {
+        try {
+            console.log('🚀 Avanzando fase de receta:', recetaId);
+            console.log('📋 Datos adicionales:', JSON.stringify(datosAdicionales, null, 2));
+            
+            const receta = await RecetaProducto.findById(recetaId);
+            if (!receta) {
+                throw new Error('Receta no encontrada');
+            }
+            
+            console.log('📍 Receta actual encontrada:', receta.nombre);
+            console.log('📊 Fase actual:', receta.categoria);
+            
+            // Determinar siguiente fase
+            const siguienteFase = this.obtenerSiguienteFase(receta.categoria);
+            let nuevaFase = siguienteFase;
+            
+            // Si la receta ya está terminada, permitir modificaciones sin cambiar de fase
+            if (!siguienteFase && receta.categoria === 'producto_terminado') {
+                console.log('⚙️ Receta terminada: permitiendo modificaciones sin cambio de fase');
+                nuevaFase = 'producto_terminado'; // Mantener la misma fase
+            } else if (!siguienteFase) {
+                throw new Error('La receta está en una fase no reconocida');
+            }
+            
+            console.log('🎯 Nueva fase:', nuevaFase);
+            
+            // Procesar ingredientes adicionales si los hay
+            if (datosAdicionales.ingredientesAdicionales && datosAdicionales.ingredientesAdicionales.length > 0) {
+                console.log('🧪 Procesando ingredientes adicionales...');
+                
+                const ingredientesAdicionales = datosAdicionales.ingredientesAdicionales;
+                const ingredientesIds = ingredientesAdicionales.map(item => item.ingrediente);
+                
+                // Verificar existencia y disponibilidad
+                const ingredientesExistentes = await Ingrediente.find({
+                    _id: { $in: ingredientesIds },
+                    activo: true
+                });
+                
+                const ingredientesAConsumir = [];
+                
+                for (const itemReceta of ingredientesAdicionales) {
+                    const ingrediente = ingredientesExistentes.find(ing => 
+                        ing._id.toString() === itemReceta.ingrediente.toString()
+                    );
+                    
+                    if (!ingrediente) {
+                        throw new Error(`Ingrediente no encontrado: ${itemReceta.ingrediente}`);
+                    }
+
+                    const disponible = ingrediente.cantidad - ingrediente.procesado;
+                    console.log(`📊 ${ingrediente.nombre}: Disponible ${disponible}, Requerido ${itemReceta.cantidad}`);
+                    
+                    if (disponible < itemReceta.cantidad) {
+                        throw new Error(
+                            `Ingrediente ${ingrediente.nombre}: cantidad insuficiente. ` +
+                            `Disponible: ${disponible} ${ingrediente.unidadMedida}, ` +
+                            `Requerido: ${itemReceta.cantidad} ${itemReceta.unidadMedida}`
+                        );
+                    }
+
+                    ingredientesAConsumir.push({
+                        ingrediente,
+                        cantidadAConsumir: itemReceta.cantidad
+                    });
+                }
+                
+                // Agregar ingredientes a la receta
+                for (const item of ingredientesAdicionales) {
+                    receta.ingredientes.push({
+                        ingrediente: item.ingrediente,
+                        cantidad: Number(item.cantidad),
+                        unidadMedida: item.unidadMedida
+                    });
+                }
+                
+                console.log('📝 Ingredientes adicionales agregados a la receta');
+                
+                // Consumir ingredientes del inventario
+                console.log('🔄 Consumiendo ingredientes adicionales...');
+                for (const { ingrediente, cantidadAConsumir } of ingredientesAConsumir) {
+                    const exito = await ingrediente.consumir(
+                        cantidadAConsumir, 
+                        `Consumido al avanzar receta "${receta.nombre}" a ${nuevaFase}`,
+                        'sistema'
+                    );
+                    if (exito) {
+                        await ingrediente.save();
+                        console.log(`📉 Consumido ${cantidadAConsumir} ${ingrediente.unidadMedida} de ${ingrediente.nombre}`);
+                    } else {
+                        throw new Error(`Error al consumir ingrediente ${ingrediente.nombre}`);
+                    }
+                }
+            }
+            
+            // Actualizar fase y notas
+            receta.categoria = nuevaFase;
+            
+            // 🎯 CORRECCIÓN: También actualizar faseActual para consistencia
+            const mapeoFaseActual = {
+                'preparado': 'preparado',
+                'producto_intermedio': 'intermedio',
+                'producto_terminado': 'terminado'
+            };
+            receta.faseActual = mapeoFaseActual[nuevaFase] || 'preparado';
+            
+            console.log(`🔄 Actualizando: categoria="${nuevaFase}", faseActual="${receta.faseActual}"`);
+            
+            if (datosAdicionales.notas) {
+                if (!receta.notas) receta.notas = [];
+                receta.notas.push({
+                    fecha: new Date(),
+                    texto: datosAdicionales.notas,
+                    fase: receta.categoria
+                });
+            }
+            
+            if (datosAdicionales.notasNuevaFase) {
+                if (!receta.notas) receta.notas = [];
+                receta.notas.push({
+                    fecha: new Date(),
+                    texto: datosAdicionales.notasNuevaFase,
+                    fase: siguienteFase
+                });
+            }
+            
+            await receta.save();
+            
+            console.log(`✅ Receta "${receta.nombre}" avanzada exitosamente a ${siguienteFase}`);
+            
+            // Repoblar la receta para devolver datos completos
+            const recetaCompleta = await RecetaProducto.findById(recetaId)
+                .populate('ingredientes.ingrediente', 'nombre unidadMedida precioUnitario cantidad procesado')
+                .lean();
+                
+            return recetaCompleta;
+            
+        } catch (error) {
+            console.error('❌ Error al avanzar fase:', error);
+            throw new Error(`Error al avanzar fase: ${error.message}`);
+        }
+    }
+    
+    // Obtener siguiente fase en el flujo
+    obtenerSiguienteFase(faseActual) {
+        const flujo = {
+            'preparado': 'producto_intermedio',
+            'producto_intermedio': 'producto_terminado',
+            'producto_terminado': null // Ya está terminado
+        };
+        
+        return flujo[faseActual] || null;
     }
 }
 

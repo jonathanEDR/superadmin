@@ -6,6 +6,23 @@ const { authenticate } = require('../middleware/authenticate');
 // Middleware de autenticación para todas las rutas
 router.use(authenticate);
 
+// GET /api/ingredientes/productos-catalogo - Obtener productos del catálogo
+router.get('/productos-catalogo', async (req, res) => {
+    try {
+        const productos = await ingredienteService.obtenerProductosCatalogo();
+        
+        res.json({
+            success: true,
+            data: productos
+        });
+    } catch (error) {
+        res.status(500).json({
+            success: false,
+            message: error.message
+        });
+    }
+});
+
 // GET /api/ingredientes - Obtener todos los ingredientes
 router.get('/', async (req, res) => {
     try {

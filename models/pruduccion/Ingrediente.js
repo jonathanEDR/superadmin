@@ -6,6 +6,19 @@ const ingredienteSchema = new mongoose.Schema({
         required: true,
         trim: true
     },
+    // Referencia al catálogo de producción (requerida)
+    productoReferencia: {
+        type: mongoose.Schema.Types.ObjectId,
+        ref: 'CatalogoProduccion',
+        required: true,
+        index: true
+    },
+    // Tipo de ingrediente: solo 'catalogo'
+    tipoIngrediente: {
+        type: String,
+        enum: ['catalogo'],
+        default: 'catalogo'
+    },
     unidadMedida: {
         type: String,
         required: true,

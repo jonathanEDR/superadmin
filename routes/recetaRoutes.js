@@ -122,6 +122,133 @@ router.put('/:id/estado', async (req, res) => {
     }
 });
 
+// ============= NUEVAS RUTAS PARA FLUJO DE TRABAJO =============
+
+// POST /api/recetas/:id/iniciar-proceso - Iniciar el proceso de producción
+router.post('/:id/iniciar-proceso', async (req, res) => {
+    try {
+        const receta = await recetaService.iniciarProceso(req.params.id);
+        
+        res.json({
+            success: true,
+            data: receta,
+            message: 'Proceso de producción iniciado exitosamente'
+        });
+    } catch (error) {
+        res.status(400).json({
+            success: false,
+            message: error.message
+        });
+    }
+});
+
+// POST /api/recetas/:id/avanzar-fase - Avanzar a la siguiente fase del proceso
+router.post('/:id/avanzar-fase', async (req, res) => {
+    try {
+        const { 
+            notas, 
+            notasNuevaFase, 
+            ingredientesAdicionales = [] 
+        } = req.body;
+        
+        const receta = await recetaService.avanzarFase(req.params.id, {
+            notas,
+            notasNuevaFase,
+            ingredientesAdicionales
+        });
+        
+        res.json({
+            success: true,
+            data: receta,
+            message: `Receta avanzada a fase ${receta.faseActual} exitosamente`
+        });
+    } catch (error) {
+        res.status(400).json({
+            success: false,
+            message: error.message
+        });
+    }
+});
+
+// POST /api/recetas/:id/agregar-ingrediente-fase - Agregar ingrediente a la fase actual
+router.post('/:id/agregar-ingrediente-fase', async (req, res) => {
+    try {
+        const ingredienteData = req.body;
+        
+        const receta = await recetaService.agregarIngredienteAFaseActual(req.params.id, ingredienteData);
+        
+        res.json({
+            success: true,
+            data: receta,
+            message: 'Ingrediente agregado a la fase actual exitosamente'
+        });
+    } catch (error) {
+        res.status(400).json({
+            success: false,
+            message: error.message
+        });
+    }
+});
+
+// PUT /api/recetas/:id/pausar-proceso - Pausar el proceso
+router.put('/:id/pausar-proceso', async (req, res) => {
+    try {
+        const { motivo } = req.body;
+        
+        const receta = await recetaService.pausarProceso(req.params.id, motivo);
+        
+        res.json({
+            success: true,
+            data: receta,
+            message: 'Proceso pausado exitosamente'
+        });
+    } catch (error) {
+        res.status(400).json({
+            success: false,
+            message: error.message
+        });
+    }
+});
+
+// PUT /api/recetas/:id/reanudar-proceso - Reanudar el proceso
+router.put('/:id/reanudar-proceso', async (req, res) => {
+    try {
+        const receta = await recetaService.reanudarProceso(req.params.id);
+        
+        res.json({
+            success: true,
+            data: receta,
+            message: 'Proceso reanudado exitosamente'
+        });
+    } catch (error) {
+        res.status(400).json({
+            success: false,
+            message: error.message
+        });
+    }
+});
+
+// 🎯 NUEVO: PUT /api/recetas/:id/reiniciar - Reiniciar receta al estado inicial
+router.put('/:id/reiniciar', async (req, res) => {
+    try {
+        const { motivo = 'Reinicio manual' } = req.body;
+        
+        const receta = await recetaService.reiniciarReceta(req.params.id, motivo);
+        
+        res.json({
+            success: true,
+            data: receta,
+            message: 'Receta reiniciada exitosamente al estado preparado'
+        });
+    } catch (error) {
+        console.error('Error al reiniciar receta:', error);
+        res.status(400).json({
+            success: false,
+            message: error.message
+        });
+    }
+});
+
 // GET /api/recetas/:id/disponibilidad - Verificar disponibilidad para producir
 router.get('/:id/disponibilidad', async (req, res) => {
     try {
@@ -308,6 +435,30 @@ router.get('/:id/inventario', async (req, res) => {
         });
     } catch (error) {
         res.status(404).json({
+            success: false,
+            message: error.message
+        });
+    }
+});
+
+// ============= RUTAS PARA FLUJO DE TRABAJO =============
+
+// POST /api/recetas/:id/avanzar-fase - Avanzar fase del proceso
+router.post('/:id/avanzar-fase', async (req, res) => {
+    try {
+        console.log('🚀 Ruta avanzar-fase llamada para receta:', req.params.id);
+        console.log('📋 Datos recibidos:', req.body);
+        
+        const recetaActualizada = await recetaService.avanzarFase(req.params.id, req.body);
+        
+        res.json({
+            success: true,
+            data: recetaActualizada,
+            message: 'Fase avanzada exitosamente'
+        });
+    } catch (error) {
+        console.error('❌ Error en ruta avanzar-fase:', error);
+        res.status(400).json({
             success: false,
             message: error.message
         });

@@ -20,9 +20,11 @@ const cajaRoutes = require('./routes/cajaRoutes');
 const reservaRoutes = require('./routes/reservaRoutes');
 // Rutas del módulo de producción
 const ingredienteRoutes = require('./routes/ingredienteRoutes');
+const materialRoutes = require('./routes/materialRoutes');
 const recetaRoutes = require('./routes/recetaRoutes');
 const produccionRoutes = require('./routes/produccionRoutes');
 const movimientoRoutes = require('./routes/movimientoRoutes');
+const catalogoProduccionRoutes = require('./routes/catalogoProduccionRoutes');
 const dashboardRoutes = require('./routes/dashboardRoutes');
 const estadisticasRoutes = require('./routes/estadisticasRoutes');
 const categoryRoutes = require('./routes/categoryRoutes');
@@ -87,6 +89,17 @@ app.use(express.urlencoded({ extended: true, limit: '10mb' }));
 app.use(bodyParser.json());
 app.use(bodyParser.urlencoded({ extended: true }));
 
+// Middleware de logging para todas las requests
+app.use((req, res, next) => {
+  console.log(`🔍 ${new Date().toISOString()} - ${req.method} ${req.originalUrl}`);
+  console.log('Headers:', {
+    'user-agent': req.get('user-agent'),
+    'authorization': req.get('authorization') ? 'Bearer [PRESENT]' : 'NOT_PRESENT',
+    'x-user-role': req.get('x-user-role') || 'NOT_SET'
+  });
+  next();
+});
+
 // Rutas de la API
 app.use('/api/productos', productoRoutes);
 app.use('/api/catalogo', catalogoRoutes);
@@ -102,10 +115,14 @@ app.use('/api/gastos', gastoRoutes);
 app.use('/api/caja', cajaRoutes);
 app.use('/api/reservas', reservaRoutes);
 // Rutas del módulo de producción
+console.log('🔧 Registrando rutas de producción...');
 app.use('/api/ingredientes', ingredienteRoutes);
+app.use('/api/materiales', materialRoutes);
 app.use('/api/recetas', recetaRoutes);
 app.use('/api/produccion', produccionRoutes);
 app.use('/api/movimientos', movimientoRoutes);
+console.log('🎯 Registrando ruta: /api/catalogo-produccion');
+app.use('/api/catalogo-produccion', catalogoProduccionRoutes);
 app.use('/api/dashboard', dashboardRoutes);
 app.use('/api/estadisticas', estadisticasRoutes);
 app.use('/api/categories', categoryRoutes);

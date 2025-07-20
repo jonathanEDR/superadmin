@@ -32,9 +32,24 @@ class IngredienteService {
     async obtenerIngredientes(filtros = {}) {
         try {
             const query = { activo: true, ...filtros };
-            return await Ingrediente.find(query).sort({ nombre: 1 });
+            return await Ingrediente.find(query)
+                .populate('productoReferencia', 'nombre codigo tipoProduccion')
+                .sort({ nombre: 1 });
         } catch (error) {
             throw new Error(`Error al obtener ingredientes: ${error.message}`);
+        }
+    }
+
+    // Obtener productos del catálogo disponibles para ingredientes
+    async obtenerProductosCatalogo() {
+        try {
+            const CatalogoProduccion = require('../models/pruduccion/CatalogoProduccion');
+            return await CatalogoProduccion.find({ activo: true })
+                .populate('tipoProduccion', 'nombre icono')
+                .select('codigo nombre descripcion tipoProduccion unidadMedida')
+                .sort({ nombre: 1 });
+        } catch (error) {
+            throw new Error(`Error al obtener productos del catálogo: ${error.message}`);
         }
     }
 

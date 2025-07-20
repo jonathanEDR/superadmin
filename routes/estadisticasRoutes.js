@@ -1,6 +1,7 @@
 const express = require('express');
 const router = express.Router();
 const Ingrediente = require('../models/pruduccion/Ingrediente');
+const Material = require('../models/pruduccion/Material');
 const RecetaProducto = require('../models/pruduccion/RecetaProducto');
 const Produccion = require('../models/pruduccion/Produccion');
 const MovimientoInventario = require('../models/pruduccion/MovimientoInventario');
@@ -13,6 +14,7 @@ router.get('/dashboard', async (req, res) => {
     // Obtener estadísticas en paralelo para mejor rendimiento
     const [
       ingredientesActivos,
+      materialesActivos,
       recetasDisponibles,
       produccionesCompletadas,
       movimientosHoy
@@ -25,6 +27,20 @@ router.get('/dashboard', async (req, res) => {
             { $subtract: [
               { $ifNull: ["$cantidad", 0] }, 
               { $ifNull: ["$procesado", 0] }
+            ]}, 
+            0
+          ] 
+        }
+      }),
+      
+      // Materiales activos CON STOCK > 0 (cantidad - consumido > 0)
+      Material.countDocuments({ 
+        activo: true,
+        $expr: { 
+          $gt: [
+            { $subtract: [
+              { $ifNull: ["$cantidad", 0] }, 
+              { $ifNull: ["$consumido", 0] }
             ]}, 
             0
           ] 
@@ -62,11 +78,13 @@ router.get('/dashboard', async (req, res) => {
     // Estadísticas adicionales para métricas complementarias
     const [
       totalIngredientes,
+      totalMateriales,
       totalRecetas,
       totalProducciones,
       movimientosUltimos7Dias
     ] = await Promise.all([
       Ingrediente.countDocuments({ activo: true }),
+      Material.countDocuments({ activo: true }),
       RecetaProducto.countDocuments({ activo: true }),
       Produccion.countDocuments(),
       MovimientoInventario.countDocuments({
@@ -78,17 +96,22 @@ router.get('/dashboard', async (req, res) => {
 
     const estadisticas = {
       ingredientesActivos, // Ingredientes con stock > 0
+      materialesActivos,   // Materiales con stock > 0
       recetasDisponibles,  // Recetas con stock disponible > 0
       produccionesCompletadas, // Producciones completadas
       movimientosHoy,
       // Estadísticas adicionales para métricas
       totalIngredientes,
+      totalMateriales,
       totalRecetas,
       totalProducciones,
       movimientosUltimos7Dias,
       // Porcentajes para indicadores
       porcentajeIngredientesConStock: totalIngredientes > 0 
         ? Math.round((ingredientesActivos / totalIngredientes) * 100) 
+        : 0,
+      porcentajeMaterialesConStock: totalMateriales > 0 
+        ? Math.round((materialesActivos / totalMateriales) * 100) 
         : 0,
       porcentajeRecetasDisponibles: totalRecetas > 0 
         ? Math.round((recetasDisponibles / totalRecetas) * 100) 
