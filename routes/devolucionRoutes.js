@@ -4,6 +4,7 @@ const { authenticate } = require('../middleware/authenticate');
 const Devolucion = require('../models/Devolucion');
 const Venta = require('../models/Venta');
 const Producto = require('../models/Producto');
+const { getFechaHoraActual, formatearFecha, validarFormatoFecha } = require('../utils/fechaHoraUtils');
 
 // Obtener todas las devoluciones
 router.get('/', authenticate, async (req, res) => {
@@ -18,7 +19,9 @@ router.get('/', authenticate, async (req, res) => {
     let query = {};
     if (userRole === 'user') {
       query.userId = userId;
-    }    const [devoluciones, totalDevoluciones] = await Promise.all([
+    }
+
+    const [devoluciones, totalDevoluciones] = await Promise.all([
       Devolucion.find(query)
         .populate('productoId', 'nombre precio')
         .populate('ventaId', 'isCompleted estadoPago')
@@ -27,10 +30,12 @@ router.get('/', authenticate, async (req, res) => {
         .skip(skip)
         .limit(parseInt(limit)),
       Devolucion.countDocuments(query)
-    ]);// Formatear los datos para la respuesta
+    ]);
+
+    // Formatear los datos para la respuesta usando utilidad unificada
     const devolucionesFormateadas = devoluciones.map(dev => ({
       _id: dev._id,
-      fechaDevolucion: dev.fechaDevolucion,
+      fechaDevolucion: formatearFecha(dev.fechaDevolucion), // Usar utilidad unificada
       colaborador: {
         nombre: dev.creatorName,
         email: dev.creatorEmail
@@ -42,18 +47,21 @@ router.get('/', authenticate, async (req, res) => {
       estado: dev.estado,
       ventaFinalizada: dev.ventaId ? dev.ventaId.isCompleted : false,
       ventaEstadoPago: dev.ventaId ? dev.ventaId.estadoPago : undefined,
-      ventaId: dev.ventaId?._id || dev.ventaId, // <-- Campo necesario para el frontend
-      // ✅ AGREGAR EL productoId COMPLETO PARA ProductCard
-      productoId: dev.productoId, // <-- Campo necesario para detectar devoluciones por producto
-      cantidadDevuelta: dev.cantidadDevuelta // <-- Asegurar que esté disponible
-    }));    // Log para debug
+      ventaId: dev.ventaId?._id || dev.ventaId,
+      productoId: dev.productoId,
+      cantidadDevuelta: dev.cantidadDevuelta
+    }));
+
+    // Log para debug
     console.log('Devoluciones formateadas:', devolucionesFormateadas.map(d => ({
       id: d._id,
       producto: d.producto,
       ventaFinalizada: d.ventaFinalizada,
       ventaId: devoluciones.find(orig => orig._id === d._id)?.ventaId?._id,
       ventaIsCompleted: devoluciones.find(orig => orig._id === d._id)?.ventaId?.isCompleted
-    })));res.json({
+    })));
+
+    res.json({
       devoluciones: devolucionesFormateadas,
       totalDevoluciones,
       totalPages: Math.ceil(totalDevoluciones / parseInt(limit)),
@@ -94,16 +102,18 @@ router.post('/', authenticate, async (req, res) => {
       });
     }
 
-    // Validar y procesar la fecha de devolución
+    // Validar y procesar la fecha de devolución usando utilidad unificada
     let fechaDevolucionFinal;
     if (fechaDevolucion) {
-      fechaDevolucionFinal = new Date(fechaDevolucion);
-      // Verificar si la fecha es válida
-      if (isNaN(fechaDevolucionFinal.getTime())) {
+      // Validar formato usando utilidad unificada
+      if (!validarFormatoFecha(fechaDevolucion)) {
         return res.status(400).json({ 
           message: 'La fecha de devolución no es válida' 
         });
       }
+      
+      fechaDevolucionFinal = new Date(fechaDevolucion);
+      
       // Verificar que no sea fecha futura
       const hoy = new Date();
       hoy.setHours(23, 59, 59, 999);
@@ -113,9 +123,8 @@ router.post('/', authenticate, async (req, res) => {
         });
       }
     } else {
-      return res.status(400).json({ 
-        message: 'La fecha de devolución es requerida' 
-      });
+      // Si no se proporciona fecha, usar fecha actual
+      fechaDevolucionFinal = new Date(getFechaHoraActual());
     }
 
     console.log('Fecha procesada para devolución:', {
@@ -198,7 +207,9 @@ router.post('/', authenticate, async (req, res) => {
         return res.status(400).json({ 
           message: 'La cantidad a devolver debe ser mayor a 0' 
         });
-      }      // Crear la devolución para este producto
+      }
+
+      // Crear la devolución para este producto
       const nuevaDevolucion = new Devolucion({
         userId,
         creatorName: user.nombre_negocio || user.email.split('@')[0],
@@ -316,9 +327,6 @@ router.post('/', authenticate, async (req, res) => {
         path: 'productos.productoId',
         select: 'nombre precio codigoProducto categoryId cantidadRestante'
       });
-      // ❌ REMOVIDO: .populate('clienteId', 'nombre email') - NO EXISTE
-      // ❌ REMOVIDO: .populate('usuarioId', 'nombre email') - NO EXISTE
-      // El modelo Venta solo tiene userId y creatorId como strings (Clerk IDs)
 
     console.log('✅ Backend - Venta actualizada tras devolución:', {
       ventaId: ventaActualizada._id,
@@ -343,7 +351,7 @@ router.post('/', authenticate, async (req, res) => {
     res.status(201).json({
       message: 'Devoluciones creadas exitosamente',
       devoluciones: devolucionesPopuladas,
-      venta: ventaActualizada // ✅ AGREGAR VENTA ACTUALIZADA
+      venta: ventaActualizada
     });
   } catch (error) {
     console.error('Error al crear devolución:', error);

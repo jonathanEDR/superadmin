@@ -102,11 +102,11 @@ const ventaSchema = new mongoose.Schema({
   },
   adminReviewedAt: {
     type: Date
-  },
-  },
-  {
-    timestamps: true // Esto agrega createdAt y updatedAt automáticamente
   }
+},
+{
+  timestamps: true // Esto agrega createdAt y updatedAt automáticamente
+}
 );
 
 // Validación adicional para estadoPago "Parcial"
