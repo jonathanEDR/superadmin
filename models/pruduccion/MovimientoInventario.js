@@ -13,7 +13,7 @@ const movimientoInventarioSchema = new mongoose.Schema({
     },
     tipoItem: {
         type: String,
-        enum: ['Ingrediente', 'RecetaProducto'],
+        enum: ['Ingrediente', 'RecetaProducto', 'Material', 'CatalogoProduccion'],
         required: true
     },
     cantidad: {
@@ -32,6 +32,11 @@ const movimientoInventarioSchema = new mongoose.Schema({
         type: String,
         required: true,
         trim: true
+    },
+    precio: {
+        type: Number,
+        min: 0,
+        default: null
     },
     referencia: {
         tipo: String, // 'produccion', 'compra', 'ajuste', etc.

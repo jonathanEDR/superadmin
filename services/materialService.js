@@ -5,25 +5,61 @@ class MaterialService {
     // Crear nuevo material
     async crearMaterial(datosMaterial) {
         try {
+            console.log('📝 Datos recibidos para crear material:', datosMaterial);
+            
+            // Validar datos requeridos
+            if (!datosMaterial.nombre) {
+                throw new Error('El nombre del material es requerido');
+            }
+            
+            if (!datosMaterial.productoReferencia) {
+                throw new Error('La referencia del producto es requerida');
+            }
+            
+            if (!datosMaterial.unidadMedida) {
+                throw new Error('La unidad de medida es requerida');
+            }
+
             const material = new Material(datosMaterial);
             await material.save();
+            
+            console.log('✅ Material creado exitosamente:', material._id);
 
             // Registrar movimiento inicial si tiene cantidad
             if (material.cantidad > 0) {
-                await MovimientoInventario.registrarMovimiento({
-                    tipo: 'entrada',
-                    item: material._id,
-                    tipoItem: 'Material',
-                    cantidad: material.cantidad,
-                    cantidadAnterior: 0,
-                    cantidadNueva: material.cantidad,
-                    motivo: 'Registro inicial de material',
-                    operador: 'Sistema'
-                });
+                try {
+                    await MovimientoInventario.registrarMovimiento({
+                        tipo: 'entrada',
+                        item: material._id,
+                        tipoItem: 'Material',
+                        cantidad: material.cantidad,
+                        cantidadAnterior: 0,
+                        cantidadNueva: material.cantidad,
+                        motivo: 'Registro inicial de material',
+                        operador: 'Sistema'
+                    });
+                    console.log('✅ Movimiento inicial registrado');
+                } catch (movError) {
+                    console.warn('⚠️ Error al registrar movimiento inicial:', movError.message);
+                    // No fallar la creación del material por esto
+                }
             }
 
             return material;
         } catch (error) {
+            console.error('❌ Error al crear material:', error);
+            
+            // Manejar errores de validación de Mongoose
+            if (error.name === 'ValidationError') {
+                const messages = Object.values(error.errors).map(err => err.message);
+                throw new Error(`Errores de validación: ${messages.join(', ')}`);
+            }
+            
+            // Manejar errores de duplicado
+            if (error.code === 11000) {
+                throw new Error('Ya existe un material con esos datos');
+            }
+            
             throw new Error(`Error al crear material: ${error.message}`);
         }
     }

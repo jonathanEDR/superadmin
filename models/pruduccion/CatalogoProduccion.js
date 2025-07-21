@@ -75,7 +75,7 @@ const catalogoProduccionSchema = new mongoose.Schema({
 
 // Índices para mejorar rendimiento
 catalogoProduccionSchema.index({ codigo: 1 });
-catalogoProduccionSchema.index({ tipoProduccion: 1 });
+catalogoProduccionSchema.index({ moduloSistema: 1 });
 catalogoProduccionSchema.index({ activo: 1 });
 catalogoProduccionSchema.index({ nombre: 'text', descripcion: 'text' });
 
@@ -85,9 +85,9 @@ catalogoProduccionSchema.virtual('codigoCompleto').get(function() {
 });
 
 // Método para generar código automático
-catalogoProduccionSchema.statics.generarCodigo = async function(tipoProduccion, prefijo) {
+catalogoProduccionSchema.statics.generarCodigo = async function(moduloSistema, prefijo) {
     const ultimoProducto = await this.findOne({ 
-        tipoProduccion 
+        moduloSistema 
     }).sort({ codigo: -1 });
     
     let numeroSiguiente = 1;

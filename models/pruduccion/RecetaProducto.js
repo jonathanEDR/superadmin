@@ -24,6 +24,11 @@ const recetaProductoSchema = new mongoose.Schema({
         trim: true,
         unique: true
     },
+    productoReferencia: {
+        type: mongoose.Schema.Types.ObjectId,
+        ref: 'CatalogoProducto',
+        required: false // Opcional para mantener compatibilidad con recetas existentes
+    },
     descripcion: {
         type: String,
         trim: true
@@ -161,6 +166,11 @@ recetaProductoSchema.virtual('inventarioDisponible').get(function() {
 // NUEVOS VIRTUALS Y MÉTODOS PARA FLUJO DE TRABAJO
 // Virtual para obtener la fase actual del historial
 recetaProductoSchema.virtual('faseActualInfo').get(function() {
+    // VALIDACIÓN DEFENSIVA: Verificar que historicoFases existe y es un array
+    if (!this.historicoFases || !Array.isArray(this.historicoFases)) {
+        return null;
+    }
+    
     const fasesActivas = this.historicoFases.filter(f => !f.fechaFinalizacion);
     return fasesActivas.length > 0 ? fasesActivas[fasesActivas.length - 1] : null;
 });
@@ -192,6 +202,9 @@ recetaProductoSchema.methods.iniciarProceso = async function() {
     this.categoria = 'preparado'; // 🎯 AGREGAR: Asegurar que categoría esté sincronizada
     
     // Agregar la fase inicial al historial
+    if (!this.historicoFases) {
+        this.historicoFases = [];
+    }
     this.historicoFases.push({
         fase: 'preparado',
         fechaInicio: new Date(),
@@ -231,6 +244,9 @@ recetaProductoSchema.methods.avanzarAProximaFase = async function(datosAdicional
                     siguienteFase === 'intermedio' ? 'producto_intermedio' : 'preparado';
     
     // Agregar nueva fase al historial
+    if (!this.historicoFases) {
+        this.historicoFases = [];
+    }
     this.historicoFases.push({
         fase: siguienteFase,
         fechaInicio: new Date(),
@@ -307,6 +323,9 @@ recetaProductoSchema.methods.reiniciarReceta = async function(motivo = 'Reinicio
     this.puedeAvanzar = true;
     
     // Agregar entrada de reinicio al historial
+    if (!this.historicoFases) {
+        this.historicoFases = [];
+    }
     this.historicoFases.push({
         fase: 'preparado',
         fechaInicio: new Date(),
@@ -371,13 +390,29 @@ recetaProductoSchema.methods.agregarAlInventario = async function(cantidad, moti
 // Método para calcular costo total de la receta
 recetaProductoSchema.methods.calcularCostoTotal = async function() {
     await this.populate('ingredientes.ingrediente');
-    let costoTotal = 0;
+    let costoTotalIngredientes = 0;
     
     for (const item of this.ingredientes) {
-        costoTotal += item.cantidad * item.ingrediente.precioUnitario;
+        costoTotalIngredientes += item.cantidad * (item.ingrediente.precioUnitario || 0);
     }
     
-    return costoTotal;
+    // Calcular el costo por unidad producida considerando el rendimiento
+    const rendimiento = this.rendimiento?.cantidad || 1;
+    const costoPorUnidadProducida = costoTotalIngredientes / rendimiento;
+    
+    return costoPorUnidadProducida;
+};
+
+// Método para calcular el costo total de ingredientes (sin dividir por rendimiento)
+recetaProductoSchema.methods.calcularCostoIngredientes = async function() {
+    await this.populate('ingredientes.ingrediente');
+    let costoTotalIngredientes = 0;
+    
+    for (const item of this.ingredientes) {
+        costoTotalIngredientes += item.cantidad * (item.ingrediente.precioUnitario || 0);
+    }
+    
+    return costoTotalIngredientes;
 };
 
 // Método para verificar disponibilidad de todos los ingredientes

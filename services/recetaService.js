@@ -231,11 +231,16 @@ class RecetaService {
         try {
             const receta = await this.obtenerRecetaPorId(id);
             const costoUnitario = await receta.calcularCostoTotal();
+            const costoIngredientes = await receta.calcularCostoIngredientes();
+            const rendimiento = receta.rendimiento?.cantidad || 1;
             
             return {
-                costoUnitario,
-                costoTotal: costoUnitario * cantidadAPrducir,
-                cantidad: cantidadAPrducir
+                costoUnitario, // Costo por unidad producida
+                costoTotal: costoUnitario * cantidadAPrducir, // Costo total para la cantidad solicitada
+                costoIngredientes, // Costo total de ingredientes para una producción
+                cantidad: cantidadAPrducir, // Cantidad que se quiere producir
+                rendimiento, // Cuántas unidades produce la receta
+                costoProduccion: costoIngredientes * cantidadAPrducir // Costo total de ingredientes para la cantidad solicitada
             };
         } catch (error) {
             throw new Error(`Error al calcular costo: ${error.message}`);

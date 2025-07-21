@@ -114,7 +114,13 @@ router.get('/:id', async (req, res) => {
 // POST /api/materiales - Crear nuevo material
 router.post('/', async (req, res) => {
     try {
+        console.log('📊 POST /api/materiales - Iniciando creación de material');
+        console.log('📊 Datos recibidos:', req.body);
+        console.log('📊 Usuario:', req.user?.email || 'No identificado');
+        
         const material = await materialService.crearMaterial(req.body);
+        
+        console.log('✅ Material creado exitosamente:', material._id);
         
         res.status(201).json({
             success: true,
@@ -122,6 +128,8 @@ router.post('/', async (req, res) => {
             message: 'Material creado exitosamente'
         });
     } catch (error) {
+        console.error('❌ Error en POST /api/materiales:', error.message);
+        
         res.status(400).json({
             success: false,
             message: error.message
