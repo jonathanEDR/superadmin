@@ -185,7 +185,7 @@ router.delete('/movimiento/:id', async (req, res) => {
         res.json({
             success: true,
             data: resultado,
-            message: resultado.message
+            message: 'Movimiento eliminado y stock revertido exitosamente'
         });
         
     } catch (error) {
@@ -373,43 +373,6 @@ router.get('/tipos', async (req, res) => {
         console.error('❌ Error en GET /tipos:', error.message);
         
         res.status(500).json({
-            success: false,
-            message: error.message
-        });
-    }
-});
-
-// DELETE /api/movimientos-unificados/movimiento/:id - Eliminar movimiento
-router.delete('/movimiento/:id', async (req, res) => {
-    try {
-        console.log('🗑️ DELETE /api/movimientos-unificados/movimiento/:id');
-        console.log('🗑️ ID del movimiento:', req.params.id);
-        console.log('🗑️ Usuario:', req.user?.email || 'No identificado');
-        
-        const { id } = req.params;
-        const operador = req.user?.name || req.user?.email || 'Usuario';
-        
-        if (!id) {
-            return res.status(400).json({
-                success: false,
-                message: 'ID del movimiento es requerido'
-            });
-        }
-        
-        const resultado = await movimientoUnificadoService.eliminarMovimiento(id, operador);
-        
-        console.log('✅ Movimiento eliminado exitosamente');
-        
-        res.json({
-            success: true,
-            data: resultado,
-            message: 'Movimiento eliminado y stock revertido exitosamente'
-        });
-        
-    } catch (error) {
-        console.error('❌ Error en DELETE /movimiento/:id:', error.message);
-        
-        res.status(400).json({
             success: false,
             message: error.message
         });

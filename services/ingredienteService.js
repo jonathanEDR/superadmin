@@ -1,10 +1,39 @@
-const Ingrediente = require('../models/pruduccion/Ingrediente');
-const MovimientoInventario = require('../models/pruduccion/MovimientoInventario');
+const Ingrediente = require('../models/produccion/Ingrediente');
+const MovimientoInventario = require('../models/produccion/MovimientoInventario');
 
 class IngredienteService {
+    // Validar nombre único
+    async validarNombreUnico(nombre, idExcluir = null) {
+        try {
+            const query = { 
+                nombre: { $regex: new RegExp(`^${nombre.trim()}$`, 'i') },
+                activo: true 
+            };
+            
+            if (idExcluir) {
+                query._id = { $ne: idExcluir };
+            }
+            
+            const ingredienteExistente = await Ingrediente.findOne(query);
+            return !ingredienteExistente;
+        } catch (error) {
+            throw new Error(`Error al validar nombre: ${error.message}`);
+        }
+    }
+
     // Crear nuevo ingrediente
     async crearIngrediente(datosIngrediente) {
         try {
+            // Validar que no exista un ingrediente con el mismo nombre
+            const ingredienteExistente = await Ingrediente.findOne({ 
+                nombre: { $regex: new RegExp(`^${datosIngrediente.nombre.trim()}$`, 'i') },
+                activo: true 
+            });
+            
+            if (ingredienteExistente) {
+                throw new Error(`Ya existe un ingrediente con el nombre "${datosIngrediente.nombre}". Por favor, use un nombre diferente.`);
+            }
+
             const ingrediente = new Ingrediente(datosIngrediente);
             await ingrediente.save();
 
@@ -24,6 +53,10 @@ class IngredienteService {
 
             return ingrediente;
         } catch (error) {
+            // Si el error es de MongoDB por índice único
+            if (error.code === 11000) {
+                throw new Error(`Ya existe un ingrediente con el nombre "${datosIngrediente.nombre}". Por favor, use un nombre diferente.`);
+            }
             throw new Error(`Error al crear ingrediente: ${error.message}`);
         }
     }
@@ -43,7 +76,7 @@ class IngredienteService {
     // Obtener productos del catálogo disponibles para ingredientes
     async obtenerProductosCatalogo() {
         try {
-            const CatalogoProduccion = require('../models/pruduccion/CatalogoProduccion');
+            const CatalogoProduccion = require('../models/produccion/CatalogoProduccion');
             return await CatalogoProduccion.find({ activo: true })
                 .populate('tipoProduccion', 'nombre icono')
                 .select('codigo nombre descripcion tipoProduccion unidadMedida')
@@ -136,6 +169,15 @@ class IngredienteService {
             .limit(limite);
         } catch (error) {
             throw new Error(`Error al obtener movimientos: ${error.message}`);
+        }
+    }
+
+    // Verificar si un nombre de ingrediente está disponible
+    async verificarNombreDisponible(nombre, idExcluir = null) {
+        try {
+            return await this.validarNombreUnico(nombre, idExcluir);
+        } catch (error) {
+            throw new Error(`Error al verificar nombre: ${error.message}`);
         }
     }
 }

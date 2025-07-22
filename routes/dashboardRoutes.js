@@ -1,10 +1,10 @@
 const express = require('express');
 const router = express.Router();
 const { authenticate } = require('../middleware/authenticate');
-const Ingrediente = require('../models/pruduccion/Ingrediente');
-const RecetaProducto = require('../models/pruduccion/RecetaProducto');
-const ProduccionOrden = require('../models/pruduccion/ProduccionOrden');
-const MovimientoInventario = require('../models/pruduccion/MovimientoInventario');
+const Ingrediente = require('../models/produccion/Ingrediente');
+const RecetaProducto = require('../models/produccion/RecetaProducto');
+const ProduccionOrden = require('../models/produccion/ProduccionOrden');
+const MovimientoInventario = require('../models/produccion/MovimientoInventario');
 
 // GET /api/dashboard/test - Endpoint de prueba sin autenticación
 router.get('/test', async (req, res) => {

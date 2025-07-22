@@ -1,6 +1,6 @@
 const express = require('express');
 const router = express.Router();
-const MovimientoInventario = require('../models/pruduccion/MovimientoInventario');
+const MovimientoInventario = require('../models/produccion/MovimientoInventario');
 const { authenticate } = require('../middleware/authenticate');
 
 // Middleware de autenticación para todas las rutas

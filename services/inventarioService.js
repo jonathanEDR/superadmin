@@ -1,6 +1,6 @@
-const Ingrediente = require('../models/pruduccion/Ingrediente');
-const RecetaProducto = require('../models/pruduccion/RecetaProducto');
-const MovimientoInventario = require('../models/pruduccion/MovimientoInventario');
+const Ingrediente = require('../models/produccion/Ingrediente');
+const RecetaProducto = require('../models/produccion/RecetaProducto');
+const MovimientoInventario = require('../models/produccion/MovimientoInventario');
 
 class InventarioService {
     

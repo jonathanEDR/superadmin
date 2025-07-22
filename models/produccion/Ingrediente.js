@@ -4,7 +4,9 @@ const ingredienteSchema = new mongoose.Schema({
     nombre: {
         type: String,
         required: true,
-        trim: true
+        trim: true,
+        unique: true,
+        index: true
     },
     // Referencia al catálogo de producción (requerida)
     productoReferencia: {

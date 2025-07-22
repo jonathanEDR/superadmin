@@ -59,6 +59,7 @@ router.get('/:id', async (req, res) => {
 // POST /api/recetas - Crear nueva receta
 router.post('/', async (req, res) => {
     try {
+        // CORRECCIÓN: Por defecto SÍ consumir ingredientes al crear nuevas recetas
         const { consumirIngredientes = true, ...datosReceta } = req.body;
         const receta = await recetaService.crearReceta(datosReceta, consumirIngredientes);
         
@@ -66,8 +67,8 @@ router.post('/', async (req, res) => {
             success: true,
             data: receta,
             message: consumirIngredientes 
-                ? 'Receta creada exitosamente e ingredientes consumidos'
-                : 'Receta creada exitosamente (ingredientes no consumidos)'
+                ? 'Receta creada exitosamente e ingredientes consumidos del inventario'
+                : 'Receta creada exitosamente (fórmula registrada, ingredientes no consumidos)'
         });
     } catch (error) {
         res.status(400).json({
@@ -465,18 +466,36 @@ router.post('/:id/avanzar-fase', async (req, res) => {
     }
 });
 
-// DELETE /api/recetas/:id - Desactivar receta
+// DELETE /api/recetas/:id - Eliminar receta completamente
 router.delete('/:id', async (req, res) => {
     try {
-        const receta = await recetaService.desactivarReceta(req.params.id);
+        const resultado = await recetaService.eliminarReceta(req.params.id);
         
         res.json({
             success: true,
-            data: receta,
-            message: 'Receta desactivada exitosamente y ingredientes liberados'
+            data: resultado,
+            message: 'Receta eliminada completamente de la base de datos y ingredientes liberados'
         });
     } catch (error) {
         res.status(400).json({
+            success: false,
+            message: error.message
+        });
+    }
+});
+
+// 🧹 POST /api/recetas/limpiar-inactivas - Utilidad para limpiar recetas inactivas
+router.post('/limpiar-inactivas', async (req, res) => {
+    try {
+        const resultado = await recetaService.limpiarRecetasInactivas();
+        
+        res.json({
+            success: true,
+            data: resultado,
+            message: `Limpieza completada: ${resultado.eliminadas} recetas eliminadas de ${resultado.procesadas} procesadas`
+        });
+    } catch (error) {
+        res.status(500).json({
             success: false,
             message: error.message
         });

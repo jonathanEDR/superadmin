@@ -1,5 +1,5 @@
-const Material = require('../models/pruduccion/Material');
-const MovimientoInventario = require('../models/pruduccion/MovimientoInventario');
+const Material = require('../models/produccion/Material');
+const MovimientoInventario = require('../models/produccion/MovimientoInventario');
 
 class MaterialService {
     // Crear nuevo material
@@ -79,7 +79,7 @@ class MaterialService {
     // Obtener productos del catálogo disponibles para materiales
     async obtenerProductosCatalogo() {
         try {
-            const CatalogoProduccion = require('../models/pruduccion/CatalogoProduccion');
+            const CatalogoProduccion = require('../models/produccion/CatalogoProduccion');
             return await CatalogoProduccion.find({ activo: true })
                 .populate('tipoProduccion', 'nombre icono')
                 .select('codigo nombre descripcion tipoProduccion unidadMedida')

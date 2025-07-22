@@ -38,7 +38,9 @@ const produccionSchema = new mongoose.Schema({
     nombre: {
         type: String,
         required: true,
-        trim: true
+        trim: true,
+        unique: true,
+        index: true
     },
     receta: {
         type: mongoose.Schema.Types.ObjectId,

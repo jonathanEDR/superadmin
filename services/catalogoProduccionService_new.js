@@ -1,4 +1,4 @@
-const CatalogoProduccion = require('../models/pruduccion/CatalogoProduccion');
+const CatalogoProduccion = require('../models/produccion/CatalogoProduccion');
 
 class CatalogoProduccionService {
     

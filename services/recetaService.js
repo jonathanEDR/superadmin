@@ -1,5 +1,5 @@
-const RecetaProducto = require('../models/pruduccion/RecetaProducto');
-const Ingrediente = require('../models/pruduccion/Ingrediente');
+const RecetaProducto = require('../models/produccion/RecetaProducto');
+const Ingrediente = require('../models/produccion/Ingrediente');
 
 class RecetaService {
     // Crear nueva receta
@@ -121,7 +121,9 @@ class RecetaService {
                 activo: datosReceta.activo !== undefined ? datosReceta.activo : true,
                 // 🎯 AGREGAR: Estados iniciales del flujo de trabajo
                 estadoProceso: 'borrador',
-                faseActual: 'preparado'
+                faseActual: 'preparado',
+                // 🎯 NUEVO: Rastrear si se consumieron ingredientes
+                ingredientesConsumidos: consumirIngredientes
             };
 
             console.log('📝 Datos limpios para MongoDB:', JSON.stringify(datosLimpios, null, 2));
@@ -351,17 +353,18 @@ class RecetaService {
         }
     }
 
-    // Desactivar/eliminar receta
-    async desactivarReceta(id) {
+    // Eliminar receta completamente
+    async eliminarReceta(id) {
         try {
-            console.log('🗑️ Desactivando receta:', id);
+            console.log('🗑️ Eliminando receta completamente:', id);
             
             const receta = await this.obtenerRecetaPorId(id);
-            console.log(`📋 Receta a desactivar: "${receta.nombre}"`);
+            console.log(`📋 Receta a eliminar: "${receta.nombre}"`);
+            console.log(`🔍 ¿Ingredientes fueron consumidos?: ${receta.ingredientesConsumidos ?? 'no especificado'}`);
 
-            // Verificar si la receta tiene ingredientes que necesitan ser restaurados
-            if (receta.ingredientes && receta.ingredientes.length > 0) {
-                console.log('🔄 Restaurando ingredientes al inventario...');
+            // Solo restaurar ingredientes si realmente fueron consumidos al crear la receta
+            if (receta.ingredientesConsumidos === true && receta.ingredientes && receta.ingredientes.length > 0) {
+                console.log('🔄 Restaurando ingredientes consumidos al inventario...');
                 
                 // Restaurar cada ingrediente consumido
                 for (const itemReceta of receta.ingredientes) {
@@ -389,6 +392,38 @@ class RecetaService {
                         console.warn(`⚠️ Ingrediente ${itemReceta.ingrediente} no encontrado o inactivo`);
                     }
                 }
+            } else if (receta.ingredientesConsumidos === false) {
+                console.log('ℹ️ Los ingredientes no fueron consumidos originalmente, no es necesario restaurar');
+            } else {
+                console.log('⚠️ Estado de consumo de ingredientes desconocido - receta creada antes de la implementación del rastreo');
+                
+                // Para recetas antiguas, intentar restaurar solo si hay procesado > 0
+                if (receta.ingredientes && receta.ingredientes.length > 0) {
+                    console.log('🔄 Intentando restaurar ingredientes (receta antigua)...');
+                    
+                    for (const itemReceta of receta.ingredientes) {
+                        const ingrediente = await Ingrediente.findById(itemReceta.ingrediente);
+                        
+                        if (ingrediente && ingrediente.activo && ingrediente.procesado > 0) {
+                            const cantidadARestaurar = Math.min(itemReceta.cantidad, ingrediente.procesado);
+                            const procesadoAnterior = ingrediente.procesado;
+                            
+                            if (cantidadARestaurar > 0) {
+                                const exito = await ingrediente.restaurar(
+                                    cantidadARestaurar,
+                                    `Restaurado por eliminación de receta antigua: ${receta.nombre}`,
+                                    'sistema'
+                                );
+                                
+                                if (exito) {
+                                    await ingrediente.save();
+                                    console.log(`📈 Restaurado ${cantidadARestaurar} ${ingrediente.unidadMedida} de ${ingrediente.nombre}`);
+                                    console.log(`   Procesado: ${procesadoAnterior} → ${ingrediente.procesado}`);
+                                }
+                            }
+                        }
+                    }
+                }
             }
 
             // Eliminar inventario de la receta (si existe)
@@ -397,7 +432,7 @@ class RecetaService {
                 
                 // Registrar movimiento de salida del inventario de recetas
                 try {
-                    const MovimientoInventario = require('../models/pruduccion/MovimientoInventario');
+                    const MovimientoInventario = require('../models/produccion/MovimientoInventario');
                     await MovimientoInventario.registrarMovimiento({
                         tipo: 'salida',
                         item: receta._id,
@@ -405,28 +440,23 @@ class RecetaService {
                         cantidad: receta.inventario.cantidadProducida,
                         cantidadAnterior: receta.inventario.cantidadProducida,
                         cantidadNueva: 0,
-                        motivo: `Eliminado por desactivación de receta: ${receta.nombre}`,
+                        motivo: `Eliminado por eliminación de receta: ${receta.nombre}`,
                         operador: 'sistema'
                     });
                 } catch (error) {
                     console.warn('No se pudo registrar movimiento de inventario de recetas:', error.message);
                 }
-
-                // Resetear el inventario de la receta
-                receta.inventario.cantidadProducida = 0;
-                receta.inventario.cantidadUtilizada = 0;
             }
 
-            // Desactivar la receta
-            receta.activo = false;
-            await receta.save();
+            // ELIMINAR COMPLETAMENTE la receta
+            await RecetaProducto.findByIdAndDelete(id);
 
-            console.log(`✅ Receta "${receta.nombre}" desactivada e inventario restaurado`);
+            console.log(`✅ Receta "${receta.nombre}" eliminada completamente de la base de datos`);
             
-            return receta;
+            return { success: true, message: `Receta "${receta.nombre}" eliminada exitosamente` };
         } catch (error) {
-            console.error('❌ Error al desactivar receta:', error);
-            throw new Error(`Error al desactivar receta: ${error.message}`);
+            console.error('❌ Error al eliminar receta:', error);
+            throw new Error(`Error al eliminar receta: ${error.message}`);
         }
     }
 
@@ -766,6 +796,81 @@ class RecetaService {
         };
         
         return flujo[faseActual] || null;
+    }
+
+    // 🧹 UTILIDAD: Limpiar recetas inactivas (migración de desactivar a eliminar)
+    async limpiarRecetasInactivas() {
+        try {
+            console.log('🧹 Iniciando limpieza de recetas inactivas...');
+            
+            // Buscar todas las recetas inactivas
+            const recetasInactivas = await RecetaProducto.find({ activo: false })
+                .populate('ingredientes.ingrediente');
+            
+            console.log(`📋 Encontradas ${recetasInactivas.length} recetas inactivas para limpiar`);
+            
+            let eliminadas = 0;
+            
+            for (const receta of recetasInactivas) {
+                console.log(`\n🗑️ Procesando receta inactiva: "${receta.nombre}"`);
+                
+                try {
+                    // Restaurar ingredientes si es necesario
+                    if (receta.ingredientes && receta.ingredientes.length > 0) {
+                        console.log('  🔄 Restaurando ingredientes...');
+                        
+                        for (const itemReceta of receta.ingredientes) {
+                            if (itemReceta.ingrediente && itemReceta.ingrediente.activo) {
+                                const ingrediente = itemReceta.ingrediente;
+                                const cantidadARestaurar = itemReceta.cantidad;
+                                
+                                // Restaurar usando el método del modelo si existe
+                                if (typeof ingrediente.restaurar === 'function') {
+                                    const exito = await ingrediente.restaurar(
+                                        cantidadARestaurar,
+                                        `Restaurado por limpieza de receta inactiva: ${receta.nombre}`,
+                                        'sistema'
+                                    );
+                                    
+                                    if (exito) {
+                                        await ingrediente.save();
+                                        console.log(`    📈 Restaurado ${cantidadARestaurar} ${ingrediente.unidadMedida} de ${ingrediente.nombre}`);
+                                    }
+                                } else {
+                                    // Restaurar manualmente si no existe el método
+                                    ingrediente.procesado = Math.max(0, ingrediente.procesado - cantidadARestaurar);
+                                    await ingrediente.save();
+                                    console.log(`    📈 Restaurado ${cantidadARestaurar} ${ingrediente.unidadMedida} de ${ingrediente.nombre} (manual)`);
+                                }
+                            }
+                        }
+                    }
+                    
+                    // Eliminar la receta completamente
+                    await RecetaProducto.findByIdAndDelete(receta._id);
+                    eliminadas++;
+                    console.log(`  ✅ Receta "${receta.nombre}" eliminada de la base de datos`);
+                    
+                } catch (error) {
+                    console.error(`  ❌ Error al procesar receta "${receta.nombre}":`, error.message);
+                }
+            }
+            
+            console.log(`\n🎉 Limpieza completada:`);
+            console.log(`   - Recetas procesadas: ${recetasInactivas.length}`);
+            console.log(`   - Recetas eliminadas: ${eliminadas}`);
+            console.log(`   - Errores: ${recetasInactivas.length - eliminadas}`);
+            
+            return {
+                procesadas: recetasInactivas.length,
+                eliminadas,
+                errores: recetasInactivas.length - eliminadas
+            };
+            
+        } catch (error) {
+            console.error('❌ Error durante la limpieza:', error);
+            throw new Error(`Error al limpiar recetas inactivas: ${error.message}`);
+        }
     }
 }
 

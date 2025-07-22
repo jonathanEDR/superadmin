@@ -1,4 +1,5 @@
-const CatalogoProduccion = require('../models/pruduccion/CatalogoProduccion');
+const CatalogoProduccion = require('../models/produccion/CatalogoProduccion');
+const mongoose = require('mongoose');
 
 class CatalogoProduccionService {
     
@@ -63,7 +64,41 @@ class CatalogoProduccionService {
                 ];
             }
             
-            return await CatalogoProduccion.find(query).sort({ codigo: 1 });
+            // Usar aggregation para incluir información del inventario
+            const pipeline = [
+                { $match: query },
+                { $sort: { codigo: 1 } },
+                
+                // Lookup para obtener stock actual del inventario
+                {
+                    $lookup: {
+                        from: 'inventarioproductos',
+                        localField: '_id',
+                        foreignField: 'catalogoProductoId',
+                        as: 'inventarioInfo'
+                    }
+                },
+                
+                // Agregar campo stockActual
+                {
+                    $addFields: {
+                        stockActual: {
+                            $ifNull: [
+                                { $arrayElemAt: ['$inventarioInfo.stock', 0] },
+                                0
+                            ]
+                        },
+                        costoUnitarioInventario: {
+                            $ifNull: [
+                                { $arrayElemAt: ['$inventarioInfo.costoUnitario', 0] },
+                                '$precio'
+                            ]
+                        }
+                    }
+                }
+            ];
+            
+            return await CatalogoProduccion.aggregate(pipeline);
         } catch (error) {
             throw new Error(`Error al obtener productos del catálogo: ${error.message}`);
         }
@@ -71,7 +106,41 @@ class CatalogoProduccionService {
     
     async obtenerProductoCatalogoPorId(id) {
         try {
-            const producto = await CatalogoProduccion.findById(id);
+            // Usar aggregation para incluir información del inventario
+            const pipeline = [
+                { $match: { _id: mongoose.Types.ObjectId(id) } },
+                
+                // Lookup para obtener stock actual del inventario
+                {
+                    $lookup: {
+                        from: 'inventarioproductos',
+                        localField: '_id',
+                        foreignField: 'catalogoProductoId',
+                        as: 'inventarioInfo'
+                    }
+                },
+                
+                // Agregar campo stockActual
+                {
+                    $addFields: {
+                        stockActual: {
+                            $ifNull: [
+                                { $arrayElemAt: ['$inventarioInfo.stock', 0] },
+                                0
+                            ]
+                        },
+                        costoUnitarioInventario: {
+                            $ifNull: [
+                                { $arrayElemAt: ['$inventarioInfo.costoUnitario', 0] },
+                                '$precio'
+                            ]
+                        }
+                    }
+                }
+            ];
+            
+            const resultado = await CatalogoProduccion.aggregate(pipeline);
+            const producto = resultado[0];
                 
             if (!producto) {
                 throw new Error('Producto no encontrado en el catálogo');

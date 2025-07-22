@@ -23,6 +23,27 @@ router.get('/productos-catalogo', async (req, res) => {
     }
 });
 
+// GET /api/ingredientes/verificar-nombre/:nombre - Verificar si un nombre está disponible
+router.get('/verificar-nombre/:nombre', async (req, res) => {
+    try {
+        const { nombre } = req.params;
+        const { excluirId } = req.query;
+        
+        const disponible = await ingredienteService.verificarNombreDisponible(nombre, excluirId);
+        
+        res.json({
+            success: true,
+            disponible,
+            message: disponible ? 'Nombre disponible' : 'Este nombre ya está en uso'
+        });
+    } catch (error) {
+        res.status(500).json({
+            success: false,
+            message: error.message
+        });
+    }
+});
+
 // GET /api/ingredientes - Obtener todos los ingredientes
 router.get('/', async (req, res) => {
     try {
@@ -95,6 +116,17 @@ router.post('/', async (req, res) => {
 router.put('/:id', async (req, res) => {
     try {
         const ingrediente = await ingredienteService.obtenerIngredientePorId(req.params.id);
+        
+        // Validar nombre único si se está cambiando
+        if (req.body.nombre && req.body.nombre !== ingrediente.nombre) {
+            const nombreEsUnico = await ingredienteService.validarNombreUnico(req.body.nombre, req.params.id);
+            if (!nombreEsUnico) {
+                return res.status(400).json({
+                    success: false,
+                    message: `Ya existe un ingrediente con el nombre "${req.body.nombre}". Por favor, use un nombre diferente.`
+                });
+            }
+        }
         
         Object.assign(ingrediente, req.body);
         await ingrediente.save();

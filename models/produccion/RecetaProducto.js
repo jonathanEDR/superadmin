@@ -69,6 +69,12 @@ const recetaProductoSchema = new mongoose.Schema({
         enum: ['preparado', 'intermedio', 'terminado'],
         default: 'preparado'
     },
+
+    // 🎯 NUEVO: Rastrear si se consumieron ingredientes al crear
+    ingredientesConsumidos: {
+        type: Boolean,
+        default: false // Por defecto no consumir ingredientes
+    },
     
     // Historial de transiciones entre fases
     historicoFases: [{

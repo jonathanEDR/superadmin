@@ -6,6 +6,78 @@ const { authenticate } = require('../middleware/authenticate');
 // Middleware de autenticación para todas las rutas
 router.use(authenticate);
 
+// GET /api/produccion/verificar-nombre/:nombre - Verificar si un nombre está disponible
+router.get('/verificar-nombre/:nombre', async (req, res) => {
+    try {
+        const { nombre } = req.params;
+        const { excluirId } = req.query;
+        
+        const disponible = await produccionService.verificarNombreDisponible(nombre, excluirId);
+        
+        res.json({
+            success: true,
+            disponible,
+            message: disponible ? 'Nombre disponible' : 'Ya existe una producción con este nombre'
+        });
+    } catch (error) {
+        res.status(500).json({
+            success: false,
+            message: error.message
+        });
+    }
+});
+
+// GET /api/produccion/agrupadas - Obtener producciones agrupadas por producto
+router.get('/agrupadas', async (req, res) => {
+    try {
+        const { 
+            buscar, 
+            estado, 
+            fechaInicio, 
+            fechaFin, 
+            operador,
+            limite = 50,
+            pagina = 1 
+        } = req.query;
+        
+        let filtros = {};
+        
+        if (buscar) {
+            filtros.nombre = { $regex: buscar, $options: 'i' };
+        }
+        
+        if (estado) {
+            filtros.estado = estado;
+        }
+        
+        if (operador) {
+            filtros.operador = { $regex: operador, $options: 'i' };
+        }
+        
+        if (fechaInicio || fechaFin) {
+            filtros.fechaProduccion = {};
+            if (fechaInicio) filtros.fechaProduccion.$gte = new Date(fechaInicio);
+            if (fechaFin) filtros.fechaProduccion.$lte = new Date(fechaFin);
+        }
+
+        const resultado = await produccionService.obtenerProduccionesAgrupadas(
+            filtros,
+            parseInt(limite),
+            parseInt(pagina)
+        );
+        
+        res.json({
+            success: true,
+            data: resultado
+        });
+    } catch (error) {
+        res.status(500).json({
+            success: false,
+            message: error.message
+        });
+    }
+});
+
 // GET /api/produccion - Obtener todas las producciones
 router.get('/', async (req, res) => {
     try {

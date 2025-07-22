@@ -6,6 +6,11 @@ const movimientoInventarioSchema = new mongoose.Schema({
         enum: ['entrada', 'salida', 'ajuste', 'produccion', 'consumo'],
         required: true
     },
+    tipoMovimiento: {
+        type: String,
+        enum: ['produccion', 'manual', 'consumo', 'ajuste', 'compra', 'venta'],
+        default: 'manual'
+    },
     item: {
         type: mongoose.Schema.Types.ObjectId,
         required: true,
@@ -38,6 +43,15 @@ const movimientoInventarioSchema = new mongoose.Schema({
         min: 0,
         default: null
     },
+    costoTotal: {
+        type: Number,
+        min: 0,
+        default: null
+    },
+    detalles: {
+        type: mongoose.Schema.Types.Mixed,
+        default: null
+    },
     referencia: {
         tipo: String, // 'produccion', 'compra', 'ajuste', etc.
         id: mongoose.Schema.Types.ObjectId
@@ -62,6 +76,8 @@ const movimientoInventarioSchema = new mongoose.Schema({
 movimientoInventarioSchema.index({ item: 1, fecha: -1 });
 movimientoInventarioSchema.index({ tipo: 1, fecha: -1 });
 movimientoInventarioSchema.index({ tipoItem: 1, fecha: -1 });
+movimientoInventarioSchema.index({ tipoMovimiento: 1, fecha: -1 });
+movimientoInventarioSchema.index({ tipoItem: 1, tipoMovimiento: 1, fecha: -1 });
 
 // Método estático para registrar movimiento
 movimientoInventarioSchema.statics.registrarMovimiento = async function(datos) {

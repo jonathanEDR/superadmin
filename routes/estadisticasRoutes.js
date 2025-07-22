@@ -1,10 +1,10 @@
 const express = require('express');
 const router = express.Router();
-const Ingrediente = require('../models/pruduccion/Ingrediente');
-const Material = require('../models/pruduccion/Material');
-const RecetaProducto = require('../models/pruduccion/RecetaProducto');
-const Produccion = require('../models/pruduccion/Produccion');
-const MovimientoInventario = require('../models/pruduccion/MovimientoInventario');
+const Ingrediente = require('../models/produccion/Ingrediente');
+const Material = require('../models/produccion/Material');
+const RecetaProducto = require('../models/produccion/RecetaProducto');
+const Produccion = require('../models/produccion/Produccion');
+const MovimientoInventario = require('../models/produccion/MovimientoInventario');
 
 // GET /api/estadisticas/dashboard - Obtener estadísticas del dashboard
 router.get('/dashboard', async (req, res) => {
