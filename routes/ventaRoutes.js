@@ -54,7 +54,7 @@ async function processVentasWithUserInfo(ventas) {
   // Get all cobros for these ventas
   const cobros = await Cobro.find({ 
     ventasId: { $in: ventaIds } 
-  }).select('ventasId yape efectivo gastosImprevistos fechaPago montoPagado');
+  }).select('ventasId yape efectivo billetes faltantes gastosImprevistos fechaPago montoPagado');
 
   // Create a map of cobros by venta ID
   const cobrosMap = cobros.reduce((acc, cobro) => {
@@ -63,6 +63,8 @@ async function processVentasWithUserInfo(ventas) {
       acc[ventaId].push({
         yape: cobro.yape || 0,
         efectivo: cobro.efectivo || 0,
+        billetes: cobro.billetes || 0,
+        faltantes: cobro.faltantes || 0,
         gastosImprevistos: cobro.gastosImprevistos || 0,
         fechaPago: cobro.fechaPago,
         montoPagado: cobro.montoPagado
@@ -82,6 +84,8 @@ async function processVentasWithUserInfo(ventas) {
     // Calculate totals from cobros
     const totalYape = ventaCobros.reduce((sum, cobro) => sum + cobro.yape, 0);
     const totalEfectivo = ventaCobros.reduce((sum, cobro) => sum + cobro.efectivo, 0);
+    const totalBilletes = ventaCobros.reduce((sum, cobro) => sum + cobro.billetes, 0);
+    const totalFaltantes = ventaCobros.reduce((sum, cobro) => sum + cobro.faltantes, 0);
     const totalGastosImprevistos = ventaCobros.reduce((sum, cobro) => sum + cobro.gastosImprevistos, 0);
     
     return {
@@ -101,6 +105,8 @@ async function processVentasWithUserInfo(ventas) {
       cobros_detalle: {
         yape: totalYape,
         efectivo: totalEfectivo,
+        billetes: totalBilletes,
+        faltantes: totalFaltantes,
         gastosImprevistos: totalGastosImprevistos,
         historial: ventaCobros
       }

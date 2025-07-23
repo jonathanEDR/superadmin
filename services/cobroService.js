@@ -213,8 +213,14 @@ async function getPaymentHistory(userId, role) {
           totalCobrado: cobro.montoPagado || 0,
           metodoPago: {
             yape: cobro.yape || 0,
-            efectivo: cobro.efectivo || 0
+            efectivo: cobro.efectivo || 0,
+            billetes: cobro.billetes || 0,
+            faltantes: cobro.faltantes || 0
           },
+          yape: cobro.yape || 0,
+          efectivo: cobro.efectivo || 0,
+          billetes: cobro.billetes || 0,
+          faltantes: cobro.faltantes || 0,
           gastosImprevistos: cobro.gastosImprevistos || 0,
           ventas: ventasProcesadas,
           observaciones: cobro.observaciones || '',
@@ -248,15 +254,18 @@ async function createCobro(cobroData) {
       creatorId: cobroData.creatorId,
       creatorName: cobroData.creatorName,
       creatorEmail: cobroData.creatorEmail,
-      descripcion: descripcion, // Agregar descripción
+      descripcion: descripcion,
       ventasId: cobroData.ventas.map(v => v.ventaId),
       montoPagado: cobroData.montoTotal,
       montoTotalVentas: cobroData.montoTotal,
       estadoPago: 'Pagado',
       yape: cobroData.yape || 0,
       efectivo: cobroData.efectivo || 0,
+      billetes: cobroData.billetes || 0,
+      faltantes: cobroData.faltantes || 0,
       gastosImprevistos: cobroData.gastosImprevistos || 0,
-      fechaCobro: new Date(cobroData.fechaCobro),      distribucionPagos: cobroData.distribucionPagos.map(v => ({
+      fechaCobro: new Date(cobroData.fechaCobro),
+      distribucionPagos: cobroData.distribucionPagos.map(v => ({
         ventaId: v.ventaId,
         montoPagado: Number(v.montoPagado) || 0,
         montoOriginal: Number(v.montoOriginal) || 0,
@@ -265,8 +274,19 @@ async function createCobro(cobroData) {
       estado: 'procesando'
     });
 
+    console.log('=== DEBUG COBRO OBJECT ===');
+    console.log('Cobro antes de guardar:', {
+      yape: cobro.yape,
+      efectivo: cobro.efectivo,
+      billetes: cobro.billetes,
+      faltantes: cobro.faltantes,
+      gastosImprevistos: cobro.gastosImprevistos
+    });
+
     // Guardar el cobro
     const cobroGuardado = await cobro.save();
+    
+    console.log('Cobro creado exitosamente:', cobroGuardado._id);
 
     // Actualizar el estado de las ventas
     const updatePromises = cobroData.ventas.map(async (venta) => {
@@ -346,6 +366,8 @@ async function getCobrosHistorial(page = 1, limit = 10) {
           montoPagado: { $ifNull: ['$montoPagado', 0] },
           yape: { $ifNull: ['$yape', 0] },
           efectivo: { $ifNull: ['$efectivo', 0] },
+          billetes: { $ifNull: ['$billetes', 0] },
+          faltantes: { $ifNull: ['$faltantes', 0] },
           gastosImprevistos: { $ifNull: ['$gastosImprevistos', 0] },
           descripcion: 1,
           creatorName: 1,
@@ -372,6 +394,31 @@ async function getCobrosHistorial(page = 1, limit = 10) {
     };
   } catch (error) {
     console.error('Error en getCobrosHistorial:', error);
+    throw error;
+  }
+}
+
+// Obtener resumen de cobros para dashboard
+async function getResumen(userId) {
+  try {
+    console.log('=== Obteniendo resumen de cobros ===');
+    console.log('userId:', userId);
+
+    // Obtener ventas pendientes
+    const ventasPendientes = await getVentasPendientes(userId, 'user');
+    
+    // Calcular deuda total
+    const totalDebt = ventasPendientes.reduce((sum, venta) => 
+      sum + (venta.montoPendiente || 0), 0);
+    
+    console.log(`Resumen calculado - Deuda total: ${totalDebt}, Ventas pendientes: ${ventasPendientes.length}`);
+    
+    return {
+      totalDebt,
+      pendingVentasCount: ventasPendientes.length
+    };
+  } catch (error) {
+    console.error('Error al obtener resumen:', error);
     throw error;
   }
 }
@@ -420,5 +467,6 @@ module.exports = {
   getPaymentHistory,
   createCobro,
   getCobrosHistorial,
+  getResumen,
   anularCobro
 };

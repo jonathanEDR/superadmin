@@ -7,7 +7,7 @@ const mongoose = require('mongoose');
 
 // Middleware de validación mejorado
 const validateCobroData = (req, res, next) => {
-  const { ventas, distribucionPagos, yape, efectivo, gastosImprevistos, fechaCobro } = req.body;
+  const { ventas, distribucionPagos, yape, efectivo, billetes, faltantes, gastosImprevistos, fechaCobro } = req.body;
 
   console.log('=== VALIDACIÓN DE COBRO ===');
   console.log('Datos recibidos:', {
@@ -15,6 +15,8 @@ const validateCobroData = (req, res, next) => {
     distribucionPagos: distribucionPagos?.length,
     yape,
     efectivo,
+    billetes,
+    faltantes,
     gastosImprevistos,
     fechaCobro,
     body: req.body
@@ -69,7 +71,7 @@ const validateCobroData = (req, res, next) => {
       }
     });    // Validar montos - La suma de métodos de pago debe ser igual al total de montos pagados
     const montoTotalPagado = ventas.reduce((sum, v) => sum + Number(v.montoPagado), 0);
-    const totalMetodosPago = (parseFloat(yape) || 0) + (parseFloat(efectivo) || 0) + (parseFloat(gastosImprevistos) || 0);
+    const totalMetodosPago = (parseFloat(yape) || 0) + (parseFloat(efectivo) || 0) + (parseFloat(billetes) || 0) + (parseFloat(faltantes) || 0) + (parseFloat(gastosImprevistos) || 0);
 
     console.log('Validación de montos:', {
       montoTotalPagado: montoTotalPagado.toFixed(2),
@@ -79,6 +81,8 @@ const validateCobroData = (req, res, next) => {
       metodosPago: { 
         yape: parseFloat(yape) || 0, 
         efectivo: parseFloat(efectivo) || 0, 
+        billetes: parseFloat(billetes) || 0, 
+        faltantes: parseFloat(faltantes) || 0, 
         gastosImprevistos: parseFloat(gastosImprevistos) || 0 
       }
     });
@@ -91,6 +95,16 @@ const validateCobroData = (req, res, next) => {
     // Validar gastos imprevistos
     if (gastosImprevistos && gastosImprevistos < 0) {
       throw new Error('Los gastos imprevistos no pueden ser negativos');
+    }
+
+    // Validar billetes
+    if (billetes && billetes < 0) {
+      throw new Error('El monto de billetes no puede ser negativo');
+    }
+
+    // Validar faltantes
+    if (faltantes && faltantes < 0) {
+      throw new Error('El monto de faltantes no puede ser negativo');
     }
 
     // Validar que los IDs de venta sean válidos
@@ -200,8 +214,10 @@ router.post('/', authenticate, validateCobroData, async (req, res) => {
         montoPagado: cobroData.montoPagado,
         yape: cobroData.yape,
         efectivo: cobroData.efectivo,
+        billetes: cobroData.billetes,
+        faltantes: cobroData.faltantes,
         gastosImprevistos: cobroData.gastosImprevistos,
-        total: (cobroData.yape || 0) + (cobroData.efectivo || 0) + (cobroData.gastosImprevistos || 0)
+        total: (cobroData.yape || 0) + (cobroData.efectivo || 0) + (cobroData.billetes || 0) + (cobroData.faltantes || 0) + (cobroData.gastosImprevistos || 0)
       }
     });
 
@@ -253,18 +269,21 @@ router.put('/:id', authenticate, async (req, res) => {
   try {
     const userId = req.user.clerk_id;
     const { id } = req.params;
-    const { yape, efectivo, montoPagado } = req.body;
+    const { yape, efectivo, billetes, faltantes, gastosImprevistos, montoPagado } = req.body;
 
     // Validar que haya al menos un campo para actualizar
-    if (!yape && !efectivo && !montoPagado && Object.keys(req.body).length === 0) {
+    if (!yape && !efectivo && !billetes && !faltantes && !gastosImprevistos && !montoPagado && Object.keys(req.body).length === 0) {
       throw new Error('Debe proporcionar al menos un campo para actualizar');
     }
 
     // Si se actualizan montos, validar que sean números válidos
-    if (yape !== undefined || efectivo !== undefined || montoPagado !== undefined) {
+    if (yape !== undefined || efectivo !== undefined || billetes !== undefined || faltantes !== undefined || gastosImprevistos !== undefined || montoPagado !== undefined) {
       const montos = [
         yape !== undefined ? yape : null,
         efectivo !== undefined ? efectivo : null,
+        billetes !== undefined ? billetes : null,
+        faltantes !== undefined ? faltantes : null,
+        gastosImprevistos !== undefined ? gastosImprevistos : null,
         montoPagado !== undefined ? montoPagado : null
       ].filter(m => m !== null).map(m => parseFloat(m) || 0);
 
@@ -272,16 +291,20 @@ router.put('/:id', authenticate, async (req, res) => {
         throw new Error('Los montos no pueden ser negativos');
       }
 
-      // Si se proporcionan tanto yape como efectivo y monto total, validar la suma
-      if (yape !== undefined && efectivo !== undefined && montoPagado !== undefined) {
-        if (parseFloat(yape) + parseFloat(efectivo) !== parseFloat(montoPagado)) {
-          throw new Error('La suma de Yape y Efectivo debe ser igual al monto total');
+      // Si se proporcionan todos los métodos de pago y monto total, validar la suma
+      if (yape !== undefined && efectivo !== undefined && billetes !== undefined && faltantes !== undefined && gastosImprevistos !== undefined && montoPagado !== undefined) {
+        const totalMetodos = parseFloat(yape) + parseFloat(efectivo) + parseFloat(billetes) + parseFloat(faltantes) + parseFloat(gastosImprevistos);
+        if (Math.abs(totalMetodos - parseFloat(montoPagado)) > 0.01) {
+          throw new Error('La suma de todos los métodos de pago debe ser igual al monto total');
         }
       }
 
       // Convertir los valores a números en el body
       if (yape !== undefined) req.body.yape = parseFloat(yape);
       if (efectivo !== undefined) req.body.efectivo = parseFloat(efectivo);
+      if (billetes !== undefined) req.body.billetes = parseFloat(billetes);
+      if (faltantes !== undefined) req.body.faltantes = parseFloat(faltantes);
+      if (gastosImprevistos !== undefined) req.body.gastosImprevistos = parseFloat(gastosImprevistos);
       if (montoPagado !== undefined) req.body.montoPagado = parseFloat(montoPagado);
     }
 

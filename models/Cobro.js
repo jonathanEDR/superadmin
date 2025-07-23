@@ -66,6 +66,16 @@ const cobroSchema = new mongoose.Schema({
     default: 0,
     min: [0, 'Los gastos imprevistos no pueden ser negativos']
   },
+  billetes: {
+    type: Number,
+    default: 0,
+    min: [0, 'El monto de billetes no puede ser negativo']
+  },
+  faltantes: {
+    type: Number,
+    default: 0,
+    min: [0, 'El monto de faltantes no puede ser negativo']
+  },
   fechaCobro: {
     type: Date,
     required: [true, 'La fecha de cobro es requerida']
@@ -107,7 +117,7 @@ const cobroSchema = new mongoose.Schema({
 
 // Virtual para calcular el total de métodos de pago
 cobroSchema.virtual('totalMetodosPago').get(function() {
-  return (this.yape || 0) + (this.efectivo || 0);
+  return (this.yape || 0) + (this.efectivo || 0) + (this.billetes || 0) + (this.faltantes || 0);
 });
 
 // Virtual para calcular el monto pendiente
@@ -117,10 +127,10 @@ cobroSchema.virtual('montoPendiente').get(function() {
 
 // Middleware para validar montos
 cobroSchema.pre('save', async function(next) {
-  try {    // Validar que la suma de yape, efectivo y gastos imprevistos sea igual al montoPagado
-    const totalPagado = (this.yape || 0) + (this.efectivo || 0) + (this.gastosImprevistos || 0);
+  try {    // Validar que la suma de yape, efectivo, billetes, faltantes y gastos imprevistos sea igual al montoPagado
+    const totalPagado = (this.yape || 0) + (this.efectivo || 0) + (this.billetes || 0) + (this.faltantes || 0) + (this.gastosImprevistos || 0);
     if (Math.abs(totalPagado - this.montoPagado) > 0.01) { // Usando una pequeña tolerancia para decimales
-      throw new Error('La suma de Yape, Efectivo y Gastos Imprevistos debe ser igual al monto pagado');
+      throw new Error('La suma de Yape, Efectivo, Billetes, Faltantes y Gastos Imprevistos debe ser igual al monto pagado');
     }
 
     // Validar que el monto pagado no exceda el total de las ventas
