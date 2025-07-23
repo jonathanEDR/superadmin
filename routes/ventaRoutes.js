@@ -184,6 +184,23 @@ async function deleteVentaService(id, userId) {
     throw new Error('No se puede eliminar una venta que tiene devoluciones asociadas');
   }
 
+  // Verificar si tiene cobros/pagos asociados
+  const tieneCobro = await Cobro.findOne({ ventasId: id });
+  if (tieneCobro) {
+    throw new Error('No se puede eliminar una venta que tiene pagos/cobros asociados');
+  }
+
+  // Verificar si la venta tiene pagos registrados
+  if (venta.estadoPago === 'Pagado' || venta.estadoPago === 'Parcial' || 
+      (venta.cantidadPagada && venta.cantidadPagada > 0)) {
+    throw new Error('No se puede eliminar una venta que tiene pagos registrados');
+  }
+
+  // Verificar si la venta está finalizada o aprobada
+  if (venta.completionStatus === 'approved' || venta.completionStatus === 'pending') {
+    throw new Error('No se puede eliminar una venta que está finalizada o en proceso de aprobación');
+  }
+
   // Actualizar el stock de todos los productos
   for (const productoVenta of venta.productos) {
     const producto = await Producto.findById(productoVenta.productoId);
@@ -417,10 +434,14 @@ router.delete('/:id', authenticate, async (req, res) => {
     res.status(200).json({ message: 'Venta eliminada exitosamente' });
   } catch (error) {
     console.error('Error al eliminar la venta:', error);
-    if (error.message.includes('devoluciones asociadas')) {
+    // Manejar errores específicos de validación
+    if (error.message.includes('devoluciones asociadas') || 
+        error.message.includes('pagos/cobros asociados') ||
+        error.message.includes('pagos registrados') ||
+        error.message.includes('finalizada o en proceso')) {
       return res.status(400).json({ message: error.message });
     }
-    res.status(500).json({ message: 'Error al eliminar la venta.' });
+    res.status(500).json({ message: 'Error interno del servidor al eliminar la venta.' });
   }
 });
 
