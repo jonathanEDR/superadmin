@@ -48,11 +48,21 @@ async function getVentasPendientes(userId, role) {
 
     // Procesar y enriquecer los resultados con validación detallada
     const ventasProcesadas = ventas.map(venta => {
-      // Validar y calcular montos
+      // Validar y calcular montos - usar montoTotal original como deuda del cliente
       const cantidadPagada = venta.cantidadPagada || 0;
       const montoTotal = venta.montoTotal || 0;
-      const montoPendiente = montoTotal - cantidadPagada;
+      const montoTotalDevuelto = venta.montoTotalDevuelto || 0;
+      const montoTotalNeto = montoTotal - montoTotalDevuelto;
+      const montoPendiente = montoTotal - cantidadPagada; // Usar montoTotal original para deuda del cliente
       const porcentajePagado = montoTotal > 0 ? ((cantidadPagada / montoTotal) * 100).toFixed(2) : '0';
+
+      console.log(`Procesando venta ${venta._id}:`, {
+        montoTotalOriginal: montoTotal,
+        montoTotalDevuelto: montoTotalDevuelto,
+        montoTotalNeto: montoTotalNeto,
+        cantidadPagada: cantidadPagada,
+        montoPendienteCalculado: montoPendiente
+      });
 
       // Validar que la venta sea válida para cobro
       if (montoPendiente <= 0) {
@@ -85,14 +95,14 @@ async function getVentasPendientes(userId, role) {
         creatorId: venta.creatorId,
         fechadeVenta: venta.fechadeVenta,
         montoTotal: montoTotal,
-        montoTotalDevuelto: venta.montoTotalDevuelto || 0,
-        montoTotalNeto: montoTotal - (venta.montoTotalDevuelto || 0),
+        montoTotalDevuelto: montoTotalDevuelto,
+        montoTotalNeto: montoTotalNeto,
         cantidadPagada: cantidadPagada,
-        montoPendiente: montoTotal - cantidadPagada,
-        porcentajePagado: montoTotal > 0 ? ((cantidadPagada / montoTotal) * 100).toFixed(2) : '0',
+        montoPendiente: montoPendiente, // Usar el montoPendiente basado en montoTotal original
+        porcentajePagado: porcentajePagado,
         estadoPago: venta.estadoPago,
         productos: productosValidos,
-        debe: venta.debe || (montoTotal - cantidadPagada)
+        debe: montoPendiente // Usar montoPendiente en lugar de venta.debe
       };
     }).filter(Boolean); // Eliminar ventas nulas
 
