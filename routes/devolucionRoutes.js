@@ -116,11 +116,22 @@ router.post('/', authenticate, async (req, res) => {
       
       fechaDevolucionFinal = new Date(fechaConvertida);
       
-      // Verificar que no sea fecha futura (comparar en hora de Perú)
+      // Verificar que no sea fecha futura (comparar correctamente)
       const ahora = new Date();
-      const ahoraPeruUTC = new Date(ahora.getTime() - (5 * 60 * 60 * 1000));
       
-      if (fechaDevolucionFinal > ahoraPeruUTC) {
+      // Agregar un margen de 1 minuto para evitar problemas de sincronización
+      const margenSeguridad = 60 * 1000; // 1 minuto en millisegundos
+      const ahoraConMargen = new Date(ahora.getTime() + margenSeguridad);
+      
+      console.log('🕐 Validación de fecha futura:', {
+        fechaDevolucionUTC: fechaDevolucionFinal.toISOString(),
+        ahoraUTC: ahora.toISOString(),
+        ahoraConMargenUTC: ahoraConMargen.toISOString(),
+        esFechaFutura: fechaDevolucionFinal > ahoraConMargen,
+        diferenciaMilisegundos: fechaDevolucionFinal.getTime() - ahora.getTime()
+      });
+      
+      if (fechaDevolucionFinal > ahoraConMargen) {
         return res.status(400).json({ 
           message: 'La fecha de devolución no puede ser futura' 
         });

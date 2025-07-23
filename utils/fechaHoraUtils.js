@@ -38,9 +38,9 @@ const formatearFecha = (fecha) => {
     if (!fecha) return '';
     try {
         const fechaObj = new Date(fecha);
-        // Ajustar a zona horaria de Perú para mostrar
-        const peruTime = new Date(fechaObj.getTime() - (5 * 60 * 60 * 1000));
-        return peruTime.toLocaleString('es-PE', {
+        
+        // No ajustar manualmente, usar directamente timeZone para mostrar correctamente
+        return fechaObj.toLocaleString('es-PE', {
             year: 'numeric',
             month: '2-digit',
             day: '2-digit',
@@ -74,22 +74,44 @@ const convertirFechaFrontendAPeruUTC = (fechaFrontend) => {
     if (!fechaFrontend) return null;
     
     try {
-        // Si viene como string datetime-local (YYYY-MM-DDTHH:mm)
-        let fechaObj;
-        
+        // Si viene como string datetime-local (YYYY-MM-DDTHH:mm o YYYY-MM-DDTHH:mm:ss)
         if (typeof fechaFrontend === 'string' && fechaFrontend.includes('T') && !fechaFrontend.includes('Z')) {
-            // Es datetime-local, interpretarlo como hora de Perú
-            fechaObj = new Date(fechaFrontend + ':00.000-05:00');
+            // Interpretar como hora local de Perú y convertir a UTC
+            // Agregar offset de Perú (-05:00) para que se interprete correctamente
+            let fechaConOffset;
+            
+            if (fechaFrontend.includes(':') && fechaFrontend.split(':').length === 3) {
+                // Ya tiene segundos: YYYY-MM-DDTHH:mm:ss
+                fechaConOffset = fechaFrontend + '-05:00';
+            } else {
+                // Solo tiene horas y minutos: YYYY-MM-DDTHH:mm
+                fechaConOffset = fechaFrontend + ':00-05:00';
+            }
+            
+            const fechaObj = new Date(fechaConOffset);
+            
+            console.log('🔄 Conversión Frontend->Backend:', {
+                fechaOriginal: fechaFrontend,
+                fechaConOffset: fechaConOffset,
+                fechaResultadoUTC: fechaObj.toISOString(),
+                fechaDisplayPerú: fechaObj.toLocaleString('es-PE', { timeZone: 'America/Lima' })
+            });
+            
+            if (isNaN(fechaObj.getTime())) {
+                throw new Error('Fecha inválida después de agregar offset');
+            }
+            
+            return fechaObj.toISOString();
         } else {
-            // Ya es una fecha ISO completa
-            fechaObj = new Date(fechaFrontend);
+            // Ya es una fecha ISO completa o Date object
+            const fechaObj = new Date(fechaFrontend);
+            
+            if (isNaN(fechaObj.getTime())) {
+                throw new Error('Fecha inválida');
+            }
+            
+            return fechaObj.toISOString();
         }
-        
-        if (isNaN(fechaObj.getTime())) {
-            throw new Error('Fecha inválida');
-        }
-        
-        return fechaObj.toISOString();
     } catch (error) {
         console.error('Error al convertir fecha frontend a Perú UTC:', error);
         return null;
