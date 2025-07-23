@@ -1,3 +1,4 @@
+const mongoose = require('mongoose');
 const Ingrediente = require('../models/produccion/Ingrediente');
 const Material = require('../models/produccion/Material');
 const RecetaProducto = require('../models/produccion/RecetaProducto');
@@ -99,8 +100,6 @@ class MovimientoUnificadoService {
      */
     async obtenerProductosPorTipo(tipoProducto) {
         try {
-            console.log('🔍 Obteniendo productos para tipo:', tipoProducto);
-            
             let productos = [];
             
             switch (tipoProducto) {
@@ -122,88 +121,44 @@ class MovimientoUnificadoService {
                     break;
                     
                 case 'produccion':
-                    // CORECCIÓN: Solo mostrar productos que realmente tienen producciones completadas
-                    console.log('🔍 Buscando productos con producciones completadas...');
-                    
-                    // PASO 1: Obtener nombres de productos que tienen producciones completadas
-                    const produccionesCompletadas = await Produccion.find({
-                        estado: 'completada'
-                    }).select('nombre cantidadProducida unidadMedida');
+                    // Buscar todos los productos de producción en el catálogo
+                    const productosProduccion = await CatalogoProduccion.find({
+                        moduloSistema: 'produccion',
+                        activo: true
+                    }).sort({ nombre: 1 });
 
-                    if (produccionesCompletadas.length === 0) {
-                        console.log('⚠️ No hay producciones completadas - devolviendo lista vacía');
+                    if (productosProduccion.length === 0) {
                         productos = [];
                         break;
                     }
 
-                    // PASO 2: Agrupar por nombre de producto
-                    const productosConStock = new Map();
-                    for (const produccion of produccionesCompletadas) {
-                        if (!produccion.nombre) continue;
-
-                        const nombreProducto = produccion.nombre;
-                        const cantidad = produccion.cantidadProducida || 0;
-
-                        if (productosConStock.has(nombreProducto)) {
-                            const existing = productosConStock.get(nombreProducto);
-                            existing.cantidadProducida += cantidad;
-                        } else {
-                            productosConStock.set(nombreProducto, {
-                                nombre: nombreProducto,
-                                cantidadProducida: cantidad,
-                                unidadMedida: produccion.unidadMedida
-                            });
-                        }
-                    }
-
-                    console.log(`� Productos únicos con producciones: ${productosConStock.size}`);
-
-                    // PASO 3: Buscar cada producto en catálogo y combinar con inventario
+                    // Para cada producto, buscar su inventario actual
                     productos = [];
-                    for (const [nombreProducto, stockData] of productosConStock) {
-                        // Buscar el producto en el catálogo
-                        const productoCatalogo = await CatalogoProduccion.findOne({
-                            nombre: nombreProducto,
-                            moduloSistema: 'produccion',
-                            activo: true
-                        });
-
-                        if (!productoCatalogo) {
-                            console.log(`⚠️ Producto '${nombreProducto}' no encontrado en catálogo`);
-                            continue;
-                        }
-
-                        // Buscar inventario actual
+                    for (const productoCatalogo of productosProduccion) {
                         const inventarioItem = await InventarioProducto.findOne({
                             catalogoProductoId: productoCatalogo._id
                         });
 
                         const stockActual = inventarioItem?.stock || 0;
 
-                        console.log(`� ${nombreProducto}: stock actual=${stockActual}, producido=${stockData.cantidadProducida}`);
-
-                        productos.push({
-                            ...productoCatalogo.toObject(),
-                            cantidad: stockActual,
-                            stock: stockActual,
-                            cantidadProducida: stockData.cantidadProducida,
-                            inventarioProductoId: inventarioItem?._id || null,
-                            catalogoProductoId: productoCatalogo._id
-                        });
+                        // Solo incluir productos que tienen stock actual
+                        if (stockActual > 0) {
+                            productos.push({
+                                ...productoCatalogo.toObject(),
+                                cantidad: stockActual,
+                                stock: stockActual,
+                                cantidadProducida: stockActual,
+                                inventarioProductoId: inventarioItem?._id || null,
+                                catalogoProductoId: productoCatalogo._id
+                            });
+                        }
                     }
-
-                    console.log(`🏭 Productos con producciones completadas (${productos.length}):`, productos.map(p => ({
-                        nombre: p.nombre,
-                        stockActual: p.stock,
-                        cantidadProducida: p.cantidadProducida
-                    })));
                     break;
                     
                 default:
                     throw new Error(`Tipo de producto no válido: ${tipoProducto}`);
             }
             
-            console.log(`✅ ${productos.length} productos encontrados para ${tipoProducto}`);
             return productos;
             
         } catch (error) {
@@ -217,20 +172,15 @@ class MovimientoUnificadoService {
      */
     async agregarCantidad(tipoProducto, productoId, cantidad, motivo, operador, precio = null, consumirIngredientes = false, ingredientesUtilizados = [], recetasUtilizadas = [], costoTotal = 0, observaciones = '') {
         try {
-            console.log('📝 Agregando cantidad:', {
-                tipoProducto,
-                productoId,
-                cantidad,
-                motivo: `"${motivo}"`,
-                operador: `"${operador}"`,
-                consumirIngredientes
-            });
-            
             if (!cantidad || cantidad <= 0) {
                 throw new Error('La cantidad debe ser mayor a 0');
             }
             
             let producto, tipoItem, cantidadAnterior, cantidadNueva;
+            
+            // Declarar IDs únicos al inicio para que estén disponibles en todo el scope
+            let produccionRecetaId = null;
+            let produccionTradicionalId = null;
             
             switch (tipoProducto) {
                 case 'ingredientes':
@@ -266,10 +216,11 @@ class MovimientoUnificadoService {
                     producto = await RecetaProducto.findById(productoId).populate('ingredientes.ingrediente');
                     if (!producto) throw new Error('Receta no encontrada');
                     
+                    // Generar ID único de producción para rastrear movimientos
+                    produccionRecetaId = new mongoose.Types.ObjectId();
+                    
                     // Si se debe consumir ingredientes, verificar disponibilidad y consumir
                     if (consumirIngredientes && producto.ingredientes && producto.ingredientes.length > 0) {
-                        console.log(`🍳 Produciendo receta con consumo de ingredientes - Cantidad: ${cantidad}`);
-                        
                         // Verificar disponibilidad
                         const faltantes = await producto.verificarDisponibilidadCompleta(cantidad);
                         if (faltantes.length > 0) {
@@ -281,16 +232,19 @@ class MovimientoUnificadoService {
                             const cantidadAConsumir = ingredienteReceta.cantidad * cantidad;
                             const ingrediente = ingredienteReceta.ingrediente;
                             
-                            console.log(`🔻 Consumiendo ${cantidadAConsumir} de ${ingrediente.nombre}`);
+                            // Incluir ID de producción en el motivo
+                            const motivoConsumo = `Producción de receta: ${producto.nombre} (${cantidad} lote${cantidad > 1 ? 's' : ''}) - ID: ${produccionRecetaId}`;
                             
-                            // Guardar cantidades para el movimiento
-                            const disponibleAnterior = ingrediente.cantidad - ingrediente.procesado;
-                            const procesadoAnterior = ingrediente.procesado;
+                            // Verificar disponibilidad antes de consumir
+                            const disponible = ingrediente.cantidad - ingrediente.procesado;
+                            if (disponible < cantidadAConsumir) {
+                                throw new Error(`Ingrediente ${ingrediente.nombre} insuficiente. Disponible: ${disponible}, Requerido: ${cantidadAConsumir}`);
+                            }
                             
-                            // Usar el método consumir() del modelo (como en recetaService)
+                            // 🔧 CORRECCIÓN: Usar el método consumir() del modelo que ya registra el movimiento
                             const exito = await ingrediente.consumir(
                                 cantidadAConsumir,
-                                `Consumo para producción de receta: ${producto.nombre} (${cantidad} lote${cantidad > 1 ? 's' : ''})`,
+                                motivoConsumo,
                                 operador || 'Sistema'
                             );
                             
@@ -300,26 +254,10 @@ class MovimientoUnificadoService {
                             
                             await ingrediente.save();
                             
-                            // Registrar movimiento de salida del ingrediente usando el método correcto
-                            const disponibleNuevo = ingrediente.cantidad - ingrediente.procesado;
-                            const movimientoSalida = {
-                                tipo: 'salida',
-                                item: ingrediente._id,
-                                tipoItem: 'Ingrediente',
-                                cantidad: cantidadAConsumir,
-                                cantidadAnterior: disponibleAnterior,
-                                cantidadNueva: disponibleNuevo,
-                                motivo: `Consumo para producción de receta: ${producto.nombre} (${cantidad} lote${cantidad > 1 ? 's' : ''})`,
-                                operador: operador || 'Sistema'
-                            };
+                            console.log(`✅ Ingrediente ${ingrediente.nombre} consumido: ${cantidadAConsumir} unidades`);
+                            console.log(`📊 Nuevo estado - Stock: ${ingrediente.cantidad}, Procesado: ${ingrediente.procesado}, Disponible: ${ingrediente.cantidad - ingrediente.procesado}`);
                             
-                            console.log(`📝 Registrando movimiento de salida para ingrediente: ${ingrediente.nombre}`, {
-                                disponibleAnterior,
-                                disponibleNuevo,
-                                procesadoAnterior,
-                                procesadoNuevo: ingrediente.procesado
-                            });
-                            await MovimientoInventario.registrarMovimiento(movimientoSalida);
+                            // ✅ NO registramos movimiento adicional porque el método consumir() ya lo hace
                         }
                     }
                     
@@ -339,6 +277,9 @@ class MovimientoUnificadoService {
                     cantidadNueva = producto.inventario.cantidadProducida;
                     tipoItem = 'RecetaProducto';
                     
+                    // 🔧 CORRECCIÓN: Guardar el ID de producción para referencia posterior
+                    motivo = `Producción de receta: ${producto.nombre} (${cantidad} lote${cantidad > 1 ? 's' : ''}) - ID: ${produccionRecetaId}`;
+                    
                     await producto.save();
                     break;
                     
@@ -347,6 +288,10 @@ class MovimientoUnificadoService {
                     if (!producto) throw new Error('Producto de catálogo no encontrado');
                     
                     console.log(`🏭 Produciendo: ${producto.nombre} - Cantidad: ${cantidad}`);
+                    
+                    // 🔧 CORRECCIÓN: Generar ID único de producción para rastrear movimientos (similar a recetas)
+                    produccionTradicionalId = new mongoose.Types.ObjectId();
+                    console.log(`🏭 Iniciando producción tradicional con ID: ${produccionTradicionalId}`);
                     
                     // Solo consumir recursos si se especifica explícitamente
                     if (consumirIngredientes && ((ingredientesUtilizados && ingredientesUtilizados.length > 0) || (recetasUtilizadas && recetasUtilizadas.length > 0))) {
@@ -366,11 +311,20 @@ class MovimientoUnificadoService {
                                 }
                                 
                                 console.log(`🔻 Consumiendo ${ingredienteData.cantidadUtilizada} de ${ingrediente.nombre}`);
+                                console.log(`📊 Stock actual: ${ingrediente.cantidad}, Procesado: ${ingrediente.procesado}, Disponible: ${disponible}`);
                                 
-                                // Consumir ingrediente
+                                // 🔧 CORRECCIÓN: Incluir ID de producción en el motivo
+                                const motivoConsumo = `Producción tradicional: ${producto.nombre} (${cantidad} unidad${cantidad > 1 ? 'es' : ''}) - ID: ${produccionTradicionalId}`;
+                                
+                                // Verificar disponibilidad antes de consumir
+                                if (disponible < ingredienteData.cantidadUtilizada) {
+                                    throw new Error(`Ingrediente ${ingrediente.nombre} insuficiente. Disponible: ${disponible}, Requerido: ${ingredienteData.cantidadUtilizada}`);
+                                }
+                                
+                                // 🔧 CORRECCIÓN: Usar el método consumir() del modelo que ya registra el movimiento
                                 const exito = await ingrediente.consumir(
                                     ingredienteData.cantidadUtilizada,
-                                    `Consumo para producción de: ${producto.nombre} (${cantidad} unidad${cantidad > 1 ? 'es' : ''}) - ${observaciones || motivo}`,
+                                    motivoConsumo,
                                     operador || 'Sistema'
                                 );
                                 
@@ -380,18 +334,10 @@ class MovimientoUnificadoService {
                                 
                                 await ingrediente.save();
                                 
-                                // Registrar movimiento de salida del ingrediente
-                                await MovimientoInventario.registrarMovimiento({
-                                    tipo: 'salida',
-                                    tipoMovimiento: 'consumo',
-                                    item: ingrediente._id,
-                                    tipoItem: 'Ingrediente',
-                                    cantidad: ingredienteData.cantidadUtilizada,
-                                    cantidadAnterior: (ingrediente.cantidad || 0) - (ingrediente.procesado || 0) + ingredienteData.cantidadUtilizada,
-                                    cantidadNueva: (ingrediente.cantidad || 0) - (ingrediente.procesado || 0),
-                                    motivo: `Consumo para producción: ${producto.nombre}`,
-                                    operador: operador || 'Sistema'
-                                });
+                                console.log(`✅ Ingrediente ${ingrediente.nombre} consumido: ${ingredienteData.cantidadUtilizada} unidades`);
+                                console.log(`📊 Nuevo estado - Stock: ${ingrediente.cantidad}, Procesado: ${ingrediente.procesado}, Disponible: ${ingrediente.cantidad - ingrediente.procesado}`);
+                                
+                                // ✅ NO registramos movimiento adicional porque el método consumir() ya lo hace
                             }
                         }
                         
@@ -409,27 +355,35 @@ class MovimientoUnificadoService {
                                 }
                                 
                                 console.log(`🔻 Consumiendo ${recetaData.cantidadUtilizada} de receta ${receta.nombre}`);
+                                console.log(`📊 Stock actual de receta: ${disponible}`);
+                                
+                                // 🔧 CORRECCIÓN: Incluir ID de producción en el motivo y usar registro manual
+                                const motivoConsumo = `Producción tradicional: ${producto.nombre} (${cantidad} unidad${cantidad > 1 ? 'es' : ''}) - ID: ${produccionTradicionalId}`;
                                 
                                 // Reducir stock de receta
                                 if (!receta.inventario) {
                                     receta.inventario = { cantidadProducida: 0 };
                                 }
+                                
+                                const stockAnterior = receta.inventario.cantidadProducida;
                                 receta.inventario.cantidadProducida -= recetaData.cantidadUtilizada;
                                 
                                 await receta.save();
                                 
-                                // Registrar movimiento de salida de la receta
+                                // 🔧 CORRECCIÓN: Registrar movimiento manual con ID de producción
                                 await MovimientoInventario.registrarMovimiento({
                                     tipo: 'salida',
                                     tipoMovimiento: 'consumo',
                                     item: receta._id,
                                     tipoItem: 'RecetaProducto',
                                     cantidad: recetaData.cantidadUtilizada,
-                                    cantidadAnterior: disponible,
+                                    cantidadAnterior: stockAnterior,
                                     cantidadNueva: receta.inventario.cantidadProducida,
-                                    motivo: `Consumo para producción: ${producto.nombre}`,
+                                    motivo: motivoConsumo,
                                     operador: operador || 'Sistema'
                                 });
+                                
+                                console.log(`✅ Receta ${receta.nombre} consumida: ${recetaData.cantidadUtilizada} unidades`);
                             }
                         }
                     } else {
@@ -494,68 +448,59 @@ class MovimientoUnificadoService {
                     throw new Error(`Tipo de producto no válido: ${tipoProducto}`);
             }
             
-            // Para producción, usar la función especializada que guarda los detalles correctos
-            if (tipoProducto === 'produccion') {
-                // Preparar ingredientes para registrarProductoProducido con nombres reales
-                const ingredientesParaRegistro = [];
-                if (ingredientesUtilizados && ingredientesUtilizados.length > 0) {
-                    for (const ing of ingredientesUtilizados) {
-                        const ingrediente = await Ingrediente.findById(ing.ingrediente);
-                        ingredientesParaRegistro.push({
-                            nombre: ingrediente ? ingrediente.nombre : `Ingrediente ${ing.ingrediente}`,
-                            ingrediente: ing.ingrediente,
-                            cantidad: ing.cantidadUtilizada,
-                            costo: (ing.precioUnitario || 0) * ing.cantidadUtilizada
-                        });
+                // Para producción, usar la función especializada que guarda los detalles correctos
+                if (tipoProducto === 'produccion') {
+                    // Preparar ingredientes para registrarProductoProducido con nombres reales
+                    const ingredientesParaRegistro = [];
+                    if (ingredientesUtilizados && ingredientesUtilizados.length > 0) {
+                        for (const ing of ingredientesUtilizados) {
+                            const ingrediente = await Ingrediente.findById(ing.ingrediente);
+                            ingredientesParaRegistro.push({
+                                nombre: ingrediente ? ingrediente.nombre : `Ingrediente ${ing.ingrediente}`,
+                                ingrediente: ing.ingrediente,
+                                cantidad: ing.cantidadUtilizada,
+                                costo: (ing.precioUnitario || 0) * ing.cantidadUtilizada
+                            });
+                        }
                     }
-                }
-                
-                // Preparar recetas para registrarProductoProducido con nombres reales
-                const recetasParaRegistro = [];
-                if (recetasUtilizadas && recetasUtilizadas.length > 0) {
-                    for (const rec of recetasUtilizadas) {
-                        const receta = await RecetaProducto.findById(rec.receta);
-                        recetasParaRegistro.push({
-                            nombre: receta ? receta.nombre : `Receta ${rec.receta}`,
-                            receta: rec.receta,
-                            cantidad: rec.cantidadUtilizada,
-                            costo: (rec.precioUnitario || 0) * rec.cantidadUtilizada
-                        });
+                    
+                    // Preparar recetas para registrarProductoProducido con nombres reales
+                    const recetasParaRegistro = [];
+                    if (recetasUtilizadas && recetasUtilizadas.length > 0) {
+                        for (const rec of recetasUtilizadas) {
+                            const receta = await RecetaProducto.findById(rec.receta);
+                            recetasParaRegistro.push({
+                                nombre: receta ? receta.nombre : `Receta ${rec.receta}`,
+                                receta: rec.receta,
+                                cantidad: rec.cantidadUtilizada,
+                                costo: (rec.precioUnitario || 0) * rec.cantidadUtilizada
+                            });
+                        }
                     }
-                }
-                
-                console.log('🏭 Registrando producto producido con detalles completos...', {
-                    ingredientes: ingredientesParaRegistro.length,
-                    recetas: recetasParaRegistro.length
-                });
-                
-                const resultadoProduccion = await this.registrarProductoProducido(
-                    producto.nombre,
-                    cantidad,
-                    producto.unidadMedida || 'unidad',
-                    costoTotal,
-                    `produccion-${Date.now()}`, // ID temporal de producción
-                    operador || 'Sistema',
-                    ingredientesParaRegistro,
-                    recetasParaRegistro,
-                    observaciones
-                );
-                
-                console.log(`✅ Producción registrada con detalles: ${resultadoProduccion.movimiento._id}`);
-                
-                // NUEVO: Actualizar también la cantidad en el registro de producción existente
-                await this.actualizarCantidadProduccion(producto.nombre, cantidad, operador);
-                
-                return {
-                    producto: resultadoProduccion.producto,
-                    movimiento: resultadoProduccion.movimiento,
-                    cantidadAnterior: resultadoProduccion.stockAnterior,
-                    cantidadNueva: resultadoProduccion.stockNuevo,
-                    cantidadAgregada: cantidad
-                };
-            }
-            
-            // Para otros tipos de productos (ingredientes, materiales, recetas) usar el método anterior
+                    
+                    // CORRECCIÓN: Solo registrar el movimiento para historial, NO modificar inventario
+                    const resultadoProduccion = await this.registrarMovimientoProduccion(
+                        producto.nombre,
+                        cantidad,
+                        producto.unidadMedida || 'unidad',
+                        costoTotal,
+                        produccionTradicionalId ? produccionTradicionalId.toString() : `produccion-${Date.now()}`,
+                        operador || 'Sistema',
+                        ingredientesParaRegistro,
+                        recetasParaRegistro,
+                        observaciones,
+                        cantidadAnterior,
+                        cantidadNueva
+                    );
+                    
+                    return {
+                        producto: resultadoProduccion.producto,
+                        movimiento: resultadoProduccion.movimiento,
+                        cantidadAnterior: cantidadAnterior,
+                        cantidadNueva: cantidadNueva,
+                        cantidadAgregada: cantidad
+                    };
+                }            // Para otros tipos de productos (ingredientes, materiales, recetas) usar el método anterior
             // Para otros tipos de productos (ingredientes, materiales, recetas) usar el método anterior
             const movimientoData = {
                 tipo: 'entrada',
@@ -633,6 +578,77 @@ class MovimientoUnificadoService {
     }
 
     /**
+     * Registrar solo el movimiento de producción para historial (sin modificar inventario)
+     */
+    async registrarMovimientoProduccion(nombreProducto, cantidadProducida, unidadMedida, costoTotal, produccionId, operador, ingredientesConsumidos = [], recetasConsumidas = [], observaciones = '', stockAnterior = 0, stockNuevo = 0) {
+        try {
+            // 1. Buscar producto en el catálogo de producción
+            let productoCatalogo = await CatalogoProduccion.findOne({
+                nombre: nombreProducto,
+                moduloSistema: 'produccion'
+            });
+
+            if (!productoCatalogo) {
+                productoCatalogo = new CatalogoProduccion({
+                    nombre: nombreProducto,
+                    descripcion: `Producto generado desde producción - ${nombreProducto}`,
+                    categoria: 'Producto Final',
+                    unidadMedida: unidadMedida || 'unidad',
+                    moduloSistema: 'produccion',
+                    activo: true,
+                    precio: costoTotal > 0 ? (costoTotal / cantidadProducida) : 0
+                });
+                await productoCatalogo.save();
+            }
+
+            // 2. Crear SOLO el movimiento de historial (NO modificar inventario)
+            const movimientoData = {
+                tipo: 'entrada',
+                tipoMovimiento: 'produccion',
+                item: productoCatalogo._id,
+                tipoItem: 'CatalogoProduccion',
+                cantidad: cantidadProducida,
+                cantidadAnterior: stockAnterior,
+                cantidadNueva: stockNuevo,
+                costoTotal: costoTotal,
+                motivo: `Producción tradicional completada: ${nombreProducto} - ID: ${produccionId}`,
+                operador: operador,
+                detalles: {
+                    esProduccionReal: true,
+                    produccionId: produccionId,
+                    ingredientesConsumidos: ingredientesConsumidos.map(ing => ({
+                        nombre: ing.nombre || `Ingrediente ${ing.ingrediente}`,
+                        cantidad: ing.cantidad || ing.cantidadUtilizada || 0,
+                        costo: ing.costo || 0
+                    })),
+                    recetasConsumidas: recetasConsumidas.map(rec => ({
+                        nombre: rec.nombre || `Receta ${rec.receta}`,
+                        cantidad: rec.cantidad || rec.cantidadUtilizada || 0,
+                        costo: rec.costo || 0
+                    })),
+                    costoProduccion: costoTotal,
+                    rendimiento: `${cantidadProducida} ${unidadMedida || 'unidades'}`
+                }
+            };
+
+            if (observaciones) {
+                movimientoData.observaciones = observaciones;
+            }
+
+            const movimiento = await MovimientoInventario.registrarMovimiento(movimientoData);
+
+            return {
+                producto: productoCatalogo,
+                movimiento: movimiento
+            };
+
+        } catch (error) {
+            console.error('❌ Error al registrar movimiento de producción:', error);
+            throw new Error(`Error al registrar movimiento de producción: ${error.message}`);
+        }
+    }
+
+    /**
      * Registrar producto producido en el inventario
      * Especializado para cuando se completa una producción
      */
@@ -646,6 +662,10 @@ class MovimientoUnificadoService {
                 produccionId,
                 operador
             });
+            
+            // 🔍 DEBUG: Verificar datos de ingredientes y recetas
+            console.log('🔍 DEBUG - Ingredientes consumidos recibidos:', ingredientesConsumidos);
+            console.log('🔍 DEBUG - Recetas consumidas recibidas:', recetasConsumidas);
 
             // 1. Buscar o crear producto en el catálogo de producción
             let productoCatalogo = await CatalogoProduccion.findOne({
@@ -712,19 +732,19 @@ class MovimientoUnificadoService {
                 cantidadAnterior: stockAnterior,
                 cantidadNueva: stockNuevo,
                 costoTotal: costoTotal,
-                motivo: `Producción completada - ${nombreProducto}`,
+                motivo: `Producción tradicional completada: ${nombreProducto} - ID: ${produccionId}`, // 🔧 CORRECCIÓN: Incluir ID en motivo
                 operador: operador,
                 detalles: {
                     esProduccionReal: true,
                     produccionId: produccionId,
                     ingredientesConsumidos: ingredientesConsumidos.map(ing => ({
-                        nombre: ing.nombre || ing.ingrediente,
-                        cantidad: ing.cantidad,
+                        nombre: ing.nombre || `Ingrediente ${ing.ingrediente}`,
+                        cantidad: ing.cantidad || ing.cantidadUtilizada || 0,
                         costo: ing.costo || 0
                     })),
                     recetasConsumidas: recetasConsumidas.map(rec => ({
-                        nombre: rec.nombre || rec.receta,
-                        cantidad: rec.cantidad,
+                        nombre: rec.nombre || `Receta ${rec.receta}`,
+                        cantidad: rec.cantidad || rec.cantidadUtilizada || 0,
                         costo: rec.costo || 0
                     })),
                     costoProduccion: costoTotal,
@@ -1061,6 +1081,33 @@ class MovimientoUnificadoService {
                     producto = await RecetaProducto.findById(movimiento.item);
                     if (!producto) throw new Error('Receta no encontrada');
                     
+                    // 🔧 NUEVA LÓGICA: Verificar si es una producción de receta con ID
+                    const esProduccionDeReceta = movimiento.motivo?.includes('Producción de receta:') && 
+                                                 movimiento.motivo?.includes('ID:');
+                    
+                    if (esProduccionDeReceta) {
+                        console.log('🍳 DETECTADA PRODUCCIÓN DE RECETA - usando revertirProduccionReceta');
+                        
+                        // Extraer ID de producción del motivo
+                        const idMatch = movimiento.motivo.match(/ID:\s*([a-fA-F0-9]{24})/);
+                        if (idMatch) {
+                            const produccionId = idMatch[1];
+                            console.log(`🔄 Revirtiendo producción de receta con ID: ${produccionId}`);
+                            
+                            // Usar el método especializado que revierte recetas E ingredientes
+                            const resultadoReversion = await this.revertirProduccionReceta(produccionId, operador);
+                            console.log('✅ Producción de receta revertida usando método especializado:', resultadoReversion);
+                            
+                            // No necesitamos hacer nada más, el método especializado maneja todo
+                            break;
+                        } else {
+                            console.log('⚠️ No se pudo extraer ID de producción, usando reversión simple');
+                        }
+                    }
+                    
+                    // 📝 REVERSIÓN SIMPLE (para movimientos manuales de recetas)
+                    console.log('📝 Reversión simple de receta (sin consumo de ingredientes)');
+                    
                     // Revertir: reducir inventario de la receta
                     if (!producto.inventario) {
                         producto.inventario = { cantidadProducida: 0, cantidadUtilizada: 0 };
@@ -1090,6 +1137,33 @@ class MovimientoUnificadoService {
                     if (!producto) throw new Error('Producto de catálogo no encontrado');
                     
                     console.log('🔄 Revirtiendo movimiento de producción...');
+                    
+                    // 🔧 NUEVA LÓGICA: Verificar si es una producción tradicional con ID
+                    const esProduccionTradicional = movimiento.motivo?.includes('Producción tradicional completada:') && 
+                                                   movimiento.motivo?.includes('ID:');
+                    
+                    if (esProduccionTradicional) {
+                        console.log('🏭 DETECTADA PRODUCCIÓN TRADICIONAL - usando revertirProduccionTradicional');
+                        
+                        // Extraer ID de producción del motivo
+                        const idMatch = movimiento.motivo.match(/ID:\s*([a-fA-F0-9]{24})/);
+                        if (idMatch) {
+                            const produccionId = idMatch[1];
+                            console.log(`🔄 Revirtiendo producción tradicional con ID: ${produccionId}`);
+                            
+                            // Usar el método especializado que revierte producto final, recetas E ingredientes
+                            const resultadoReversion = await this.revertirProduccionTradicional(produccionId, operador);
+                            console.log('✅ Producción tradicional revertida usando método especializado:', resultadoReversion);
+                            
+                            // No necesitamos hacer nada más, el método especializado maneja todo
+                            break;
+                        } else {
+                            console.log('⚠️ No se pudo extraer ID de producción, usando reversión simple');
+                        }
+                    }
+                    
+                    // 📝 REVERSIÓN SIMPLE (para movimientos manuales de productos)
+                    console.log('📝 Reversión simple de producto (sin consumo de recursos)');
                     
                     // 1. Revertir cantidad del catálogo
                     const cantidadAnteriorCat = producto.cantidad || 0;
@@ -1202,6 +1276,283 @@ class MovimientoUnificadoService {
         } catch (error) {
             console.error('❌ Error al actualizar cantidad en producción:', error);
             throw new Error(`Error al actualizar cantidad en producción: ${error.message}`);
+        }
+    }
+
+    /**
+     * 🔧 NUEVO: Método para revertir producciones tradicionales usando el ID
+     */
+    async revertirProduccionTradicional(produccionId, operador = 'sistema') {
+        try {
+            console.log(`🔄 === REVIRTIENDO PRODUCCIÓN TRADICIONAL ===`);
+            console.log(`🔄 ID de producción: ${produccionId}`);
+            console.log(`🔄 Operador: ${operador}`);
+            
+            // Buscar todos los movimientos relacionados con esta producción
+            const movimientosRelacionados = await MovimientoInventario.find({
+                motivo: { $regex: `ID: ${produccionId}`, $options: 'i' }
+            }).populate('item');
+            
+            console.log(`📋 Movimientos encontrados: ${movimientosRelacionados.length}`);
+            
+            if (movimientosRelacionados.length === 0) {
+                throw new Error(`No se encontraron movimientos para la producción ${produccionId}`);
+            }
+            
+            // Separar movimientos por tipo
+            const movimientosIngredientes = movimientosRelacionados.filter(m => m.tipoItem === 'Ingrediente');
+            const movimientosRecetas = movimientosRelacionados.filter(m => m.tipoItem === 'RecetaProducto');
+            const movimientosProductos = movimientosRelacionados.filter(m => m.tipoItem === 'CatalogoProduccion');
+            
+            console.log(`📦 Movimientos de ingredientes a revertir: ${movimientosIngredientes.length}`);
+            console.log(`🍳 Movimientos de recetas a revertir: ${movimientosRecetas.length}`);
+            console.log(`🏭 Movimientos de productos finales a revertir: ${movimientosProductos.length}`);
+            
+            const movimientosReversion = [];
+            
+            // 1. Revertir ingredientes
+            for (const movimiento of movimientosIngredientes) {
+                const ingrediente = await Ingrediente.findById(movimiento.item);
+                if (ingrediente) {
+                    console.log(`🔄 Revirtiendo ingrediente: ${ingrediente.nombre} (reducir procesado: -${movimiento.cantidad})`);
+                    
+                    // CORREGIDO: Solo reducir procesado, NO tocar cantidad total
+                    const cantidadAnterior = ingrediente.cantidad; // NO CAMBIA
+                    const procesadoAnterior = ingrediente.procesado;
+                    
+                    // SOLO reducir procesado (la cantidad total no se toca)
+                    ingrediente.procesado = Math.max(0, ingrediente.procesado - movimiento.cantidad);
+                    
+                    await ingrediente.save();
+                    
+                    // Crear movimiento de reversión (registra la reducción de procesado)
+                    const movimientoReversion = await MovimientoInventario.registrarMovimiento({
+                        tipo: 'ajuste', // Usar tipo válido
+                        item: ingrediente._id,
+                        tipoItem: 'Ingrediente',
+                        cantidad: movimiento.cantidad,
+                        cantidadAnterior: procesadoAnterior, // Usar procesado anterior
+                        cantidadNueva: ingrediente.procesado, // Usar procesado nuevo
+                        motivo: `Reversión de procesado por eliminación de producción - ID: ${produccionId}`,
+                        operador: operador,
+                        detalles: {
+                            tipo: 'reversion_procesado',
+                            cantidadTotal: ingrediente.cantidad, // Mantener referencia que no cambió
+                            procesadoAnterior: procesadoAnterior,
+                            procesadoNuevo: ingrediente.procesado
+                        }
+                    });
+                    
+                    movimientosReversion.push(movimientoReversion);
+                    console.log(`✅ Ingrediente ${ingrediente.nombre} revertido: procesado ${procesadoAnterior} → ${ingrediente.procesado} (cantidad total NO cambió: ${ingrediente.cantidad})`);
+                }
+            }
+            
+            // 2. Revertir recetas
+            for (const movimiento of movimientosRecetas) {
+                const receta = await RecetaProducto.findById(movimiento.item);
+                if (receta) {
+                    console.log(`🔄 Revirtiendo receta: ${receta.nombre} (+${movimiento.cantidad})`);
+                    
+                    // Restaurar stock de receta
+                    const cantidadAnterior = receta.inventario?.cantidadProducida || 0;
+                    if (!receta.inventario) {
+                        receta.inventario = { cantidadProducida: 0, cantidadUtilizada: 0 };
+                    }
+                    
+                    receta.inventario.cantidadProducida += movimiento.cantidad;
+                    receta.inventarioDisponible = receta.inventario.cantidadProducida - (receta.inventario.cantidadUtilizada || 0);
+                    
+                    await receta.save();
+                    
+                    // Crear movimiento de reversión
+                    const movimientoReversion = await MovimientoInventario.registrarMovimiento({
+                        tipo: 'entrada',
+                        item: receta._id,
+                        tipoItem: 'RecetaProducto',
+                        cantidad: movimiento.cantidad,
+                        cantidadAnterior: cantidadAnterior,
+                        cantidadNueva: receta.inventario.cantidadProducida,
+                        motivo: `Reversión de producción tradicional - ID: ${produccionId}`,
+                        operador: operador
+                    });
+                    
+                    movimientosReversion.push(movimientoReversion);
+                    console.log(`✅ Receta ${receta.nombre} revertida: +${movimiento.cantidad} stock`);
+                }
+            }
+            
+            // 3. Revertir productos finales
+            for (const movimiento of movimientosProductos) {
+                const producto = await CatalogoProduccion.findById(movimiento.item);
+                if (producto) {
+                    console.log(`🔄 Revirtiendo producto final: ${producto.nombre} (-${movimiento.cantidad})`);
+                    
+                    // Revertir cantidad del catálogo (si se usa)
+                    const cantidadAnteriorCat = producto.cantidad || 0;
+                    producto.cantidad = Math.max(0, (producto.cantidad || 0) - movimiento.cantidad);
+                    await producto.save();
+                    
+                    // Revertir stock en InventarioProducto
+                    const inventarioProducto = await InventarioProducto.findOne({
+                        catalogoProductoId: producto._id
+                    });
+                    
+                    if (inventarioProducto) {
+                        const stockAnterior = inventarioProducto.stock || 0;
+                        inventarioProducto.stock = Math.max(0, stockAnterior - movimiento.cantidad);
+                        inventarioProducto.fechaUltimaActualizacion = new Date();
+                        await inventarioProducto.save();
+                        
+                        console.log(`📦 Inventario revertido: ${stockAnterior} → ${inventarioProducto.stock}`);
+                    }
+                    
+                    // Crear movimiento de reversión
+                    const movimientoReversion = await MovimientoInventario.registrarMovimiento({
+                        tipo: 'salida',
+                        item: producto._id,
+                        tipoItem: 'CatalogoProduccion',
+                        cantidad: movimiento.cantidad,
+                        cantidadAnterior: cantidadAnteriorCat,
+                        cantidadNueva: producto.cantidad,
+                        motivo: `Reversión de producción tradicional - ID: ${produccionId}`,
+                        operador: operador
+                    });
+                    
+                    movimientosReversion.push(movimientoReversion);
+                    console.log(`✅ Producto ${producto.nombre} revertido: -${movimiento.cantidad} stock`);
+                }
+            }
+            
+            console.log(`✅ Producción tradicional ${produccionId} revertida exitosamente`);
+            console.log(`📊 Total movimientos de reversión creados: ${movimientosReversion.length}`);
+            
+            return {
+                success: true,
+                movimientosRevertidos: movimientosRelacionados.length,
+                movimientosCreados: movimientosReversion.length,
+                ingredientesRevertidos: movimientosIngredientes.length,
+                recetasRevertidas: movimientosRecetas.length,
+                productosRevertidos: movimientosProductos.length,
+                mensaje: 'Producción tradicional revertida exitosamente'
+            };
+            
+        } catch (error) {
+            console.error('❌ Error al revertir producción tradicional:', error);
+            throw new Error(`Error al revertir producción tradicional: ${error.message}`);
+        }
+    }
+
+    /**
+     * 🔧 NUEVO: Método para revertir producciones de recetas usando el ID
+     */
+    async revertirProduccionReceta(produccionId, operador = 'sistema') {
+        try {
+            console.log(`🔄 === REVIRTIENDO PRODUCCIÓN DE RECETA ===`);
+            console.log(`🔄 ID de producción: ${produccionId}`);
+            console.log(`🔄 Operador: ${operador}`);
+            
+            // Buscar todos los movimientos relacionados con esta producción
+            const movimientosRelacionados = await MovimientoInventario.find({
+                motivo: { $regex: `ID: ${produccionId}`, $options: 'i' }
+            }).populate('item');
+            
+            console.log(`📋 Movimientos encontrados: ${movimientosRelacionados.length}`);
+            
+            if (movimientosRelacionados.length === 0) {
+                throw new Error(`No se encontraron movimientos para la producción ${produccionId}`);
+            }
+            
+            // Separar movimientos de ingredientes y recetas
+            const movimientosIngredientes = movimientosRelacionados.filter(m => m.tipoItem === 'Ingrediente');
+            const movimientosRecetas = movimientosRelacionados.filter(m => m.tipoItem === 'RecetaProducto');
+            
+            console.log(`📦 Movimientos de ingredientes a revertir: ${movimientosIngredientes.length}`);
+            console.log(`🍳 Movimientos de recetas a revertir: ${movimientosRecetas.length}`);
+            
+            const movimientosReversion = [];
+            
+            // 1. Revertir ingredientes
+            for (const movimiento of movimientosIngredientes) {
+                const ingrediente = await Ingrediente.findById(movimiento.item);
+                if (ingrediente) {
+                    console.log(`🔄 Revirtiendo ingrediente: ${ingrediente.nombre} (+${movimiento.cantidad})`);
+                    
+                    // Restaurar stock disponible
+                    const cantidadAnterior = ingrediente.cantidad;
+                    ingrediente.cantidad += movimiento.cantidad;
+                    
+                    // Reducir procesado
+                    ingrediente.procesado = Math.max(0, ingrediente.procesado - movimiento.cantidad);
+                    
+                    await ingrediente.save();
+                    
+                    // Crear movimiento de reversión
+                    const movimientoReversion = await MovimientoInventario.registrarMovimiento({
+                        tipo: 'entrada',
+                        item: ingrediente._id,
+                        tipoItem: 'Ingrediente',
+                        cantidad: movimiento.cantidad,
+                        cantidadAnterior: cantidadAnterior,
+                        cantidadNueva: ingrediente.cantidad,
+                        motivo: `Reversión de producción de receta - ID: ${produccionId}`,
+                        operador: operador
+                    });
+                    
+                    movimientosReversion.push(movimientoReversion);
+                    console.log(`✅ Ingrediente ${ingrediente.nombre} revertido: +${movimiento.cantidad} stock`);
+                }
+            }
+            
+            // 2. Revertir recetas
+            for (const movimiento of movimientosRecetas) {
+                const receta = await RecetaProducto.findById(movimiento.item);
+                if (receta) {
+                    console.log(`🔄 Revirtiendo receta: ${receta.nombre} (-${movimiento.cantidad})`);
+                    
+                    // Reducir stock de receta producida
+                    const cantidadAnterior = receta.inventario?.cantidadProducida || 0;
+                    if (!receta.inventario) {
+                        receta.inventario = { cantidadProducida: 0, cantidadUtilizada: 0 };
+                    }
+                    
+                    receta.inventario.cantidadProducida = Math.max(0, receta.inventario.cantidadProducida - movimiento.cantidad);
+                    receta.inventarioDisponible = receta.inventario.cantidadProducida - (receta.inventario.cantidadUtilizada || 0);
+                    
+                    await receta.save();
+                    
+                    // Crear movimiento de reversión
+                    const movimientoReversion = await MovimientoInventario.registrarMovimiento({
+                        tipo: 'salida',
+                        item: receta._id,
+                        tipoItem: 'RecetaProducto',
+                        cantidad: movimiento.cantidad,
+                        cantidadAnterior: cantidadAnterior,
+                        cantidadNueva: receta.inventario.cantidadProducida,
+                        motivo: `Reversión de producción de receta - ID: ${produccionId}`,
+                        operador: operador
+                    });
+                    
+                    movimientosReversion.push(movimientoReversion);
+                    console.log(`✅ Receta ${receta.nombre} revertida: -${movimiento.cantidad} stock`);
+                }
+            }
+            
+            console.log(`✅ Producción de receta ${produccionId} revertida exitosamente`);
+            console.log(`📊 Total movimientos de reversión creados: ${movimientosReversion.length}`);
+            
+            return {
+                success: true,
+                movimientosRevertidos: movimientosRelacionados.length,
+                movimientosCreados: movimientosReversion.length,
+                ingredientesRevertidos: movimientosIngredientes.length,
+                recetasRevertidas: movimientosRecetas.length,
+                mensaje: 'Producción de receta revertida exitosamente'
+            };
+            
+        } catch (error) {
+            console.error('❌ Error al revertir producción de receta:', error);
+            throw new Error(`Error al revertir producción de receta: ${error.message}`);
         }
     }
 }

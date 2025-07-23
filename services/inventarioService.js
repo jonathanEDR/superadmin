@@ -1,6 +1,7 @@
 const Ingrediente = require('../models/produccion/Ingrediente');
 const RecetaProducto = require('../models/produccion/RecetaProducto');
 const MovimientoInventario = require('../models/produccion/MovimientoInventario');
+const movimientoUnificadoService = require('./movimientoUnificadoService');
 
 class InventarioService {
     
@@ -127,7 +128,7 @@ class InventarioService {
                 throw new Error(`Inventario insuficiente: ${verificacion.problemas.join(', ')}`);
             }
             
-            const motivo = `Producción ${produccionId}`;
+            const motivo = `Producción manual tradicional - ID: ${produccionId}`;
             
             // Actualizar ingredientes
             if (ingredientesUtilizados.length > 0) {
@@ -186,22 +187,97 @@ class InventarioService {
         const movimientos = [];
         
         try {
-            console.log('🔄 Revirtiendo producción:', produccionId);
+            console.log('🔄 === INICIANDO REVERSIÓN DE PRODUCCIÓN ===');
+            console.log('🔄 ID de producción:', produccionId);
+            console.log('🔄 Operador:', operador);
+            console.log('📥 DATOS RECIBIDOS:');
+            console.log('   - ingredientesUtilizados cantidad:', ingredientesUtilizados?.length || 0);
+            console.log('   - recetasUtilizadas cantidad:', recetasUtilizadas?.length || 0);
+            console.log('   - ingredientesUtilizados:', JSON.stringify(ingredientesUtilizados, null, 2));
+            console.log('   - recetasUtilizadas:', JSON.stringify(recetasUtilizadas, null, 2));
+            
+            // 🔧 NUEVO: Verificar si esta es una producción que debería usar los métodos unificados
+            try {
+                // Buscar movimientos con el ID de producción en diferentes patrones
+                const movimientosRelacionados = await MovimientoInventario.find({
+                    $or: [
+                        // Patrón nuevo: ID en el motivo
+                        { motivo: { $regex: `ID: ${produccionId}`, $options: 'i' } },
+                        // Patrón nuevo: ID en detalles
+                        { 'detalles.produccionId': produccionId }
+                    ]
+                });
+                
+                console.log(`🔍 Búsqueda de movimientos para ID ${produccionId}:`);
+                console.log(`   - Movimientos encontrados: ${movimientosRelacionados.length}`);
+                
+                if (movimientosRelacionados.length > 0) {
+                    // Verificar si es una producción de receta o tradicional
+                    const esReceta = movimientosRelacionados.some(mov => 
+                        mov.motivo && mov.motivo.includes('Producción de receta')
+                    );
+                    
+                    const esTradicional = movimientosRelacionados.some(mov => 
+                        mov.motivo && (
+                            mov.motivo.includes('Producción tradicional') ||
+                            mov.motivo.includes('completada')
+                        )
+                    );
+                    
+                    console.log(`   - Es receta: ${esReceta}`);
+                    console.log(`   - Es tradicional: ${esTradicional}`);
+                    
+                    if (esReceta) {
+                        console.log(`🍳 DETECTADA PRODUCCIÓN DE RECETA - usando revertirProduccionReceta`);
+                        return await movimientoUnificadoService.revertirProduccionReceta(produccionId, operador);
+                    } else if (esTradicional) {
+                        console.log(`📦 DETECTADA PRODUCCIÓN TRADICIONAL - usando revertirProduccionTradicional`);
+                        return await movimientoUnificadoService.revertirProduccionTradicional(produccionId, operador);
+                    }
+                }
+            } catch (searchError) {
+                console.log(`ℹ️ Error en búsqueda de movimientos:`, searchError.message);
+            }
+            
+            // 🔧 FALLBACK: Si no se detectó ningún patrón moderno, usar método manual tradicional
+            console.log(`⚠️ FALLBACK - No se encontraron movimientos unificados, procesando manualmente`);
+            console.log(`📦 REVERSIÓN MANUAL - procesando ingredientes y recetas directamente`);
+            
             const motivo = `Eliminación producción ${produccionId}`;
             
-            // 1. Restaurar SOLO ingredientes directos (reducir procesado)
+            // 1. Restaurar ingredientes directos (CORREGIDO: aumentar cantidad Y reducir procesado)
             if (ingredientesUtilizados && ingredientesUtilizados.length > 0) {
                 console.log('📦 Restaurando ingredientes directos:', ingredientesUtilizados.length);
                 
-                for (const item of ingredientesUtilizados) {
+                for (const [index, item] of ingredientesUtilizados.entries()) {
+                    console.log(`🔍 Procesando ingrediente ${index + 1}/${ingredientesUtilizados.length}:`);
+                    console.log(`   - Datos del item:`, JSON.stringify(item, null, 2));
+                    console.log(`   - ID del ingrediente: ${item.ingrediente}`);
+                    console.log(`   - Cantidad a restaurar: ${item.cantidadUtilizada || item.cantidad || 0}`);
+                    
                     const ingrediente = await Ingrediente.findById(item.ingrediente);
                     if (ingrediente) {
                         const cantidadARestaurar = item.cantidadUtilizada || item.cantidad || 0;
                         
-                        // Restaurar procesado (reducir el consumo)
+                        console.log(`🔍 Restaurando ingrediente ${ingrediente.nombre}:`);
+                        console.log(`   - Cantidad actual: ${ingrediente.cantidad}`);
+                        console.log(`   - Procesado actual: ${ingrediente.procesado}`);
+                        console.log(`   - Cantidad a restaurar: ${cantidadARestaurar}`);
+                        
+                        // CORREGIDO: Restaurar tanto el stock disponible como el procesado
+                        const cantidadAnterior = ingrediente.cantidad;
                         const procesadoAnterior = ingrediente.procesado;
+                        
+                        // ✅ SOLUCIÓN: Restaurar la cantidad disponible (lo que se consumió)
+                        ingrediente.cantidad += cantidadARestaurar;
+                        
+                        // ✅ SOLUCIÓN: Reducir el procesado (revertir el consumo registrado)
                         ingrediente.procesado = Math.max(0, ingrediente.procesado - cantidadARestaurar);
+                        
                         await ingrediente.save();
+                        
+                        console.log(`   - Nueva cantidad: ${ingrediente.cantidad} (+${cantidadARestaurar})`);
+                        console.log(`   - Nuevo procesado: ${ingrediente.procesado} (-${cantidadARestaurar})`);
                         
                         // Crear movimiento de restauración con campos correctos
                         const movimiento = new MovimientoInventario({
@@ -209,16 +285,77 @@ class InventarioService {
                             tipoItem: 'Ingrediente', // ✅ CORRECTO: enum válido (con mayúscula)
                             item: ingrediente._id, // ✅ CORRECTO: campo 'item' no 'itemId'
                             cantidad: cantidadARestaurar,
-                            cantidadAnterior: procesadoAnterior, // ✅ CORRECTO: valor anterior
-                            cantidadNueva: ingrediente.procesado, // ✅ CORRECTO: valor nuevo
-                            motivo,
+                            cantidadAnterior: cantidadAnterior, // ✅ CORRECTO: cantidad anterior
+                            cantidadNueva: ingrediente.cantidad, // ✅ CORRECTO: cantidad nueva
+                            motivo: `${motivo} - Restauración de ingrediente`,
                             operador
                         });
                         
                         await movimiento.save();
                         movimientos.push(movimiento);
                         
-                        console.log(`✅ Restaurado ingrediente ${ingrediente.nombre}: -${cantidadARestaurar} procesado`);
+                        console.log(`✅ Restaurado ingrediente ${ingrediente.nombre}: +${cantidadARestaurar} stock disponible, -${cantidadARestaurar} procesado`);
+                    } else {
+                        console.error(`❌ INGREDIENTE NO ENCONTRADO:`);
+                        console.error(`   - ID buscado: ${item.ingrediente}`);
+                        console.error(`   - Tipo de ID: ${typeof item.ingrediente}`);
+                        console.error(`   - Item completo:`, JSON.stringify(item, null, 2));
+                        
+                        // Intentar buscar por nombre como fallback
+                        console.log(`🔍 Intentando buscar ingrediente por otros medios...`);
+                        const ingredientePorNombre = await Ingrediente.findOne({ 
+                            $or: [
+                                { _id: item.ingrediente },
+                                { nombre: item.ingrediente }
+                            ]
+                        });
+                        
+                        if (ingredientePorNombre) {
+                            console.log(`✅ Ingrediente encontrado por búsqueda alternativa: ${ingredientePorNombre.nombre}`);
+                            
+                            // Procesar este ingrediente usando el código de arriba
+                            const cantidadARestaurar = item.cantidadUtilizada || item.cantidad || 0;
+                            
+                            console.log(`🔍 Restaurando ingrediente ${ingredientePorNombre.nombre}:`);
+                            console.log(`   - Cantidad actual: ${ingredientePorNombre.cantidad}`);
+                            console.log(`   - Procesado actual: ${ingredientePorNombre.procesado}`);
+                            console.log(`   - Cantidad a restaurar: ${cantidadARestaurar}`);
+                            
+                            // Restaurar tanto el stock disponible como el procesado
+                            const cantidadAnterior = ingredientePorNombre.cantidad;
+                            const procesadoAnterior = ingredientePorNombre.procesado;
+                            
+                            // Restaurar la cantidad disponible (lo que se consumió)
+                            ingredientePorNombre.cantidad += cantidadARestaurar;
+                            
+                            // Reducir el procesado (revertir el consumo registrado)
+                            ingredientePorNombre.procesado = Math.max(0, ingredientePorNombre.procesado - cantidadARestaurar);
+                            
+                            await ingredientePorNombre.save();
+                            
+                            console.log(`   - Nueva cantidad: ${ingredientePorNombre.cantidad} (+${cantidadARestaurar})`);
+                            console.log(`   - Nuevo procesado: ${ingredientePorNombre.procesado} (-${cantidadARestaurar})`);
+                            
+                            // Crear movimiento de restauración
+                            const movimiento = new MovimientoInventario({
+                                tipo: 'entrada',
+                                tipoItem: 'Ingrediente',
+                                item: ingredientePorNombre._id,
+                                cantidad: cantidadARestaurar,
+                                cantidadAnterior: cantidadAnterior,
+                                cantidadNueva: ingredientePorNombre.cantidad,
+                                motivo: `${motivo} - Restauración de ingrediente`,
+                                operador
+                            });
+                            
+                            await movimiento.save();
+                            movimientos.push(movimiento);
+                            
+                            console.log(`✅ Restaurado ingrediente ${ingredientePorNombre.nombre}: +${cantidadARestaurar} stock disponible, -${cantidadARestaurar} procesado`);
+                        } else {
+                            console.error(`❌ INGREDIENTE DEFINITIVAMENTE NO ENCONTRADO: ${item.ingrediente}`);
+                            console.error(`⚠️ Este error impedirá la reposición completa del stock`);
+                        }
                     }
                 }
             }
@@ -232,6 +369,10 @@ class InventarioService {
                     if (receta) {
                         const cantidadARestaurar = item.cantidadUtilizada || item.cantidad || 0;
                         
+                        console.log(`🔍 Restaurando receta ${receta.nombre}:`);
+                        console.log(`   - Cantidad utilizada actual: ${receta.inventario?.cantidadUtilizada || 0}`);
+                        console.log(`   - Cantidad a restaurar: ${cantidadARestaurar}`);
+                        
                         // Restaurar inventario de la receta
                         if (!receta.inventario) {
                             receta.inventario = { cantidadProducida: 0, cantidadUtilizada: 0 };
@@ -243,6 +384,9 @@ class InventarioService {
                         
                         await receta.save();
                         
+                        console.log(`   - Nueva cantidad utilizada: ${receta.inventario.cantidadUtilizada}`);
+                        console.log(`   - Nuevo disponible: ${receta.inventarioDisponible}`);
+                        
                         // Crear movimiento de restauración con campos correctos
                         const movimiento = new MovimientoInventario({
                             tipo: 'entrada', // ✅ CORRECTO: enum válido
@@ -251,7 +395,7 @@ class InventarioService {
                             cantidad: cantidadARestaurar,
                             cantidadAnterior: cantidadUtilizadaAnterior, // ✅ CORRECTO: valor anterior
                             cantidadNueva: receta.inventario.cantidadUtilizada, // ✅ CORRECTO: valor nuevo
-                            motivo,
+                            motivo: `${motivo} - Restauración de receta`,
                             operador
                         });
                         
@@ -259,15 +403,21 @@ class InventarioService {
                         movimientos.push(movimiento);
                         
                         console.log(`✅ Restaurada receta ${receta.nombre}: +${cantidadARestaurar} disponible`);
+                    } else {
+                        console.log(`⚠️ Receta no encontrada: ${item.receta}`);
                     }
                 }
             }
             
             console.log(`✅ Producción ${produccionId} revertida exitosamente`);
+            console.log(`📊 Resumen: ${movimientos.length} movimientos de reversión creados`);
+            
             return {
                 success: true,
                 movimientos,
-                mensaje: 'Inventario restaurado exitosamente'
+                mensaje: 'Inventario restaurado exitosamente',
+                ingredientesRestaurados: ingredientesUtilizados?.length || 0,
+                recetasRestauradas: recetasUtilizadas?.length || 0
             };
             
         } catch (error) {

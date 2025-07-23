@@ -105,13 +105,7 @@ class ProduccionService {
     // Crear producción manual
     async crearProduccionManual(datosProduccion) {
         try {
-            console.log('📥 Datos recibidos en crearProduccionManual:', JSON.stringify(datosProduccion, null, 2));
-            
             const { ingredientesUtilizados = [], recetasUtilizadas = [], ...otrosDatos } = datosProduccion;
-            
-            console.log('🔍 Ingredientes utilizados:', ingredientesUtilizados);
-            console.log('🔍 Recetas utilizadas:', recetasUtilizadas);
-            console.log('🔍 Otros datos:', otrosDatos);
             
             // Validar campos requeridos
             if (!otrosDatos.nombre || otrosDatos.nombre.trim() === '') {
@@ -138,9 +132,7 @@ class ProduccionService {
             
             // Mapear ingredientes para verificación
             const ingredientesParaVerificar = ingredientesUtilizados.map(item => {
-                console.log('🧩 Mapeando ingrediente:', item);
                 const cantidad = item.cantidadUtilizada || item.cantidad || 0;
-                console.log('📊 Cantidad mapeada:', cantidad);
                 return {
                     ingrediente: item.ingrediente,
                     cantidad: cantidad
@@ -149,33 +141,23 @@ class ProduccionService {
             
             // Mapear recetas para verificación
             const recetasParaVerificar = recetasUtilizadas.map(item => {
-                console.log('🍳 Mapeando receta:', item);
                 const cantidad = item.cantidadUtilizada || item.cantidad || 0;
-                console.log('📊 Cantidad mapeada:', cantidad);
                 return {
                     receta: item.receta,
                     cantidad: cantidad
                 };
             });
             
-            console.log('✅ Ingredientes para verificar:', ingredientesParaVerificar);
-            console.log('✅ Recetas para verificar:', recetasParaVerificar);
-            
             // Verificar disponibilidad completa usando el servicio de inventario
-            console.log('🔍 Iniciando verificación de disponibilidad...');
             const verificacion = await inventarioService.verificarDisponibilidadCompleta(
                 ingredientesParaVerificar, 
                 recetasParaVerificar
             );
             
-            console.log('📋 Resultado de verificación:', verificacion);
-            
             if (!verificacion.disponible) {
-                console.log('❌ Inventario insuficiente:', verificacion.problemas);
                 throw new Error(`Inventario insuficiente: ${verificacion.problemas.join(', ')}`);
             }
 
-            console.log('💾 Creando producción...');
             const produccion = new Produccion({
                 ...otrosDatos,
                 ingredientesUtilizados,
@@ -184,32 +166,23 @@ class ProduccionService {
                 estado: 'planificada'
             });
 
-            console.log('💾 Guardando producción...');
             await produccion.save();
-            console.log('✅ Producción guardada:', produccion._id);
             
             // Actualizar inventarios usando el servicio
-            console.log('📦 Procesando inventarios...');
             await inventarioService.procesarProduccion(
                 ingredientesParaVerificar, 
                 recetasParaVerificar,
                 produccion._id, 
                 otrosDatos.operador || 'sistema'
             );
-            console.log('✅ Inventarios actualizados');
             
             // Marcar como completada
-            console.log('✅ Marcando como completada...');
             produccion.estado = 'completada';
             await produccion.save();
-            console.log('✅ Producción completada');
             
-            console.log('💰 Calculando costo...');
             await produccion.calcularCosto();
-            console.log('✅ Costo calculado');
 
-            // 🏭 NUEVO: Registrar el producto final en el inventario
-            console.log('🏭 Registrando producto producido en inventario...');
+            // Registrar el producto final en el inventario
             await movimientoUnificadoService.registrarProductoProducido(
                 otrosDatos.nombre,
                 otrosDatos.cantidadProducida,
@@ -217,23 +190,19 @@ class ProduccionService {
                 produccion.costoTotal || otrosDatos.costoTotal || 0,
                 produccion._id,
                 otrosDatos.operador,
-                ingredientesUtilizados, // Para el historial
-                recetasUtilizadas, // Para el historial
+                ingredientesUtilizados,
+                recetasUtilizadas,
                 otrosDatos.observaciones || ''
             );
-            console.log('✅ Producto agregado al inventario con movimiento de producción');
 
-            console.log('🔄 Populando datos...');
             const produccionCompleta = await produccion.populate([
                 'ingredientesUtilizados.ingrediente',
                 'recetasUtilizadas.receta'
             ]);
-            console.log('✅ Producción manual creada exitosamente:', produccionCompleta._id);
 
             return produccionCompleta;
         } catch (error) {
             console.error('❌ Error en crearProduccionManual:', error.message);
-            console.error('📍 Stack trace:', error.stack);
             throw new Error(`Error al crear producción manual: ${error.message}`);
         }
     }
@@ -282,17 +251,13 @@ class ProduccionService {
             // Calcular costo
             await produccion.calcularCosto();
 
-            // 🏭 NUEVO: Registrar el producto final en el inventario
-            console.log('🏭 Registrando producto producido en inventario...');
-            
-            // Mapear ingredientes para el historial
+            // Registrar el producto final en el inventario
             const ingredientesParaHistorial = produccion.ingredientesUtilizados?.map(item => ({
                 nombre: item.ingrediente?.nombre || 'N/A',
                 cantidad: item.cantidadUtilizada || item.cantidad || 0,
                 costo: 0
             })) || [];
 
-            // Mapear recetas para el historial
             const recetasParaHistorial = produccion.recetasUtilizadas?.map(item => ({
                 nombre: item.receta?.nombre || 'N/A',
                 cantidad: item.cantidadUtilizada || item.cantidad || 0,
@@ -310,7 +275,6 @@ class ProduccionService {
                 recetasParaHistorial,
                 produccion.observaciones || ''
             );
-            console.log('✅ Producto agregado al inventario con movimiento de producción');
 
             return produccion;
         } catch (error) {
@@ -323,9 +287,7 @@ class ProduccionService {
         try {
             const skip = (pagina - 1) * limite;
             
-            console.log('🔍 Obteniendo producciones con filtros:', filtros);
-            
-            // NUEVA SOLUCIÓN: Pipeline simplificado que usa los datos directos de producción
+            // Pipeline simplificado que usa los datos directos de producción
             const pipeline = [
                 { $match: filtros },
                 { $sort: { fechaProduccion: -1 } },
@@ -397,8 +359,7 @@ class ProduccionService {
                 // Proyección final para agregar campos calculados
                 {
                     $addFields: {
-                        // NUEVO: Obtener stock por consulta directa después del pipeline
-                        stockActual: 0, // Lo estableceremos después
+                        stockActual: 0,
                         cantidadProducidaOriginal: '$cantidadProducida',
                         receta: { $arrayElemAt: ['$receta', 0] },
                         // Mejorar la información de items con datos de ingredientes
@@ -471,12 +432,10 @@ class ProduccionService {
                 }
             ];
             
-            console.log('🔧 Pipeline de agregación:', JSON.stringify(pipeline, null, 2));
-            
             // Ejecutar aggregation pipeline optimizado
             const producciones = await Produccion.aggregate(pipeline);
             
-            // NUEVA SOLUCIÓN: Agregar stock manualmente después del pipeline
+            // Agregar stock manualmente después del pipeline
             for (let produccion of producciones) {
                 if (produccion.catalogoInfo && produccion.catalogoInfo.length > 0) {
                     const catalogoId = produccion.catalogoInfo[0]._id;
@@ -488,17 +447,11 @@ class ProduccionService {
                     
                     if (inventario) {
                         produccion.stockActual = inventario.stock || inventario.cantidad || 0;
-                        console.log(`✅ Stock encontrado para ${produccion.nombre}: ${produccion.stockActual}`);
-                    } else {
-                        console.log(`❌ No se encontró inventario para ${produccion.nombre}`);
                     }
                 }
             }
             
             const total = await Produccion.countDocuments(filtros);
-
-            console.log(`📊 Obtenidas ${producciones.length} producciones con stock optimizado`);
-            console.log('📋 Primera producción:', producciones[0]);
 
             return {
                 producciones,
@@ -697,33 +650,15 @@ class ProduccionService {
     // Eliminar producción
     async eliminarProduccion(id) {
         try {
-            console.log('🗑️ === INICIANDO ELIMINACIÓN DE PRODUCCIÓN ===');
-            console.log('🗑️ ID recibido:', id);
-            
             const produccion = await Produccion.findById(id);
 
             if (!produccion) {
-                console.log('❌ Producción no encontrada en la base de datos');
                 throw new Error('Producción no encontrada');
             }
 
-            console.log(`📋 Producción encontrada: "${produccion.nombre}" - Estado: ${produccion.estado} - Cantidad: ${produccion.cantidadProducida}`);
-            console.log('📊 Datos completos de la producción:', {
-                id: produccion._id,
-                nombre: produccion.nombre,
-                estado: produccion.estado,
-                cantidadProducida: produccion.cantidadProducida,
-                ingredientesUtilizados: produccion.ingredientesUtilizados?.length || 0,
-                recetasUtilizadas: produccion.recetasUtilizadas?.length || 0
-            });
-
             // Si la producción está completada, necesitamos revertir el inventario
             if (produccion.estado === 'completada') {
-                console.log('⚠️ Producción completada - revirtiendo inventario...');
-                
-                // MEJORADO: Revertir stock del producto en InventarioProducto
-                console.log(`🔄 Iniciando reversión de stock para producto: "${produccion.nombre}" - Cantidad a revertir: ${produccion.cantidadProducida}`);
-                
+                // Revertir stock del producto en InventarioProducto
                 try {
                     // Buscar el producto en el catálogo
                     const productoCatalogo = await CatalogoProduccion.findOne({
@@ -732,23 +667,11 @@ class ProduccionService {
                         activo: true
                     });
                     
-                    console.log('🔍 Producto en catálogo:', productoCatalogo ? {
-                        id: productoCatalogo._id,
-                        nombre: productoCatalogo.nombre,
-                        moduloSistema: productoCatalogo.moduloSistema
-                    } : 'NO ENCONTRADO');
-                    
                     if (productoCatalogo) {
                         // Buscar el item en inventario
                         const inventarioItem = await InventarioProducto.findOne({
                             catalogoProductoId: productoCatalogo._id
                         });
-                        
-                        console.log('🔍 Item en inventario:', inventarioItem ? {
-                            id: inventarioItem._id,
-                            catalogoProductoId: inventarioItem.catalogoProductoId,
-                            stockActual: inventarioItem.stock
-                        } : 'NO ENCONTRADO');
                         
                         if (inventarioItem) {
                             const cantidadARestar = produccion.cantidadProducida || 0;
@@ -756,11 +679,7 @@ class ProduccionService {
                             // Usar el método del modelo para revertir el stock
                             const resultado = inventarioItem.actualizarStock(cantidadARestar, 'restar');
                             
-                            console.log(`� Cálculo de reversión: ${resultado.cantidadAnterior} - ${cantidadARestar} = ${resultado.cantidadNueva}`);
-                            
                             await inventarioItem.save();
-                            
-                            console.log(`✅ Stock revertido exitosamente: ${produccion.nombre} - ${resultado.cantidadAnterior} → ${resultado.cantidadNueva}`);
                             
                             // Registrar el movimiento de reversión
                             const movimientoReversion = await MovimientoInventario.registrarMovimiento({
@@ -773,78 +692,64 @@ class ProduccionService {
                                 motivo: `Reversión por eliminación de producción: ${produccion.nombre} - ID: ${produccion._id}`,
                                 operador: 'Sistema'
                             });
-                            
-                            console.log('📝 Movimiento de reversión registrado:', movimientoReversion._id);
-                        } else {
-                            console.log(`⚠️ No se encontró item de inventario para el producto "${produccion.nombre}" - No hay stock que revertir`);
                         }
-                    } else {
-                        console.log(`⚠️ No se encontró producto "${produccion.nombre}" en catálogo de producción - No se puede revertir stock`);
                     }
                 } catch (stockError) {
-                    console.error('❌ ERROR CRÍTICO al revertir stock del producto:', stockError);
-                    // MEJORADO: Re-lanzar el error en lugar de solo logearlo
+                    console.error('❌ Error al revertir stock del producto:', stockError);
                     throw new Error(`Error al revertir stock: ${stockError.message}`);
                 }
+                
+                // Poblar datos antes de procesar
+                await produccion.populate([
+                    'ingredientesUtilizados.ingrediente',
+                    'recetasUtilizadas.receta',
+                    'items.ingrediente'
+                ]);
                 
                 // Mapear ingredientes para revertir (compatible con estructura antigua y nueva)
                 const ingredientesParaRevertir = [];
                 
-                // Estructura nueva: ingredientesUtilizados
+                // Estructura nueva: ingredientesUtilizados (PRIORIDAD)
                 if (produccion.ingredientesUtilizados && produccion.ingredientesUtilizados.length > 0) {
                     ingredientesParaRevertir.push(...produccion.ingredientesUtilizados.map(item => ({
-                        ingrediente: item.ingrediente,
+                        ingrediente: item.ingrediente._id || item.ingrediente,
                         cantidadUtilizada: item.cantidadUtilizada || 0
                     })));
                 }
-                
-                // Estructura antigua: items (para compatibilidad)
-                if (produccion.items && produccion.items.length > 0) {
+                // Estructura antigua: items (solo si no hay ingredientesUtilizados)
+                else if (produccion.items && produccion.items.length > 0) {
                     ingredientesParaRevertir.push(...produccion.items.map(item => ({
-                        ingrediente: item.ingrediente,
+                        ingrediente: item.ingrediente._id || item.ingrediente,
                         cantidadUtilizada: item.cantidadUtilizada || 0
                     })));
                 }
                 
                 // Mapear recetas para revertir
                 const recetasParaRevertir = (produccion.recetasUtilizadas || []).map(item => ({
-                    receta: item.receta,
+                    receta: item.receta._id || item.receta,
                     cantidadUtilizada: item.cantidadUtilizada || 0
                 }));
-                
-                console.log('📦 Ingredientes a revertir:', ingredientesParaRevertir);
-                console.log('🍳 Recetas a revertir:', recetasParaRevertir);
                 
                 // Solo revertir si hay algo que revertir
                 if (ingredientesParaRevertir.length > 0 || recetasParaRevertir.length > 0) {
                     // Revertir inventario usando el servicio
-                    await inventarioService.revertirProduccion(
+                    const resultadoReversion = await inventarioService.revertirProduccion(
                         ingredientesParaRevertir,
                         recetasParaRevertir,
                         produccion._id,
                         'sistema'
                     );
-                    
-                    console.log('✅ Inventario revertido exitosamente');
-                } else {
-                    console.log('ℹ️ No hay ingredientes o recetas que revertir');
                 }
             }
 
             await Produccion.findByIdAndDelete(id);
             
-            console.log(`✅ Producción "${produccion.nombre}" eliminada exitosamente de la base de datos`);
-            
-            const resultado = { 
+            return { 
                 message: 'Producción eliminada exitosamente',
                 inventarioRevertido: produccion.estado === 'completada',
                 nombreProducto: produccion.nombre,
                 cantidadRevertida: produccion.estado === 'completada' ? (produccion.cantidadProducida || 0) : 0
             };
-            
-            console.log('📤 Devolviendo resultado final:', resultado);
-            
-            return resultado;
         } catch (error) {
             console.error('❌ Error al eliminar producción:', error);
             throw new Error(`Error al eliminar producción: ${error.message}`);
