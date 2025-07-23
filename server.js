@@ -1,8 +1,15 @@
 require('dotenv').config();
+
+// Establecer zona horaria de Perú antes de cualquier otra cosa
+process.env.TZ = 'America/Lima';
+
 const express = require('express');
 const cors = require('cors');
 const mongoose = require('mongoose');
 const bodyParser = require('body-parser');
+
+// Importar middleware de zona horaria
+const { setPeruTimezone } = require('./middleware/timezoneMiddleware');
 
 // Importar rutas
 const authRoutes = require('./routes/auth');
@@ -29,8 +36,10 @@ const catalogoProduccionRoutes = require('./routes/catalogoProduccionRoutes');
 const dashboardRoutes = require('./routes/dashboardRoutes');
 const estadisticasRoutes = require('./routes/estadisticasRoutes');
 const categoryRoutes = require('./routes/categoryRoutes');
+const inventarioEntradaRoutes = require('./routes/inventarioEntradaRoutes');
 const inventarioRoutes = require('./routes/inventarioRoutes');
 const inventarioProductoRoutes = require('./routes/inventarioProductoRoutes');
+const debugRoutes = require('./routes/debugRoutes');
 
 const app = express();
 const port = process.env.PORT || 5000;
@@ -90,6 +99,9 @@ app.use(express.urlencoded({ extended: true, limit: '10mb' }));
 app.use(bodyParser.json());
 app.use(bodyParser.urlencoded({ extended: true }));
 
+// Aplicar middleware de zona horaria de Perú
+app.use(setPeruTimezone);
+
 // Middleware de logging para todas las requests
 app.use((req, res, next) => {
   console.log(`🔍 ${new Date().toISOString()} - ${req.method} ${req.originalUrl}`);
@@ -98,6 +110,7 @@ app.use((req, res, next) => {
     'authorization': req.get('authorization') ? 'Bearer [PRESENT]' : 'NOT_PRESENT',
     'x-user-role': req.get('x-user-role') || 'NOT_SET'
   });
+  console.log('🕐 Timezone del servidor:', process.env.TZ || 'Sistema');
   next();
 });
 
@@ -130,6 +143,11 @@ app.use('/api/estadisticas', estadisticasRoutes);
 app.use('/api/categories', categoryRoutes);
 app.use('/api/inventario', inventarioRoutes);
 app.use('/api/inventario-producto', inventarioProductoRoutes);
+
+// Ruta de debug (solo en desarrollo)
+if (process.env.NODE_ENV !== 'production') {
+  app.use('/api/debug', debugRoutes);
+}
 
 // Rutas de prueba y health check
 app.get('/', (req, res) => {

@@ -4,7 +4,7 @@ const { authenticate } = require('../middleware/authenticate');
 const Devolucion = require('../models/Devolucion');
 const Venta = require('../models/Venta');
 const Producto = require('../models/Producto');
-const { getFechaHoraActual, formatearFecha, validarFormatoFecha } = require('../utils/fechaHoraUtils');
+const { getFechaHoraActual, formatearFecha, validarFormatoFecha, convertirFechaFrontendAPeruUTC } = require('../utils/fechaHoraUtils');
 
 // Obtener todas las devoluciones
 router.get('/', authenticate, async (req, res) => {
@@ -105,32 +105,35 @@ router.post('/', authenticate, async (req, res) => {
     // Validar y procesar la fecha de devolución usando utilidad unificada
     let fechaDevolucionFinal;
     if (fechaDevolucion) {
-      // Validar formato usando utilidad unificada
-      if (!validarFormatoFecha(fechaDevolucion)) {
+      // Convertir la fecha del frontend a hora de Perú UTC
+      const fechaConvertida = convertirFechaFrontendAPeruUTC(fechaDevolucion);
+      
+      if (!fechaConvertida) {
         return res.status(400).json({ 
           message: 'La fecha de devolución no es válida' 
         });
       }
       
-      fechaDevolucionFinal = new Date(fechaDevolucion);
+      fechaDevolucionFinal = new Date(fechaConvertida);
       
-      // Verificar que no sea fecha futura
-      const hoy = new Date();
-      hoy.setHours(23, 59, 59, 999);
-      if (fechaDevolucionFinal > hoy) {
+      // Verificar que no sea fecha futura (comparar en hora de Perú)
+      const ahora = new Date();
+      const ahoraPeruUTC = new Date(ahora.getTime() - (5 * 60 * 60 * 1000));
+      
+      if (fechaDevolucionFinal > ahoraPeruUTC) {
         return res.status(400).json({ 
           message: 'La fecha de devolución no puede ser futura' 
         });
       }
     } else {
-      // Si no se proporciona fecha, usar fecha actual
+      // Si no se proporciona fecha, usar fecha actual de Perú
       fechaDevolucionFinal = new Date(getFechaHoraActual());
     }
 
-    console.log('Fecha procesada para devolución:', {
+    console.log('📅 Fecha procesada para devolución (Backend):', {
       fechaOriginal: fechaDevolucion,
-      fechaProcesada: fechaDevolucionFinal,
-      fechaISO: fechaDevolucionFinal.toISOString()
+      fechaConvertidaPeruUTC: fechaDevolucionFinal.toISOString(),
+      fechaDisplay: formatearFecha(fechaDevolucionFinal)
     });
 
     // Validar que la venta existe y pertenece al usuario - CON POPULATE
