@@ -11,7 +11,7 @@ class InventarioProductoService {
    */
   async crearEntrada(data) {
     try {
-      console.log('[DEBUG] crearEntrada iniciado con datos:', data);
+      console.log('[DEBUG] crearEntrada iniciado con datos:', JSON.stringify(data, null, 2));
       
       const {
         productoId,
@@ -25,62 +25,92 @@ class InventarioProductoService {
         proveedor = ''
       } = data;
 
+      // Validaciones más robustas
+      if (!productoId) {
+        throw { status: 400, message: 'El ID del producto es requerido' };
+      }
+
+      if (!cantidad || isNaN(cantidad) || Number(cantidad) <= 0) {
+        throw { status: 400, message: 'La cantidad debe ser un número mayor a 0' };
+      }
+
+      if (!precio || isNaN(precio) || Number(precio) <= 0) {
+        throw { status: 400, message: 'El precio debe ser un número mayor a 0' };
+      }
+
+      if (!usuario || usuario.trim() === '') {
+        throw { status: 400, message: 'El usuario es requerido' };
+      }
+
       console.log('[DEBUG] Validando producto registrado:', productoId);
       
       // Validar que el producto registrado existe
       const producto = await Producto.findById(productoId);
       if (!producto) {
         console.error('[ERROR] Producto registrado no encontrado:', productoId);
-        throw { status: 404, message: 'Producto registrado no encontrado' };
+        throw { status: 404, message: `Producto registrado no encontrado con ID: ${productoId}` };
       }
 
-      console.log('[DEBUG] Producto encontrado:', producto.nombre, 'en categoría:', producto.categoryName);
+      console.log('[DEBUG] Producto encontrado:', {
+        id: producto._id,
+        nombre: producto.nombre,
+        categoria: producto.categoryName,
+        catalogoProductoId: producto.catalogoProductoId
+      });
 
       // Validar que el producto del catálogo existe
+      if (!producto.catalogoProductoId) {
+        throw { status: 400, message: 'El producto no tiene asociado un producto de catálogo' };
+      }
+
       const catalogoProducto = await CatalogoProducto.findById(producto.catalogoProductoId);
       if (!catalogoProducto) {
         console.error('[ERROR] Producto del catálogo no encontrado:', producto.catalogoProductoId);
-        throw { status: 404, message: 'Producto del catálogo no encontrado' };
+        throw { status: 404, message: `Producto del catálogo no encontrado con ID: ${producto.catalogoProductoId}` };
       }
 
-      console.log('[DEBUG] Producto del catálogo encontrado:', catalogoProducto.nombre);
+      console.log('[DEBUG] Producto del catálogo encontrado:', {
+        id: catalogoProducto._id,
+        nombre: catalogoProducto.nombre,
+        codigo: catalogoProducto.codigoproducto,
+        activo: catalogoProducto.activo
+      });
 
       if (!catalogoProducto.activo) {
         console.error('[ERROR] Producto inactivo en catálogo:', producto.catalogoProductoId);
-        throw { status: 400, message: 'El producto está inactivo en el catálogo' };
+        throw { status: 400, message: `El producto '${catalogoProducto.nombre}' está inactivo en el catálogo` };
       }
 
-      // Validar campos requeridos
-      if (!cantidad || cantidad <= 0) {
-        throw { status: 400, message: 'La cantidad debe ser mayor a 0' };
-      }
-
-      if (!precio || precio <= 0) {
-        throw { status: 400, message: 'El precio debe ser mayor a 0' };
-      }
-
-      if (!usuario) {
-        throw { status: 400, message: 'El usuario es requerido' };
-      }
+      // Convertir valores a números para asegurar consistencia
+      const cantidadNum = Number(cantidad);
+      const precioNum = Number(precio);
+      const costoTotal = cantidadNum * precioNum;
 
       // Crear nueva entrada individual
       const nuevaEntrada = new InventarioProducto({
         productoId: productoId,
         catalogoProductoId: producto.catalogoProductoId,
-        cantidad: Number(cantidad),
-        cantidadInicial: Number(cantidad),
-        cantidadDisponible: Number(cantidad),
-        precio: Number(precio),
-        lote,
-        observaciones,
-        usuario,
-        usuarioEmail,
-        fechaVencimiento,
-        proveedor,
-        costoTotal: Number(cantidad) * Number(precio)
+        cantidad: cantidadNum,
+        cantidadInicial: cantidadNum,
+        cantidadDisponible: cantidadNum,
+        precio: precioNum,
+        lote: lote?.trim() || '',
+        observaciones: observaciones?.trim() || '',
+        usuario: usuario.trim(),
+        usuarioEmail: usuarioEmail?.trim() || '',
+        fechaVencimiento: fechaVencimiento ? new Date(fechaVencimiento) : null,
+        proveedor: proveedor?.trim() || '',
+        costoTotal: costoTotal
       });
 
-      console.log('[DEBUG] Guardando nueva entrada:', nuevaEntrada);
+      console.log('[DEBUG] Guardando nueva entrada:', {
+        productoId: nuevaEntrada.productoId,
+        catalogoProductoId: nuevaEntrada.catalogoProductoId,
+        cantidad: nuevaEntrada.cantidad,
+        precio: nuevaEntrada.precio,
+        costoTotal: nuevaEntrada.costoTotal
+      });
+
       const entradaGuardada = await nuevaEntrada.save();
       console.log('[DEBUG] Entrada guardada exitosamente:', entradaGuardada._id);
       
@@ -89,16 +119,54 @@ class InventarioProductoService {
       await entradaGuardada.populate('catalogoProductoId');
 
       // Actualizar el stock del producto individual (no del catálogo)
-      await this.actualizarStockProductoIndividual(productoId, Number(cantidad));
+      await this.actualizarStockProductoIndividual(productoId, cantidadNum);
 
       // Registrar movimiento de inventario
-      await this.registrarMovimiento(entradaGuardada._id, 'ingreso', cantidad, usuario, 'Entrada inicial de inventario');
+      await this.registrarMovimiento(
+        entradaGuardada._id, 
+        'ingreso', 
+        cantidadNum, 
+        usuario.trim(), 
+        'Entrada inicial de inventario'
+      );
 
       console.log('[DEBUG] Entrada completada exitosamente');
       return entradaGuardada;
     } catch (error) {
-      console.error('Error al crear entrada:', error);
-      throw error;
+      console.error('[ERROR] Error al crear entrada:', {
+        message: error.message,
+        status: error.status,
+        stack: error.stack,
+        data: data
+      });
+      
+      // Si el error ya tiene status, lo mantenemos
+      if (error.status) {
+        throw error;
+      }
+      
+      // Si es un error de MongoDB, lo manejamos apropiadamente
+      if (error.code === 11000) {
+        throw { 
+          status: 409, 
+          message: 'Ya existe una entrada con esos datos. Verifique el número de entrada o el lote.' 
+        };
+      }
+      
+      // Si es un error de validación de Mongoose
+      if (error.name === 'ValidationError') {
+        const messages = Object.values(error.errors).map(err => err.message);
+        throw { 
+          status: 400, 
+          message: `Error de validación: ${messages.join(', ')}` 
+        };
+      }
+      
+      // Error genérico
+      throw { 
+        status: 500, 
+        message: `Error interno al crear entrada de inventario: ${error.message}` 
+      };
     }
   }
 
@@ -411,23 +479,54 @@ class InventarioProductoService {
    */
   async actualizarStockProductoIndividual(productoId, cantidadAAgregar) {
     try {
+      console.log('[DEBUG] Actualizando stock del producto:', productoId, 'cantidad:', cantidadAAgregar);
+      
       // Buscar el producto específico
       const producto = await Producto.findById(productoId);
       if (!producto) {
-        console.log('Producto no encontrado:', productoId);
-        return;
+        console.log('[WARNING] Producto no encontrado para actualizar stock:', productoId);
+        throw { status: 404, message: `Producto no encontrado: ${productoId}` };
+      }
+
+      // Validar que la cantidad sea un número válido
+      const cantidadNum = Number(cantidadAAgregar);
+      if (isNaN(cantidadNum)) {
+        throw { status: 400, message: 'La cantidad debe ser un número válido' };
       }
 
       // Actualizar la cantidad y cantidad restante solo de este producto específico
-      producto.cantidad = Math.max(0, (producto.cantidad || 0) + cantidadAAgregar);
-      producto.cantidadRestante = Math.max(0, (producto.cantidadRestante || 0) + cantidadAAgregar);
+      const cantidadAnterior = producto.cantidad || 0;
+      const cantidadRestanteAnterior = producto.cantidadRestante || 0;
 
-      await producto.save();
-      console.log(`Stock actualizado para ${producto.nombre} (${producto.categoryName}): ${cantidadAAgregar >= 0 ? '+' : ''}${cantidadAAgregar}`);
+      producto.cantidad = Math.max(0, cantidadAnterior + cantidadNum);
+      producto.cantidadRestante = Math.max(0, cantidadRestanteAnterior + cantidadNum);
 
+      const productoActualizado = await producto.save();
+      
+      console.log(`[DEBUG] Stock actualizado para ${producto.nombre} (${producto.categoryName}):`, {
+        cantidadAnterior,
+        cantidadNueva: productoActualizado.cantidad,
+        cantidadRestanteAnterior,
+        cantidadRestanteNueva: productoActualizado.cantidadRestante,
+        cambio: cantidadNum >= 0 ? `+${cantidadNum}` : cantidadNum.toString()
+      });
+
+      return productoActualizado;
     } catch (error) {
-      console.error('Error al actualizar stock del producto individual:', error);
-      throw error;
+      console.error('[ERROR] Error al actualizar stock del producto individual:', {
+        productoId,
+        cantidadAAgregar,
+        error: error.message
+      });
+      
+      if (error.status) {
+        throw error;
+      }
+      
+      throw { 
+        status: 500, 
+        message: `Error al actualizar stock del producto: ${error.message}` 
+      };
     }
   }
 

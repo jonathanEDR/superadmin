@@ -39,11 +39,23 @@ const productService = {
 
       // Usar el nombre y código del producto del catálogo
       const nombreNormalizado = normalizarNombre(catalogoProducto.nombre);
-      const codigoProducto = catalogoProducto.codigoproducto || catalogoProducto.codigoProducto;
-      console.log('[DEBUG] Código del producto del catálogo:', codigoProducto);
+      const codigoProducto = catalogoProducto.codigoproducto || catalogoProducto.codigoProducto || catalogoProducto.codigo;
+      console.log('[DEBUG] Información del catálogo:', {
+        id: catalogoProducto._id,
+        nombre: catalogoProducto.nombre,
+        codigoproducto: catalogoProducto.codigoproducto,
+        codigoProducto: catalogoProducto.codigoProducto,
+        codigo: catalogoProducto.codigo,
+        codigoFinal: codigoProducto
+      });
       
       if (!codigoProducto) {
-        throw { status: 400, message: 'El producto de catálogo no tiene código' };
+        console.error('[ERROR] Producto de catálogo sin código:', {
+          id: catalogoProducto._id,
+          nombre: catalogoProducto.nombre,
+          campos: Object.keys(catalogoProducto.toObject())
+        });
+        throw { status: 400, message: `El producto '${catalogoProducto.nombre}' no tiene código asignado en el catálogo` };
       }
       
       // Validar que no exista el mismo producto del catálogo en la misma categoría

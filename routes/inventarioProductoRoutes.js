@@ -6,7 +6,13 @@ const { authenticate, requireAdmin, requireUser } = require('../middleware/authe
 // Registrar nueva entrada/lote (individual)
 router.post('/', authenticate, requireAdmin, async (req, res) => {
   try {
-    console.log('[DEBUG] Recibiendo datos para crear entrada:', req.body);
+    console.log('[DEBUG] Recibiendo datos para crear entrada:', JSON.stringify(req.body, null, 2));
+    console.log('[DEBUG] Usuario autenticado:', {
+      id: req.user.id,
+      email: req.user.email,
+      role: req.user.role
+    });
+
     const {
       productoId,
       cantidad,
@@ -17,22 +23,41 @@ router.post('/', authenticate, requireAdmin, async (req, res) => {
       proveedor
     } = req.body;
 
+    // Validaciones iniciales
+    if (!productoId) {
+      return res.status(400).json({ 
+        message: 'El ID del producto es requerido' 
+      });
+    }
+
+    if (!cantidad || isNaN(cantidad) || Number(cantidad) <= 0) {
+      return res.status(400).json({ 
+        message: 'La cantidad debe ser un número mayor a 0' 
+      });
+    }
+
+    if (!precio || isNaN(precio) || Number(precio) <= 0) {
+      return res.status(400).json({ 
+        message: 'El precio debe ser un número mayor a 0' 
+      });
+    }
+
     // Obtener datos del usuario autenticado
-    const usuario = req.user.email?.split('@')[0] || req.user.id;
-    const usuarioEmail = req.user.email;
+    const usuario = req.user.email?.split('@')[0] || req.user.id || 'usuario_desconocido';
+    const usuarioEmail = req.user.email || '';
 
     console.log('[DEBUG] Creando entrada con productoId:', productoId);
     
     const entrada = await inventarioProductoService.crearEntrada({
       productoId,
-      cantidad,
-      precio,
-      lote,
-      observaciones,
+      cantidad: Number(cantidad),
+      precio: Number(precio),
+      lote: lote?.trim() || '',
+      observaciones: observaciones?.trim() || '',
       usuario,
       usuarioEmail,
-      fechaVencimiento,
-      proveedor
+      fechaVencimiento: fechaVencimiento || null,
+      proveedor: proveedor?.trim() || ''
     });
 
     console.log('[DEBUG] Entrada creada exitosamente:', entrada._id);
@@ -41,9 +66,19 @@ router.post('/', authenticate, requireAdmin, async (req, res) => {
       entrada
     });
   } catch (error) {
-    console.error('[ERROR] Error al crear entrada:', error);
-    res.status(error.status || 500).json({ 
-      message: error.message || 'Error al registrar entrada de inventario' 
+    console.error('[ERROR] Error al crear entrada:', {
+      message: error.message,
+      status: error.status,
+      stack: error.stack,
+      body: req.body
+    });
+
+    const status = error.status || 500;
+    const message = error.message || 'Error interno del servidor al registrar entrada de inventario';
+    
+    res.status(status).json({ 
+      message,
+      error: process.env.NODE_ENV === 'development' ? error.stack : undefined
     });
   }
 });
