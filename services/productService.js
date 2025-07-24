@@ -59,6 +59,8 @@ const productService = {
       }
       
       // Validar que no exista el mismo producto del catálogo en la misma categoría
+      // TEMPORALMENTE COMENTADO PARA DEBUGGING
+      /*
       const productoExistente = await Producto.findOne({ 
         catalogoProductoId: productData.catalogoProductoId,
         categoryId: productData.categoryId 
@@ -67,6 +69,9 @@ const productService = {
       if (productoExistente) {
         throw { status: 409, message: 'Este producto ya existe en esta categoría' };
       }
+      */
+      
+      console.log('[DEBUG] Validación de producto duplicado OMITIDA temporalmente');
 
       console.log('[DEBUG] Creando producto con datos:', {
         nombre: nombreNormalizado,

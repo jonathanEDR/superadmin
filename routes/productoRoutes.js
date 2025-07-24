@@ -34,6 +34,10 @@ router.get('/:id', authenticate, requireUser, async (req, res) => {
 // Ruta para agregar un producto (admin y super_admin)
 router.post('/', authenticate, requireAdmin, async (req, res) => {
   try {
+    console.log('\n🚨 === RUTA PRODUCTOS LLAMADA (POSIBLE ERROR) ===');
+    console.log('📍 URL completa:', req.originalUrl);
+    console.log('📍 Método:', req.method);
+    console.log('📍 Esta ruta NO debería llamarse para inventario!');
     console.log('[DEBUG] POST /api/productos - Request body:', req.body);
     console.log('[DEBUG] POST /api/productos - User:', req.user);
     

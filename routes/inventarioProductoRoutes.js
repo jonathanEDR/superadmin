@@ -6,6 +6,14 @@ const { authenticate, requireAdmin, requireUser } = require('../middleware/authe
 // Registrar nueva entrada/lote (individual)
 router.post('/', authenticate, requireAdmin, async (req, res) => {
   try {
+    console.log('\n🔍 === RUTA INVENTARIO-PRODUCTO LLAMADA ===');
+    console.log('📍 URL completa:', req.originalUrl);
+    console.log('📍 Método:', req.method);
+    console.log('📍 Headers relevantes:', {
+      'content-type': req.headers['content-type'],
+      'authorization': req.headers.authorization ? '[PRESENT]' : '[MISSING]',
+      'user-agent': req.headers['user-agent']?.substring(0, 50) + '...'
+    });
     console.log('[DEBUG] Recibiendo datos para crear entrada:', JSON.stringify(req.body, null, 2));
     console.log('[DEBUG] Usuario autenticado:', {
       id: req.user.id,
