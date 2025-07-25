@@ -10,7 +10,7 @@ const catalogoService = {
     if (typeof CatalogoProducto.find !== 'function') {
       console.error('[ERROR] CatalogoProducto.find is not a function!');
     }
-    return await CatalogoProducto.find({}, 'codigoproducto nombre activo');
+    return await CatalogoProducto.find({}, 'codigoproducto nombre descripcion activo');
   },
   async addProducto(data) {
     console.log('[LOG] addProducto llamado con:', data);
@@ -31,6 +31,7 @@ const catalogoService = {
     const producto = new CatalogoProducto({
       codigoproducto: data.codigoproducto,
       nombre: data.nombre,
+      descripcion: data.descripcion || '',
       activo: data.activo !== undefined ? data.activo : true
     });
     console.log('[LOG] Nuevo producto a guardar:', producto);
@@ -41,6 +42,7 @@ const catalogoService = {
     const update = {};
     if (data.codigoproducto) update.codigoproducto = data.codigoproducto;
     if (data.nombre) update.nombre = data.nombre;
+    if (data.descripcion !== undefined) update.descripcion = data.descripcion;
     if (typeof data.activo === 'boolean') update.activo = data.activo;
     const producto = await CatalogoProducto.findByIdAndUpdate(id, update, { new: true, runValidators: true });
     if (!producto) {

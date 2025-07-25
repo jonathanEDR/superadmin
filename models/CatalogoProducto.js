@@ -9,6 +9,7 @@ const CatalogoProductoSchema = new mongoose.Schema({
     set: function(value) { this.codigoproducto = value; }
   },
   nombre: { type: String, required: true },
+  descripcion: { type: String, required: false, default: '' },
   activo: { type: Boolean, default: true }
 }, {
   toJSON: { virtuals: true, getters: true },
