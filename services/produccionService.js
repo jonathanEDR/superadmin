@@ -699,36 +699,65 @@ class ProduccionService {
                     throw new Error(`Error al revertir stock: ${stockError.message}`);
                 }
                 
-                // Poblar datos antes de procesar
-                await produccion.populate([
-                    'ingredientesUtilizados.ingrediente',
-                    'recetasUtilizadas.receta',
-                    'items.ingrediente'
-                ]);
+                // Poblar datos antes de procesar (con manejo de errores para referencias huérfanas)
+                try {
+                    await produccion.populate([
+                        'ingredientesUtilizados.ingrediente',
+                        'recetasUtilizadas.receta',
+                        'items.ingrediente'
+                    ]);
+                } catch (populateError) {
+                    console.warn('⚠️ Error al poblar referencias, continuando con datos disponibles:', populateError.message);
+                    // Continuar sin poblar si hay referencias huérfanas
+                }
                 
                 // Mapear ingredientes para revertir (compatible con estructura antigua y nueva)
                 const ingredientesParaRevertir = [];
                 
                 // Estructura nueva: ingredientesUtilizados (PRIORIDAD)
                 if (produccion.ingredientesUtilizados && produccion.ingredientesUtilizados.length > 0) {
-                    ingredientesParaRevertir.push(...produccion.ingredientesUtilizados.map(item => ({
-                        ingrediente: item.ingrediente._id || item.ingrediente,
-                        cantidadUtilizada: item.cantidadUtilizada || 0
-                    })));
+                    for (const item of produccion.ingredientesUtilizados) {
+                        // Verificar que el ingrediente existe y no es huérfano
+                        if (item.ingrediente && item.ingrediente._id) {
+                            ingredientesParaRevertir.push({
+                                ingrediente: item.ingrediente._id,
+                                cantidadUtilizada: item.cantidadUtilizada || 0
+                            });
+                        } else {
+                            console.warn(`⚠️ Ingrediente huérfano encontrado en producción ${produccion._id}:`, item);
+                        }
+                    }
                 }
                 // Estructura antigua: items (solo si no hay ingredientesUtilizados)
                 else if (produccion.items && produccion.items.length > 0) {
-                    ingredientesParaRevertir.push(...produccion.items.map(item => ({
-                        ingrediente: item.ingrediente._id || item.ingrediente,
-                        cantidadUtilizada: item.cantidadUtilizada || 0
-                    })));
+                    for (const item of produccion.items) {
+                        // Verificar que el ingrediente existe y no es huérfano
+                        if (item.ingrediente && item.ingrediente._id) {
+                            ingredientesParaRevertir.push({
+                                ingrediente: item.ingrediente._id,
+                                cantidadUtilizada: item.cantidadUtilizada || 0
+                            });
+                        } else {
+                            console.warn(`⚠️ Ingrediente huérfano encontrado en items de producción ${produccion._id}:`, item);
+                        }
+                    }
                 }
                 
                 // Mapear recetas para revertir
-                const recetasParaRevertir = (produccion.recetasUtilizadas || []).map(item => ({
-                    receta: item.receta._id || item.receta,
-                    cantidadUtilizada: item.cantidadUtilizada || 0
-                }));
+                const recetasParaRevertir = [];
+                if (produccion.recetasUtilizadas && produccion.recetasUtilizadas.length > 0) {
+                    for (const item of produccion.recetasUtilizadas) {
+                        // Verificar que la receta existe y no es huérfana
+                        if (item.receta && item.receta._id) {
+                            recetasParaRevertir.push({
+                                receta: item.receta._id,
+                                cantidadUtilizada: item.cantidadUtilizada || 0
+                            });
+                        } else {
+                            console.warn(`⚠️ Receta huérfana encontrada en producción ${produccion._id}:`, item);
+                        }
+                    }
+                }
                 
                 // Solo revertir si hay algo que revertir
                 if (ingredientesParaRevertir.length > 0 || recetasParaRevertir.length > 0) {
@@ -771,6 +800,88 @@ class ProduccionService {
             .sort(([,a], [,b]) => b - a)
             .slice(0, 5)
             .map(([nombre, cantidad]) => ({ nombre, cantidad }));
+    }
+
+    // 🧹 UTILIDAD: Limpiar datos huérfanos en producciones
+    async limpiarDatosHuerfanos() {
+        try {
+            console.log('🧹 Iniciando limpieza de datos huérfanos en producciones...');
+            
+            // Obtener todas las producciones
+            const producciones = await Produccion.find({});
+            let produccionesCorregidas = 0;
+            let ingredientesHuerfanosLimpiados = 0;
+            let recetasHuerfanasLimpiadas = 0;
+
+            for (const produccion of producciones) {
+                let produccionModificada = false;
+
+                // Verificar ingredientesUtilizados
+                if (produccion.ingredientesUtilizados && produccion.ingredientesUtilizados.length > 0) {
+                    const ingredientesOriginales = produccion.ingredientesUtilizados.length;
+                    produccion.ingredientesUtilizados = produccion.ingredientesUtilizados.filter(item => {
+                        return item.ingrediente && item.ingrediente.toString().length === 24; // ObjectId válido
+                    });
+                    
+                    const ingredientesLimpiados = ingredientesOriginales - produccion.ingredientesUtilizados.length;
+                    if (ingredientesLimpiados > 0) {
+                        ingredientesHuerfanosLimpiados += ingredientesLimpiados;
+                        produccionModificada = true;
+                        console.log(`🧹 Limpiados ${ingredientesLimpiados} ingredientes huérfanos en producción ${produccion._id}`);
+                    }
+                }
+
+                // Verificar items (estructura antigua)
+                if (produccion.items && produccion.items.length > 0) {
+                    const itemsOriginales = produccion.items.length;
+                    produccion.items = produccion.items.filter(item => {
+                        return item.ingrediente && item.ingrediente.toString().length === 24; // ObjectId válido
+                    });
+                    
+                    const itemsLimpiados = itemsOriginales - produccion.items.length;
+                    if (itemsLimpiados > 0) {
+                        ingredientesHuerfanosLimpiados += itemsLimpiados;
+                        produccionModificada = true;
+                        console.log(`🧹 Limpiados ${itemsLimpiados} items huérfanos en producción ${produccion._id}`);
+                    }
+                }
+
+                // Verificar recetasUtilizadas
+                if (produccion.recetasUtilizadas && produccion.recetasUtilizadas.length > 0) {
+                    const recetasOriginales = produccion.recetasUtilizadas.length;
+                    produccion.recetasUtilizadas = produccion.recetasUtilizadas.filter(item => {
+                        return item.receta && item.receta.toString().length === 24; // ObjectId válido
+                    });
+                    
+                    const recetasLimpiadas = recetasOriginales - produccion.recetasUtilizadas.length;
+                    if (recetasLimpiadas > 0) {
+                        recetasHuerfanasLimpiadas += recetasLimpiadas;
+                        produccionModificada = true;
+                        console.log(`🧹 Limpiadas ${recetasLimpiadas} recetas huérfanas en producción ${produccion._id}`);
+                    }
+                }
+
+                // Guardar si se modificó
+                if (produccionModificada) {
+                    await produccion.save();
+                    produccionesCorregidas++;
+                }
+            }
+
+            const resumen = {
+                produccionesRevisadas: producciones.length,
+                produccionesCorregidas,
+                ingredientesHuerfanosLimpiados,
+                recetasHuerfanasLimpiadas
+            };
+
+            console.log('✅ Limpieza de datos huérfanos completada:', resumen);
+            return resumen;
+
+        } catch (error) {
+            console.error('❌ Error en limpieza de datos huérfanos:', error);
+            throw new Error(`Error en limpieza: ${error.message}`);
+        }
     }
 }
 

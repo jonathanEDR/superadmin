@@ -115,7 +115,7 @@ router.post('/', async (req, res) => {
 // PUT /api/ingredientes/:id - Actualizar ingrediente
 router.put('/:id', async (req, res) => {
     try {
-        const ingrediente = await ingredienteService.obtenerIngredientePorId(req.params.id);
+        const ingrediente = await ingredienteService.obtenerIngredientePorId(req.params.id, false);
         
         // Validar nombre único si se está cambiando
         if (req.body.nombre && req.body.nombre !== ingrediente.nombre) {
@@ -235,7 +235,7 @@ router.get('/:id/movimientos', async (req, res) => {
 // DELETE /api/ingredientes/:id - Desactivar ingrediente
 router.delete('/:id', async (req, res) => {
     try {
-        const ingrediente = await ingredienteService.obtenerIngredientePorId(req.params.id);
+        const ingrediente = await ingredienteService.obtenerIngredientePorId(req.params.id, true);
         
         ingrediente.activo = false;
         await ingrediente.save();

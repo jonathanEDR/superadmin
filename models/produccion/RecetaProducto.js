@@ -26,7 +26,7 @@ const recetaProductoSchema = new mongoose.Schema({
     },
     productoReferencia: {
         type: mongoose.Schema.Types.ObjectId,
-        ref: 'CatalogoProducto',
+        ref: 'CatalogoProduccion',
         required: false // Opcional para mantener compatibilidad con recetas existentes
     },
     descripcion: {

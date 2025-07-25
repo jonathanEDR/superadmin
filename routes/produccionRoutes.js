@@ -324,6 +324,27 @@ router.put('/:id', async (req, res) => {
     }
 });
 
+// 🧹 POST /api/produccion/limpiar-huerfanos - Utilidad para limpiar datos huérfanos
+router.post('/limpiar-huerfanos', async (req, res) => {
+    try {
+        console.log('🧹 Solicitud de limpieza de datos huérfanos');
+        
+        const resultado = await produccionService.limpiarDatosHuerfanos();
+        
+        res.json({
+            success: true,
+            data: resultado,
+            message: 'Limpieza de datos huérfanos completada exitosamente'
+        });
+    } catch (error) {
+        console.error('❌ Error en limpieza de datos huérfanos:', error);
+        res.status(500).json({
+            success: false,
+            message: error.message
+        });
+    }
+});
+
 // DELETE /api/produccion/:id - Eliminar producción
 router.delete('/:id', async (req, res) => {
     try {

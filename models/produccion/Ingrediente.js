@@ -5,7 +5,6 @@ const ingredienteSchema = new mongoose.Schema({
         type: String,
         required: true,
         trim: true,
-        unique: true,
         index: true
     },
     // Referencia al catálogo de producción (requerida)
@@ -54,6 +53,12 @@ const ingredienteSchema = new mongoose.Schema({
     timestamps: true,
     toJSON: { virtuals: true },
     toObject: { virtuals: true }
+});
+
+// Índice único compuesto para permitir mismo nombre solo si uno está activo
+ingredienteSchema.index({ nombre: 1, activo: 1 }, { 
+    unique: true,
+    partialFilterExpression: { activo: true }
 });
 
 // Virtual para calcular el total disponible

@@ -87,9 +87,14 @@ class IngredienteService {
     }
 
     // Obtener ingrediente por ID
-    async obtenerIngredientePorId(id) {
+    async obtenerIngredientePorId(id, incluirInactivos = false) {
         try {
-            const ingrediente = await Ingrediente.findById(id);
+            const query = { _id: id };
+            if (!incluirInactivos) {
+                query.activo = true;
+            }
+            
+            const ingrediente = await Ingrediente.findOne(query);
             if (!ingrediente) {
                 throw new Error('Ingrediente no encontrado');
             }
@@ -102,7 +107,7 @@ class IngredienteService {
     // Actualizar cantidad de ingrediente
     async actualizarCantidad(id, nuevaCantidad, motivo, operador) {
         try {
-            const ingrediente = await this.obtenerIngredientePorId(id);
+            const ingrediente = await this.obtenerIngredientePorId(id, false);
             const cantidadAnterior = ingrediente.cantidad;
             
             ingrediente.cantidad = nuevaCantidad;
@@ -129,7 +134,7 @@ class IngredienteService {
     // Ajustar inventario
     async ajustarInventario(id, cantidadAjuste, motivo, operador) {
         try {
-            const ingrediente = await this.obtenerIngredientePorId(id);
+            const ingrediente = await this.obtenerIngredientePorId(id, false);
             const cantidadAnterior = ingrediente.cantidad;
             const nuevaCantidad = cantidadAnterior + cantidadAjuste;
 
