@@ -117,7 +117,41 @@ class MovimientoUnificadoService {
                     
                 case 'recetas':
                     productos = await RecetaProducto.find({ activo: true })
+                        .populate('ingredientes.ingrediente', 'nombre unidadMedida')
+                        .populate('productoReferencia', 'nombre codigo')
+                        .select('nombre descripcion categoria estadoProceso faseActual ingredientes rendimiento inventario inventarioPorFase tiempoPreparacion activo createdAt updatedAt')
                         .sort({ nombre: 1 });
+                    
+                    // Asegurar que cada receta tenga el objeto inventario inicializado
+                    productos = productos.map(receta => {
+                        const recetaObj = receta.toObject();
+                        
+                        // Inicializar inventario si no existe
+                        if (!recetaObj.inventario) {
+                            recetaObj.inventario = {
+                                cantidadProducida: 0,
+                                cantidadUtilizada: 0
+                            };
+                        }
+                        
+                        // Inicializar inventarioPorFase si no existe
+                        if (!recetaObj.inventarioPorFase) {
+                            recetaObj.inventarioPorFase = {
+                                preparado: { cantidadProducida: 0, cantidadUtilizada: 0 },
+                                intermedio: { cantidadProducida: 0, cantidadUtilizada: 0 },
+                                terminado: { cantidadProducida: 0, cantidadUtilizada: 0 }
+                            };
+                        }
+                        
+                        // Agregar campo calculado para la cantidad disponible
+                        recetaObj.cantidadDisponible = recetaObj.inventario.cantidadProducida - recetaObj.inventario.cantidadUtilizada;
+                        
+                        // Para compatibilidad con otros tipos de productos, agregar campos comunes
+                        recetaObj.cantidad = recetaObj.inventario.cantidadProducida;
+                        recetaObj.unidadMedida = recetaObj.rendimiento?.unidadMedida || 'unidad';
+                        
+                        return recetaObj;
+                    });
                     break;
                     
                 case 'produccion':
