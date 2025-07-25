@@ -114,6 +114,26 @@ app.use((req, res, next) => {
   next();
 });
 
+// Health check endpoint
+app.get('/api/health', (req, res) => {
+  res.status(200).json({
+    status: 'OK',
+    timestamp: new Date().toISOString(),
+    uptime: process.uptime(),
+    environment: process.env.NODE_ENV || 'development',
+    timezone: process.env.TZ || 'Sistema',
+    database: mongoose.connection.readyState === 1 ? 'connected' : 'disconnected'
+  });
+});
+
+// Root endpoint
+app.get('/', (req, res) => {
+  res.json({ 
+    message: 'Backend API funcionando correctamente',
+    timestamp: new Date().toISOString()
+  });
+});
+
 // Rutas de la API
 app.use('/api/productos', productoRoutes);
 app.use('/api/catalogo', catalogoRoutes);
