@@ -2,9 +2,15 @@ const express = require('express');
 const router = express.Router();
 const inventarioProductoService = require('../services/inventarioProductoService');
 const { authenticate, requireAdmin, requireUser } = require('../middleware/authenticate');
+const { validarIntegridadInventario, prevencicOperacionesConcurrentes } = require('../middleware/inventarioValidation');
 
 // Registrar nueva entrada/lote (individual)
-router.post('/', authenticate, requireAdmin, async (req, res) => {
+router.post('/', 
+  authenticate, 
+  requireAdmin, 
+  validarIntegridadInventario,
+  prevencicOperacionesConcurrentes,
+  async (req, res) => {
   try {
     console.log('\n🔍 === RUTA INVENTARIO-PRODUCTO LLAMADA ===');
     console.log('📍 URL completa:', req.originalUrl);

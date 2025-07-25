@@ -25,7 +25,7 @@ class InventarioProductoService {
         proveedor = ''
       } = data;
 
-      // Validaciones más robustas
+      // VALIDACIONES ROBUSTAS MEJORADAS
       if (!productoId) {
         throw { status: 400, message: 'El ID del producto es requerido' };
       }
@@ -66,25 +66,44 @@ class InventarioProductoService {
       const catalogoProducto = await CatalogoProducto.findById(producto.catalogoProductoId);
       if (!catalogoProducto) {
         console.error('[ERROR] Producto del catálogo no encontrado:', producto.catalogoProductoId);
-        throw { status: 404, message: `Producto del catálogo no encontrado con ID: ${producto.catalogoProductoId}` };
+        
+        // REPARACIÓN AUTOMÁTICA: Crear producto faltante en catálogo
+        console.log('[REPAIR] Intentando reparar automáticamente...');
+        try {
+          const nuevoCatalogo = new CatalogoProducto({
+            _id: producto.catalogoProductoId,
+            codigoproducto: producto.codigoProducto || 'AUTO',
+            nombre: producto.nombre,
+            activo: true
+          });
+          await nuevoCatalogo.save();
+          console.log('[REPAIR] ✅ Producto del catálogo creado automáticamente');
+        } catch (repairError) {
+          throw { status: 404, message: `Producto del catálogo no encontrado y no se pudo reparar: ${producto.catalogoProductoId}` };
+        }
       }
 
+      const catalogoFinal = catalogoProducto || await CatalogoProducto.findById(producto.catalogoProductoId);
+      
       console.log('[DEBUG] Producto del catálogo encontrado:', {
-        id: catalogoProducto._id,
-        nombre: catalogoProducto.nombre,
-        codigo: catalogoProducto.codigoproducto,
-        activo: catalogoProducto.activo
+        id: catalogoFinal._id,
+        nombre: catalogoFinal.nombre,
+        codigo: catalogoFinal.codigoproducto,
+        activo: catalogoFinal.activo
       });
 
-      if (!catalogoProducto.activo) {
+      if (!catalogoFinal.activo) {
         console.error('[ERROR] Producto inactivo en catálogo:', producto.catalogoProductoId);
-        throw { status: 400, message: `El producto '${catalogoProducto.nombre}' está inactivo en el catálogo` };
+        throw { status: 400, message: `El producto '${catalogoFinal.nombre}' está inactivo en el catálogo` };
       }
 
       // Convertir valores a números para asegurar consistencia
       const cantidadNum = Number(cantidad);
       const precioNum = Number(precio);
       const costoTotal = cantidadNum * precioNum;
+
+      // GENERACIÓN ROBUSTA DE NÚMERO DE ENTRADA ÚNICO
+      const numeroEntrada = await this.generarNumeroEntradaUnico();
 
       // Crear nueva entrada individual
       const nuevaEntrada = new InventarioProducto({
@@ -100,7 +119,8 @@ class InventarioProductoService {
         usuarioEmail: usuarioEmail?.trim() || '',
         fechaVencimiento: fechaVencimiento ? new Date(fechaVencimiento) : null,
         proveedor: proveedor?.trim() || '',
-        costoTotal: costoTotal
+        costoTotal: costoTotal,
+        numeroEntrada: numeroEntrada
       });
 
       console.log('[DEBUG] Guardando nueva entrada:', {
@@ -560,6 +580,77 @@ class InventarioProductoService {
     } catch (error) {
       console.error('Error al actualizar stock del producto:', error);
       // No lanzar error para no interrumpir el flujo principal
+    }
+  }
+
+  /**
+   * Generar número de entrada único y robusto
+   * Utiliza un sistema de contadores por día para garantizar unicidad
+   */
+  async generarNumeroEntradaUnico() {
+    const mongoose = require('mongoose');
+    
+    // Definir esquema de contador si no existe
+    const CounterSchema = new mongoose.Schema({
+      _id: String,
+      seq: { type: Number, default: 0 },
+      fecha: { type: Date, default: Date.now }
+    });
+    
+    const Counter = mongoose.models.Counter || mongoose.model('Counter', CounterSchema);
+    
+    try {
+      const fecha = new Date();
+      const year = fecha.getFullYear();
+      const month = String(fecha.getMonth() + 1).padStart(2, '0');
+      const day = String(fecha.getDate()).padStart(2, '0');
+      const fechaStr = `${year}-${month}-${day}`;
+      
+      // ID único del contador para este día
+      const counterId = `inventario_${fechaStr}`;
+      
+      // Obtener siguiente número de secuencia para este día
+      const counter = await Counter.findByIdAndUpdate(
+        counterId,
+        { 
+          $inc: { seq: 1 },
+          $set: { fecha: new Date() }
+        },
+        { 
+          new: true, 
+          upsert: true 
+        }
+      );
+      
+      const numeroSecuencial = String(counter.seq).padStart(3, '0');
+      
+      // Generar timestamp único adicional para mayor seguridad
+      const timestamp = Date.now().toString().slice(-4);
+      const microtime = process.hrtime.bigint().toString().slice(-2);
+      
+      const numeroEntrada = `ENT-${year}${month}${day}-${numeroSecuencial}-${timestamp}${microtime}`;
+      
+      // Verificación final de unicidad (doble seguridad)
+      const existe = await InventarioProducto.findOne({ numeroEntrada });
+      if (existe) {
+        console.warn(`[WARNING] Número duplicado detectado: ${numeroEntrada}, regenerando...`);
+        // Recursión controlada para regenerar
+        return await this.generarNumeroEntradaUnico();
+      }
+      
+      console.log(`[DEBUG] Número único generado: ${numeroEntrada}`);
+      return numeroEntrada;
+      
+    } catch (error) {
+      console.error('[ERROR] Error al generar número único:', error);
+      
+      // Fallback: usar timestamp completo como último recurso
+      const timestamp = Date.now();
+      const random = Math.floor(Math.random() * 1000).toString().padStart(3, '0');
+      const fallbackNumber = `ENT-FALLBACK-${timestamp}-${random}`;
+      
+      console.log(`[FALLBACK] Usando número de emergencia: ${fallbackNumber}`);
+      return fallbackNumber;
     }
   }
 }

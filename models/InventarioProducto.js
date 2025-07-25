@@ -89,30 +89,22 @@ const inventarioProductoSchema = new mongoose.Schema({
   timestamps: true
 });
 
-// Middleware para generar número de entrada único
+// Middleware para establecer valores iniciales
 inventarioProductoSchema.pre('save', async function(next) {
   try {
     if (this.isNew) {
-      // Generar número de entrada único
-      const fecha = new Date();
-      const year = fecha.getFullYear();
-      const month = String(fecha.getMonth() + 1).padStart(2, '0');
-      const day = String(fecha.getDate()).padStart(2, '0');
-      
-      // Contar entradas del día actual
-      const startOfDay = new Date(fecha.getFullYear(), fecha.getMonth(), fecha.getDate());
-      const endOfDay = new Date(startOfDay);
-      endOfDay.setDate(endOfDay.getDate() + 1);
-      
-      const count = await this.constructor.countDocuments({
-        fechaEntrada: {
-          $gte: startOfDay,
-          $lt: endOfDay
-        }
-      });
-      
-      const numeroSecuencial = String(count + 1).padStart(3, '0');
-      this.numeroEntrada = `ENT-${year}${month}${day}-${numeroSecuencial}`;
+      // Solo generar número si no se proporciona uno (para compatibilidad)
+      if (!this.numeroEntrada) {
+        console.log('[MODEL] Generando número de entrada en modelo (fallback)');
+        const fecha = new Date();
+        const year = fecha.getFullYear();
+        const month = String(fecha.getMonth() + 1).padStart(2, '0');
+        const day = String(fecha.getDate()).padStart(2, '0');
+        
+        // Usar timestamp como fallback para evitar duplicados
+        const timestamp = Date.now().toString().slice(-6);
+        this.numeroEntrada = `ENT-FALLBACK-${year}${month}${day}-${timestamp}`;
+      }
       
       // Establecer cantidad inicial si no se especifica
       if (!this.cantidadInicial) {
