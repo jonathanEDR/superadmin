@@ -24,6 +24,8 @@ const productService = {
   // Crear un nuevo producto
   async createProducto(productData) {
     try {
+      console.log('[productService] createProducto called with:', productData);
+
       // Buscar el producto del catálogo
       const CatalogoProducto = require('../models/CatalogoProducto');
       const catalogoProducto = await CatalogoProducto.findById(productData.catalogoProductoId);
@@ -40,6 +42,7 @@ const productService = {
       // Usar el nombre y código del producto del catálogo
       const nombreNormalizado = normalizarNombre(catalogoProducto.nombre);
       const codigoProducto = catalogoProducto.codigoproducto || catalogoProducto.codigoProducto || catalogoProducto.codigo;
+      
       console.log('[DEBUG] Información del catálogo:', {
         id: catalogoProducto._id,
         nombre: catalogoProducto.nombre,
@@ -58,21 +61,26 @@ const productService = {
         throw { status: 400, message: `El producto '${catalogoProducto.nombre}' no tiene código asignado en el catálogo` };
       }
       
-      // Validar que no exista el mismo producto del catálogo en la misma categoría
+      // NUEVA LÓGICA: Validar que no exista la misma combinación catalogoProductoId + categoryId
       const productoExistente = await Producto.findOne({ 
         catalogoProductoId: productData.catalogoProductoId,
         categoryId: productData.categoryId 
       });
       
       if (productoExistente) {
-        throw { status: 409, message: 'Este producto ya existe en esta categoría' };
+        throw { 
+          status: 409, 
+          message: `El producto '${catalogoProducto.nombre}' ya existe en la categoría '${categoria.nombre}'`
+        };
       }
 
-      console.log('[DEBUG] Creando producto con datos:', {
+      console.log('[DEBUG] Creando producto con nueva lógica:', {
         nombre: nombreNormalizado,
         codigoProducto,
         categoryId: categoria._id,
-        categoryName: categoria.nombre
+        categoryName: categoria.nombre,
+        catalogoProductoId: productData.catalogoProductoId,
+        mensaje: 'PERMITIDO: Mismo código en diferentes categorías'
       });
 
       const producto = new Producto({
@@ -91,7 +99,17 @@ const productService = {
       return productoGuardado;
     } catch (error) {
       console.error('[ERROR] Error detallado en createProducto:', error);
-      console.error('[ERROR] Stack trace:', error.stack);
+      
+      // Manejar error específico del índice compuesto
+      if (error.code === 11000 && error.message.includes('catalogoProducto_categoria_unique')) {
+        const catalogoProducto = await CatalogoProducto.findById(productData.catalogoProductoId);
+        const categoria = await Category.findById(productData.categoryId);
+        throw { 
+          status: 409, 
+          message: `El producto '${catalogoProducto?.nombre || 'desconocido'}' ya existe en la categoría '${categoria?.nombre || 'desconocida'}'`
+        };
+      }
+      
       throw error.status ? error : { status: 500, message: 'Error al crear el producto', details: error.message };
     }
   },
@@ -99,6 +117,29 @@ const productService = {
   // Actualizar un producto
   async updateProduct(id, updateData) {
     try {
+      console.log('[productService] updateProduct called with:', { id, updateData });
+      
+      // Verificar que el producto existe
+      const existingProduct = await Producto.findById(id);
+      if (!existingProduct) {
+        throw { status: 404, message: 'Producto no encontrado' };
+      }
+
+      console.log('[productService] Producto existente encontrado:', existingProduct.nombre);
+
+      // Para actualizaciones, solo permitir campos específicos
+      const allowedFields = ['precio', 'activo', 'status'];
+      const filteredUpdateData = {};
+      
+      Object.keys(updateData).forEach(key => {
+        if (allowedFields.includes(key)) {
+          filteredUpdateData[key] = updateData[key];
+        }
+      });
+
+      console.log('[productService] Datos filtrados para actualización:', filteredUpdateData);
+
+      // Solo validar nombre si se está actualizando
       if (updateData.nombre) {
         const nombreNormalizado = normalizarNombre(updateData.nombre);
         const productoExistente = await Producto.findOne({
@@ -108,27 +149,40 @@ const productService = {
         if (productoExistente) {
           throw { status: 409, message: 'Ya existe otro producto con este nombre' };
         }
-        updateData.nombre = nombreNormalizado;
+        filteredUpdateData.nombre = nombreNormalizado;
       }
+
       // Validar nueva categoría si se actualiza
       if (updateData.categoryId) {
         const categoria = await Category.findById(updateData.categoryId);
         if (!categoria) {
           throw { status: 404, message: 'La categoría especificada no existe' };
         }
+        filteredUpdateData.categoryName = categoria.nombre;
       }
+
+      // Agregar timestamp de actualización
+      filteredUpdateData.updatedAt = new Date();
+
+      console.log('[productService] Actualizando producto con datos:', filteredUpdateData);
+
       const producto = await Producto.findByIdAndUpdate(
         id,
-        { ...updateData, updatedAt: new Date() },
+        filteredUpdateData,
         { new: true, runValidators: true }
       );
+
       if (!producto) {
         throw { status: 404, message: 'Producto no encontrado' };
       }
+
+      console.log('[productService] Producto actualizado exitosamente');
+
       // Retornar con populate
       return await Producto.findById(producto._id).populate('categoryId', 'nombre descripcion');
     } catch (error) {
-      throw error.status ? error : { status: 500, message: 'Error al actualizar el producto' };
+      console.error('[productService] Error en updateProduct:', error);
+      throw error.status ? error : { status: 500, message: 'Error al actualizar el producto', details: error.message };
     }
   },
 

@@ -150,28 +150,42 @@ router.put('/:id', authenticate, requireAdmin, async (req, res) => {
   const userRole = req.user.role;
 
   try {
+    console.log('[DEBUG] PUT /api/productos/:id - Iniciando actualización');
+    console.log('[DEBUG] Product ID:', id);
+    console.log('[DEBUG] Update data:', updateData);
+    console.log('[DEBUG] User:', { userId, userRole });
+
     // Primero verificamos si el usuario tiene permisos para editar este producto
     const producto = await productService.getProductById(id);
     if (!producto) {
+      console.log('[DEBUG] Producto no encontrado');
       return res.status(404).json({ message: 'Producto no encontrado' });
     }
 
+    console.log('[DEBUG] Producto encontrado:', {
+      id: producto._id,
+      nombre: producto.nombre,
+      creatorRole: producto.creatorInfo?.role
+    });
+
     // Verificar permisos
     if (userRole !== 'super_admin' && producto.creatorInfo?.role === 'super_admin') {
+      console.log('[DEBUG] Sin permisos para editar producto de super_admin');
       return res.status(403).json({ message: 'No tienes permiso para editar este producto' });
     }
 
-    const updatedProduct = await productService.updateProduct(id, {
-      ...updateData,
-      updatedAt: new Date()
-    });
+    const updatedProduct = await productService.updateProduct(id, updateData);
 
+    console.log('[DEBUG] Producto actualizado exitosamente');
     res.json(updatedProduct);
   } catch (error) {
-    console.error('Error al actualizar producto:', error);
+    console.error('[ERROR] PUT /api/productos/:id - Error al actualizar producto:', error);
     const status = error.status || 500;
     const message = error.message || 'Error al actualizar el producto';
-    res.status(status).json({ message });
+    res.status(status).json({ 
+      message,
+      error: error.details || error.message
+    });
   }
 });
 

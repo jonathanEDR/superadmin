@@ -11,9 +11,8 @@ const productoSchema = new mongoose.Schema({
   codigoProducto: {
     type: String,
     required: true,
-    unique: true,
     trim: true,
-    index: true
+    index: true // Índice normal para búsquedas, NO único
   },
   nombre: {
     type: String,
@@ -24,7 +23,7 @@ const productoSchema = new mongoose.Schema({
   categoryId: {
     type: mongoose.Schema.Types.ObjectId,
     ref: 'Category',
-    required: false,
+    required: true, // Ahora es requerido para el índice compuesto
     index: true
   },
   categoryName: {
@@ -35,7 +34,7 @@ const productoSchema = new mongoose.Schema({
   catalogoProductoId: {
     type: mongoose.Schema.Types.ObjectId,
     ref: 'CatalogoProducto',
-    required: false,
+    required: true, // Ahora es requerido para el índice compuesto
     index: true
   },
   precio: {
@@ -107,6 +106,15 @@ const productoSchema = new mongoose.Schema({
   toJSON: { virtuals: true }, // Incluir campos virtuales en JSON
   toObject: { virtuals: true }
 });
+
+// Índice compuesto único: mismo producto solo puede estar una vez por categoría
+productoSchema.index(
+  { catalogoProductoId: 1, categoryId: 1 }, 
+  { 
+    unique: true,
+    name: 'catalogoProducto_categoria_unique'
+  }
+);
 
 // Campo virtual para creatorInfo (compatibilidad con frontend)
 productoSchema.virtual('creatorInfo').get(function() {
