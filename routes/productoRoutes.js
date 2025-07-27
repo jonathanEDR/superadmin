@@ -2,7 +2,20 @@ const express = require('express');
 const router = express.Router();
 const productService = require('../services/productService');
 const { authenticate, requireAdmin, requireUser } = require('../middleware/authenticate');
+const { getCleanupStats, manualCleanup, checkAndClean } = require('../middleware/autoCleanupMiddleware');
 
+// === RUTAS DE AUTO-LIMPIEZA ===
+
+// Obtener estadísticas de auto-limpieza
+router.get('/cleanup/stats', authenticate, requireAdmin, getCleanupStats);
+
+// Ejecutar limpieza manual
+router.post('/cleanup/manual', authenticate, requireAdmin, manualCleanup);
+
+// Verificar y limpiar si es necesario
+router.post('/cleanup/check', authenticate, requireAdmin, checkAndClean);
+
+// === RUTAS PRINCIPALES ===
 // Ruta para obtener todos los productos (accesible para todos los usuarios autenticados)
 router.get('/', authenticate, requireUser, async (req, res) => {
   try {
@@ -34,32 +47,33 @@ router.get('/:id', authenticate, requireUser, async (req, res) => {
 // Ruta para agregar un producto (admin y super_admin)
 router.post('/', authenticate, requireAdmin, async (req, res) => {
   try {
-    console.log('\n🚨 === RUTA PRODUCTOS LLAMADA (POSIBLE ERROR) ===');
-    console.log('📍 URL completa:', req.originalUrl);
+    console.log('\n� === CREANDO NUEVO PRODUCTO ===');
+    console.log('📍 URL:', req.originalUrl);
     console.log('📍 Método:', req.method);
-    console.log('📍 Esta ruta NO debería llamarse para inventario!');
-    console.log('[DEBUG] POST /api/productos - Request body:', req.body);
-    console.log('[DEBUG] POST /api/productos - User:', req.user);
+    console.log('📍 Body:', req.body);
+    console.log('📍 Usuario:', {
+      id: req.user.clerk_id,
+      email: req.user.email,
+      role: req.user.role
+    });
     
     const { precio, cantidad, creatorName, creatorEmail, categoryId, catalogoProductoId } = req.body;
+    
     // Validar campos requeridos
     if (!precio || !cantidad || !categoryId || !catalogoProductoId) {
-      console.error('[DEBUG] POST /api/productos - Missing required fields:', {
-        precio: !precio ? 'Missing' : 'OK',
-        cantidad: !cantidad ? 'Missing' : 'OK',
-        categoryId: !categoryId ? 'Missing' : 'OK',
-        catalogoProductoId: !catalogoProductoId ? 'Missing' : 'OK'
-      });
+      const missingFields = {
+        precio: !precio ? 'El precio es requerido' : null,
+        cantidad: !cantidad ? 'La cantidad es requerida' : null,
+        categoryId: !categoryId ? 'La categoría es requerida' : null,
+        catalogoProductoId: !catalogoProductoId ? 'El producto de catálogo es requerido' : null
+      };
+      console.error('❌ Campos faltantes:', missingFields);
       return res.status(400).json({ 
         message: 'Faltan campos requeridos',
-        details: {
-          precio: !precio ? 'El precio es requerido' : null,
-          cantidad: !cantidad ? 'La cantidad es requerida' : null,
-          categoryId: !categoryId ? 'La categoría es requerida' : null,
-          catalogoProductoId: !catalogoProductoId ? 'El producto de catálogo es requerido' : null
-        }
+        details: missingFields
       });
     }
+
     const userId = req.user.clerk_id;
     const creatorId = req.user.clerk_id;
     const creatorRole = req.user.role;
@@ -76,42 +90,53 @@ router.post('/', authenticate, requireAdmin, async (req, res) => {
       creatorEmail: creatorEmail || req.user.email
     };
 
-    console.log('[DEBUG] POST /api/productos - Product data to create:', productData);
-
     const nuevoProducto = await productService.createProducto(productData);
-
-    console.log('[DEBUG] POST /api/productos - Product created successfully:', nuevoProducto);
+    
     res.status(201).json(nuevoProducto);
   } catch (error) {
-    console.error('[ERROR] POST /api/productos - Error creating product:', error);
-    console.error('[ERROR] POST /api/productos - Error stack:', error.stack);
     
     // Manejar errores específicos del servicio
     if (error.status) {
       return res.status(error.status).json({ 
         message: error.message,
+        error: error.message,
+        details: error.details
+      });
+    }
+    
+    // Manejar error específico de duplicado (fallback)
+    if (error.message && (error.message.includes('Ya existe') || error.message.includes('duplicate'))) {
+      return res.status(409).json({ 
+        message: error.message,
         error: error.message 
       });
     }
     
-    // Manejar error específico de duplicado
-    if (error.message && error.message.includes('Ya existe un producto con este nombre')) {
-      return res.status(409).json({ 
-        message: 'Ya existe un producto con este nombre',
-        error: error.message 
-      });
-    }
-    // Manejar error de mongoose unique
+    // Manejar error de mongoose unique (fallback)
     if (error.code === 11000) {
+      // Verificar si es error por índice compuesto
+      const keyPattern = error.keyPattern || {};
+      if (keyPattern.catalogoProductoId && keyPattern.categoryId) {
+        return res.status(409).json({ 
+          message: 'Ya existe este producto en esta categoría',
+          error: 'Producto duplicado en categoría'
+        });
+      }
+      
+      // Otros errores de clave duplicada
+      const field = Object.keys(error.keyValue || {})[0] || 'campo';
+      const value = error.keyValue ? error.keyValue[field] : 'valor';
+      
       return res.status(409).json({ 
-        message: 'Ya existe un producto con este nombre',
-        error: 'Duplicate key error'
+        message: `Ya existe un elemento con ${field}: '${value}'`,
+        error: 'Elemento duplicado'
       });
     }
+    
+    // Error genérico
     res.status(500).json({ 
-      message: 'Error al crear el producto', 
-      error: error.message,
-      details: error.stack
+      message: 'Error interno del servidor al crear el producto', 
+      error: error.message
     });
   }
 });
@@ -150,36 +175,22 @@ router.put('/:id', authenticate, requireAdmin, async (req, res) => {
   const userRole = req.user.role;
 
   try {
-    console.log('[DEBUG] PUT /api/productos/:id - Iniciando actualización');
-    console.log('[DEBUG] Product ID:', id);
-    console.log('[DEBUG] Update data:', updateData);
-    console.log('[DEBUG] User:', { userId, userRole });
 
     // Primero verificamos si el usuario tiene permisos para editar este producto
     const producto = await productService.getProductById(id);
     if (!producto) {
-      console.log('[DEBUG] Producto no encontrado');
       return res.status(404).json({ message: 'Producto no encontrado' });
     }
 
-    console.log('[DEBUG] Producto encontrado:', {
-      id: producto._id,
-      nombre: producto.nombre,
-      creatorRole: producto.creatorInfo?.role
-    });
-
     // Verificar permisos
     if (userRole !== 'super_admin' && producto.creatorInfo?.role === 'super_admin') {
-      console.log('[DEBUG] Sin permisos para editar producto de super_admin');
       return res.status(403).json({ message: 'No tienes permiso para editar este producto' });
     }
 
     const updatedProduct = await productService.updateProduct(id, updateData);
 
-    console.log('[DEBUG] Producto actualizado exitosamente');
     res.json(updatedProduct);
   } catch (error) {
-    console.error('[ERROR] PUT /api/productos/:id - Error al actualizar producto:', error);
     const status = error.status || 500;
     const message = error.message || 'Error al actualizar el producto';
     res.status(status).json({ 

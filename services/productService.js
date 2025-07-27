@@ -1,5 +1,6 @@
 const Producto = require('../models/Producto');
 const Category = require('../models/Category');
+const autoCleanupService = require('./autoCleanupService');
 
 // Función auxiliar para normalizar el nombre
 const normalizarNombre = (nombre) => nombre.trim().toLowerCase();
@@ -23,8 +24,49 @@ const productService = {
 
   // Crear un nuevo producto
   async createProducto(productData) {
+    const maxRetries = 2;
+    let attempt = 0;
+
+    while (attempt <= maxRetries) {
+      try {
+        attempt++;
+        console.log(`[productService] createProducto - Intento ${attempt}/${maxRetries + 1}`);
+
+        // Verificación preventiva de duplicados antes de crear
+        if (attempt === 1) {
+          await autoCleanupService.checkAndCleanIfNeeded();
+        }
+
+        return await this._createProductoInternal(productData);
+
+      } catch (error) {
+        console.error(`[productService] Error en intento ${attempt}:`, error.message);
+
+        // Si es error de clave duplicada y no es el último intento
+        if (autoCleanupService.isDuplicateKeyError(error) && attempt <= maxRetries) {
+          console.log(`[productService] 🚨 Error de duplicado detectado, ejecutando auto-limpieza...`);
+          
+          try {
+            // Ejecutar auto-limpieza
+            await autoCleanupService.handleDuplicateError(error);
+            console.log(`[productService] ✅ Auto-limpieza completada, reintentando...`);
+            continue; // Continuar con el siguiente intento
+          } catch (cleanupError) {
+            console.error('[productService] ❌ Auto-limpieza falló:', cleanupError.message);
+            throw new Error(`Error de duplicado y auto-limpieza falló: ${cleanupError.message}`);
+          }
+        }
+
+        // Si no es error de duplicado o es el último intento, lanzar error
+        throw error;
+      }
+    }
+  },
+
+  // Función interna para crear producto (sin retry logic)
+  async _createProductoInternal(productData) {
     try {
-      console.log('[productService] createProducto called with:', productData);
+      console.log('[productService] _createProductoInternal - Iniciando creación:', productData);
 
       // Buscar el producto del catálogo
       const CatalogoProducto = require('../models/CatalogoProducto');
@@ -43,45 +85,36 @@ const productService = {
       const nombreNormalizado = normalizarNombre(catalogoProducto.nombre);
       const codigoProducto = catalogoProducto.codigoproducto || catalogoProducto.codigoProducto || catalogoProducto.codigo;
       
-      console.log('[DEBUG] Información del catálogo:', {
+      console.log('[productService] Información del catálogo:', {
         id: catalogoProducto._id,
         nombre: catalogoProducto.nombre,
         codigoproducto: catalogoProducto.codigoproducto,
-        codigoProducto: catalogoProducto.codigoProducto,
-        codigo: catalogoProducto.codigo,
         codigoFinal: codigoProducto
       });
       
       if (!codigoProducto) {
-        console.error('[ERROR] Producto de catálogo sin código:', {
-          id: catalogoProducto._id,
-          nombre: catalogoProducto.nombre,
-          campos: Object.keys(catalogoProducto.toObject())
-        });
+        console.error('[productService] Producto de catálogo sin código:', catalogoProducto);
         throw { status: 400, message: `El producto '${catalogoProducto.nombre}' no tiene código asignado en el catálogo` };
       }
       
-      // NUEVA LÓGICA: Validar que no exista la misma combinación catalogoProductoId + categoryId
-      const productoExistente = await Producto.findOne({ 
+      // VALIDACIÓN MEJORADA: Verificar duplicados SOLO por catálogo+categoría
+      console.log('[productService] Verificando duplicados...');
+      
+      // Verificar por combinación catálogo + categoría (esta es la única validación necesaria)
+      const productoPorCombinacion = await Producto.findOne({ 
         catalogoProductoId: productData.catalogoProductoId,
         categoryId: productData.categoryId 
       });
       
-      if (productoExistente) {
+      if (productoPorCombinacion) {
+        console.log('[productService] Producto existente con misma combinación:', productoPorCombinacion);
         throw { 
           status: 409, 
-          message: `El producto '${catalogoProducto.nombre}' ya existe en la categoría '${categoria.nombre}'`
+          message: `Ya existe este producto en esta categoría. Producto existente: '${productoPorCombinacion.nombre}' con código '${productoPorCombinacion.codigoProducto}'` 
         };
       }
 
-      console.log('[DEBUG] Creando producto con nueva lógica:', {
-        nombre: nombreNormalizado,
-        codigoProducto,
-        categoryId: categoria._id,
-        categoryName: categoria.nombre,
-        catalogoProductoId: productData.catalogoProductoId,
-        mensaje: 'PERMITIDO: Mismo código en diferentes categorías'
-      });
+      console.log('[productService] Validaciones pasadas, creando producto...');
 
       const producto = new Producto({
         ...productData,
@@ -92,25 +125,46 @@ const productService = {
         categoryName: categoria.nombre
       });
 
-      console.log('[DEBUG] Guardando producto en base de datos...');
+      console.log('[productService] Guardando producto en base de datos...');
       const productoGuardado = await producto.save();
-      console.log('[DEBUG] Producto guardado exitosamente:', productoGuardado._id);
+      console.log('[productService] Producto guardado exitosamente:', productoGuardado._id);
       
       return productoGuardado;
     } catch (error) {
-      console.error('[ERROR] Error detallado en createProducto:', error);
+      console.error('[productService] Error detallado en _createProductoInternal:', error);
       
-      // Manejar error específico del índice compuesto
-      if (error.code === 11000 && error.message.includes('catalogoProducto_categoria_unique')) {
-        const catalogoProducto = await CatalogoProducto.findById(productData.catalogoProductoId);
-        const categoria = await Category.findById(productData.categoryId);
-        throw { 
-          status: 409, 
-          message: `El producto '${catalogoProducto?.nombre || 'desconocido'}' ya existe en la categoría '${categoria?.nombre || 'desconocida'}'`
-        };
+      // Manejar errores específicos de MongoDB
+      if (error.code === 11000) {
+        // Error de clave duplicada - verificar si es por el índice compuesto
+        const keyPattern = error.keyPattern || {};
+        
+        if (keyPattern.catalogoProductoId && keyPattern.categoryId) {
+          // Error por el índice compuesto catalogoProducto_categoria_unique
+          throw { 
+            status: 409, 
+            message: 'Ya existe este producto en esta categoría',
+            code: 11000
+          };
+        } else {
+          // Otros errores de clave duplicada
+          const field = Object.keys(error.keyValue || {})[0];
+          const value = error.keyValue ? error.keyValue[field] : 'desconocido';
+          
+          console.error('[productService] Error de clave duplicada:', { field, value });
+          
+          // Crear error con información completa para auto-cleanup
+          const duplicateError = new Error(`E11000 duplicate key error collection: productos index: ${field}_1 dup key: { ${field}: "${value}" }`);
+          duplicateError.code = 11000;
+          duplicateError.keyValue = error.keyValue || { [field]: value };
+          throw duplicateError;
+        }
       }
       
-      throw error.status ? error : { status: 500, message: 'Error al crear el producto', details: error.message };
+      throw error.status ? error : { 
+        status: 500, 
+        message: 'Error al crear el producto', 
+        details: error.message 
+      };
     }
   },
 
