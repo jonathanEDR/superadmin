@@ -49,37 +49,23 @@ router.post('/migrate-data', authenticate, async (req, res) => {
 // Obtener todos los registros de gestión personal según el rol del usuario
 router.get('/', authenticate, async (req, res) => {
   try {    
-    const userId = req.user.clerk_id; // Usar clerk_id en lugar de _id
-    const userRole = req.user.role; // Obtener el rol del usuario
-    
-    console.log('Buscando registros para userId (clerk_id):', userId, 'con rol:', userRole); // Debug
+    const userId = req.user.clerk_id;
+    const userRole = req.user.role;
     
     let query = {};
     
     // Lógica basada en roles
     if (userRole === 'super_admin') {
-      // Super Admin ve TODOS los registros del sistema
       query = {};
-      console.log('Super Admin: obteniendo TODOS los registros');
     } else if (userRole === 'admin') {
-      // Admin ve TODOS los registros del sistema
       query = {};
-      console.log('Admin: obteniendo TODOS los registros');
     } else {
-      // Users normales solo ven registros donde ellos son el colaborador
       query = { colaboradorUserId: userId };
-      console.log('User: obteniendo solo registros como colaborador');
     }
     
     // Obtener TODOS los registros (sin paginación para calcular totales correctos)
     const registros = await GestionPersonal.find(query)
       .sort({ fechaDeGestion: -1 });
-      
-    console.log('Registros encontrados:', registros.length); // Debug
-    if (registros.length > 0) {
-      console.log('Primer registro:', registros[0]); // Debug
-      console.log('UserId del primer registro:', registros[0].userId); // Debug
-    }
     
     // Devolver todos los registros (la paginación se manejará en el frontend)
     res.json(registros);
@@ -92,43 +78,96 @@ router.get('/', authenticate, async (req, res) => {
 // Obtener todos los colaboradores según el rol del usuario
 router.get('/colaboradores', authenticate, async (req, res) => {
   try {
-    const userId = req.user.clerk_id; // Usar clerk_id en lugar de _id
-    const userRole = req.user.role; // Obtener el rol del usuario
+    const userId = req.user.clerk_id;
+    const userRole = req.user.role;
     
     let query = {};
-      // Lógica basada en roles
+    
+    // Lógica basada en roles
     if (userRole === 'super_admin') {
-      // Super Admin ve todos los usuarios activos (incluyendo a sí mismo)
       query = {
         is_active: true
       };
-      console.log('Super Admin: obteniendo TODOS los colaboradores (incluyendo super_admin)');    } else if (userRole === 'admin') {
-      // Admin ve todos los usuarios excepto super_admin
+    } else if (userRole === 'admin') {
       query = {
         role: { $ne: 'super_admin' },
         is_active: true
       };
-      console.log('Admin: obteniendo colaboradores (admin y user)');
     } else {
-      // Users normales no deberían acceder a esta ruta, pero por seguridad
       query = {
         clerk_id: { $ne: userId },
         role: 'user',
         is_active: true
       };
-      console.log('User: acceso limitado a colaboradores');
     }
     
     const colaboradores = await User.find(query, 'clerk_id nombre_negocio email role sueldo departamento');
     
-    console.log('Colaboradores encontrados:', colaboradores.length); // Debug
-    if (colaboradores.length > 0) {
-      console.log('Primer colaborador:', colaboradores[0]); // Debug
-    }    
     res.json(colaboradores);
   } catch (error) {
     console.error('Error al obtener colaboradores:', error);
     res.status(500).json({ message: 'Error al obtener colaboradores' });
+  }
+});
+
+// Obtener resumen de cobros para todos los colaboradores
+router.get('/cobros-resumen', authenticate, async (req, res) => {
+  try {
+    // Obtener todos los colaboradores activos (todos los roles excepto inactivos)
+    const colaboradores = await User.find({ 
+      is_active: true,
+      role: { $in: ['user', 'admin', 'super_admin'] }
+    }, 'clerk_id nombre_negocio role');
+    
+    // Obtener resumen de cobros para cada colaborador usando función CORREGIDA (como GestionPersonalList)
+    const resumenTodos = {
+      resumen: {
+        totalFaltantes: 0,
+        totalGastosImprevistos: 0,
+        cobrosDetalle: []
+      }
+    };
+    
+    for (const colaborador of colaboradores) {
+      try {
+        const resumenColaborador = await integracionService.obtenerResumenCobrosColaboradorCorregido(
+          colaborador.clerk_id
+        );
+        
+        if (resumenColaborador) {
+          // Sumar totales
+          resumenTodos.resumen.totalFaltantes += resumenColaborador.totalFaltantes || 0;
+          resumenTodos.resumen.totalGastosImprevistos += resumenColaborador.totalGastosImprevistos || 0;
+          
+          // Agregar detalles de cobros con información del colaborador
+          if (resumenColaborador.cobrosDetalle) {
+            const cobrosConColaborador = resumenColaborador.cobrosDetalle.map(cobro => ({
+              ...cobro,
+              colaboradorUserId: colaborador.clerk_id,
+              vendedorUserId: colaborador.clerk_id,
+              colaboradorNombre: colaborador.nombre_negocio
+            }));
+            resumenTodos.resumen.cobrosDetalle.push(...cobrosConColaborador);
+          }
+        }
+      } catch (err) {
+        // Error silencioso para evitar spam de logs
+      }
+    }
+    
+    res.json({
+      success: true,
+      ...resumenTodos,
+      totalColaboradores: colaboradores.length,
+      timestamp: new Date().toISOString()
+    });
+  } catch (error) {
+    console.error('Error al obtener resumen de cobros para todos:', error);
+    res.status(500).json({ 
+      success: false,
+      message: 'Error al obtener resumen de cobros', 
+      error: error.message 
+    });
   }
 });
 
@@ -177,8 +216,7 @@ router.get('/mis-registros', authenticate, async (req, res) => {
 // Crear nuevo registro de gestión personal
 router.post('/', authenticate, async (req, res) => {
   try {
-    const userId = req.user.clerk_id; // Usar clerk_id en lugar de _id
-    console.log('Creando registro para userId (clerk_id):', userId); // Debug
+    const userId = req.user.clerk_id;
     const {
       colaboradorUserId,
       fechaDeGestion,
@@ -186,7 +224,7 @@ router.post('/', authenticate, async (req, res) => {
       monto = 0,
       faltante = 0,
       adelanto = 0,
-      incluirDatosCobros = false // Nuevo flag para activar integración automática
+      incluirDatosCobros = false
     } = req.body;
 
     // Validaciones
@@ -208,8 +246,9 @@ router.post('/', authenticate, async (req, res) => {
           message: `El campo ${campo} debe ser un número válido mayor o igual a 0`
         });
       }
-    }    // Obtener información completa del colaborador
-    // Permitir que Super Admin se registre a sí mismo
+    }
+
+    // Obtener información completa del colaborador
     const colaborador = await User.findOne({
       clerk_id: colaboradorUserId,
       is_active: true
@@ -231,7 +270,7 @@ router.post('/', authenticate, async (req, res) => {
       monto: parseFloat(monto) || 0,
       faltante: parseFloat(faltante) || 0,
       adelanto: parseFloat(adelanto) || 0,
-      incluirDatosCobros, // Pasar el flag al servicio
+      incluirDatosCobros,
       colaboradorInfo: {
         nombre: colaborador.nombre_negocio || 'Sin nombre',
         email: colaborador.email,
@@ -240,10 +279,8 @@ router.post('/', authenticate, async (req, res) => {
       }
     };
 
-    // Crear registro usando el servicio (que maneja automáticamente la integración si se solicita)
+    // Crear registro usando el servicio
     const nuevoRegistro = await gestionService.crearRegistro(datosRegistro);
-    
-    console.log('Registro creado:', nuevoRegistro); // Debug
 
     res.status(201).json(nuevoRegistro);
   } catch (error) {

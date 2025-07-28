@@ -219,8 +219,10 @@ const obtenerEstadisticasColaboradorConCobros = async (userId, colaboradorUserId
         },
         totalFaltantesConCobros: estadisticasBasicas.totalFaltantes + resumenCobros.totalFaltantes,
         totalGastosConCobros: estadisticasBasicas.totalGastos + resumenCobros.totalGastosImprevistos,
+        // FÓRMULA SIMPLIFICADA (igual que el calendario): pagos diarios - faltantes de cobros - adelantos
+        // NO incluimos gastos en el cálculo total a pagar
         totalAPagarConCobros: estadisticasBasicas.totalPagosDiarios - 
-          (estadisticasBasicas.totalFaltantes + resumenCobros.totalFaltantes + estadisticasBasicas.totalAdelantos)
+          (resumenCobros.totalFaltantes + estadisticasBasicas.totalAdelantos)
       };
       
     } catch (cobroError) {

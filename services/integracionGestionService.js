@@ -11,15 +11,10 @@ const GestionPersonal = require('../models/GestionPersonal');
 // VERSIÓN FINAL: Solo busca ventas del colaborador como PROPIETARIO y sus cobros relacionados
 const obtenerResumenCobrosColaboradorCorregido = async (colaboradorUserId) => {
   try {
-    console.log('🔍 Obteniendo resumen CORREGIDO para colaborador:', colaboradorUserId);
-    
     // PASO 1: Buscar SOLO las ventas donde el colaborador es PROPIETARIO (userId)
-    // NO consideramos creatorId porque el colaborador puede registrar ventas de otros
     const ventas = await Venta.find({ 
-      userId: colaboradorUserId  // Solo ventas donde ES EL PROPIETARIO
+      userId: colaboradorUserId
     }).select('_id montoTotal fechadeVenta userId');
-    
-    console.log(`📊 Ventas donde ${colaboradorUserId} es PROPIETARIO: ${ventas.length}`);
     
     if (ventas.length === 0) {
       return {
@@ -34,17 +29,11 @@ const obtenerResumenCobrosColaboradorCorregido = async (colaboradorUserId) => {
     }
     
     const ventasIds = ventas.map(venta => venta._id);
-    console.log(`🔗 IDs de ventas del propietario ${colaboradorUserId}:`, 
-                ventasIds.slice(0, 3).map(id => id.toString()), 
-                ventasIds.length > 3 ? `... y ${ventasIds.length - 3} más` : '');
     
     // PASO 2: Buscar SOLO cobros que tienen relación con las ventas del colaborador
-    // NO importa quién creó el cobro (creatorId), solo las ventas relacionadas
     const cobros = await Cobro.find({ 
-      ventasId: { $in: ventasIds }  // Solo cobros relacionados con SUS ventas
+      ventasId: { $in: ventasIds }
     }).sort({ fechaCobro: -1 });
-    
-    console.log(`💰 Cobros relacionados con ventas de ${colaboradorUserId}: ${cobros.length}`);
     
     if (cobros.length === 0) {
       return {
