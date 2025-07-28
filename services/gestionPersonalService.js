@@ -15,28 +15,102 @@ const crearRegistro = async (data) => {
     colaboradorUserId, // Clerk ID del colaborador
     fechaDeGestion,
     descripcion,
-    monto,
+    monto = 0,
     faltante = 0,
     adelanto = 0,
     pagodiario = 0,
-    diasLaborados = 1
+    diasLaborados = 1,
+    colaboradorInfo,
+    cobrosRelacionados = [],
+    datosSugeridos = false,
+    fuenteDatos = 'manual',
+    incluirDatosCobros = false // Nuevo flag para incluir datos automáticos
   } = data;
 
   if (!userId) {
     throw new Error('userId es requerido');
   }
 
-  // Buscar al colaborador (usuario)
-  const colaborador = await User.findOne({
-    clerk_id: colaboradorUserId,
-    role: { $ne: 'super_admin' },
-    is_active: true
-  });
-  if (!colaborador) {
-    throw new Error('Colaborador no encontrado');
+  // Buscar al colaborador (usuario) si no se proporciona la info
+  let infoColaborador = colaboradorInfo;
+  if (!infoColaborador) {
+    const colaborador = await User.findOne({
+      clerk_id: colaboradorUserId,
+      is_active: true
+    });
+    if (!colaborador) {
+      throw new Error('Colaborador no encontrado');
+    }
+    
+    infoColaborador = {
+      nombre: colaborador.nombre_negocio,
+      email: colaborador.email,
+      sueldo: colaborador.sueldo,
+      departamento: colaborador.departamento
+    };
   }
 
   const fechaDeGestionUtc = convertirFechaALocalUtc(fechaDeGestion);
+
+  // Variables para los montos finales
+  let montoFinal = parsearNumero(monto);
+  let faltanteFinal = parsearNumero(faltante);
+  let cobrosRelacionadosFinal = cobrosRelacionados;
+  let fuenteDatosFinal = fuenteDatos;
+
+  // Si se solicita incluir datos de cobros automáticamente
+  if (incluirDatosCobros) {
+    try {
+      const integracionService = require('./integracionGestionService');
+      
+      console.log(`🔍 Obteniendo datos automáticos para ${colaboradorUserId} con función CORREGIDA...`);
+      
+      // Usar la función CORREGIDA que relaciona ventas → cobros correctamente
+      // Esta función busca las ventas del colaborador y luego los cobros relacionados
+      const resumenCobros = await integracionService.obtenerResumenCobrosColaboradorCorregido(
+        colaboradorUserId
+      );
+
+      console.log(`� Resultados para ${colaboradorUserId}:`);
+      console.log(`   - Ventas encontradas: ${resumenCobros.totalVentas}`);
+      console.log(`   - Cobros relacionados: ${resumenCobros.totalCobros}`);
+      console.log(`   - Total faltantes: ${resumenCobros.totalFaltantes}`);
+      console.log(`   - Total gastos: ${resumenCobros.totalGastosImprevistos}`);
+
+      // Agregar faltantes y gastos automáticamente
+      if (resumenCobros.totalFaltantes > 0 || resumenCobros.totalGastosImprevistos > 0) {
+        montoFinal += resumenCobros.totalGastosImprevistos;
+        faltanteFinal += resumenCobros.totalFaltantes;
+        
+        // Agregar referencias a cobros con más detalle
+        cobrosRelacionadosFinal = resumenCobros.cobrosDetalle.map(cobro => ({
+          cobroId: cobro.cobroId,
+          montoFaltante: cobro.faltantes,
+          montoGastoImprevisto: cobro.gastosImprevistos,
+          tipoRelacion: cobro.tipoRelacion,
+          fechaCobro: cobro.fechaCobro
+        }));
+
+        fuenteDatosFinal = 'automatico_cobros';
+        
+        console.log(`✅ Datos automáticos agregados para ${colaboradorUserId}:`, {
+          gastosImprevistos: resumenCobros.totalGastosImprevistos,
+          faltantes: resumenCobros.totalFaltantes,
+          cobrosRelacionados: cobrosRelacionadosFinal.length,
+          ventasRelacionadas: resumenCobros.totalVentas
+        });
+      } else {
+        console.log(`ℹ️ No se encontraron faltantes ni gastos para ${colaboradorUserId}:`);
+        console.log(`   - Total de ventas analizadas: ${resumenCobros.totalVentas}`);
+        console.log(`   - Total de cobros analizados: ${resumenCobros.totalCobros}`);
+      }
+
+    } catch (error) {
+      console.warn('⚠️ No se pudieron obtener datos automáticos de cobros:', error.message);
+      console.warn('   Continuando con el registro manual...');
+      // Continuar con el registro manual
+    }
+  }
 
   // Crear el nuevo registro de gestión personal
   const nuevoRegistro = new GestionPersonal({
@@ -44,11 +118,15 @@ const crearRegistro = async (data) => {
     colaboradorUserId,
     fechaDeGestion: fechaDeGestionUtc,
     descripcion: descripcion.trim(),
-    monto: parsearNumero(monto),
-    faltante: parsearNumero(faltante),
+    monto: montoFinal,
+    faltante: faltanteFinal,
     adelanto: parsearNumero(adelanto),
     pagodiario: parsearNumero(pagodiario, 0),
-    diasLaborados: parseInt(diasLaborados) || 1
+    diasLaborados: parseInt(diasLaborados) || 1,
+    colaboradorInfo: infoColaborador,
+    cobrosRelacionados: cobrosRelacionadosFinal,
+    datosSugeridos: incluirDatosCobros,
+    fuenteDatos: fuenteDatosFinal
   });
 
   await nuevoRegistro.save();
@@ -108,6 +186,57 @@ const obtenerEstadisticasColaborador = async (userId, colaboradorUserId) => {
   }
 };
 
+// NUEVA FUNCIÓN: Obtener estadísticas mejoradas con datos automáticos de cobros
+const obtenerEstadisticasColaboradorConCobros = async (userId, colaboradorUserId) => {
+  try {
+    console.log(`🔍 Obteniendo estadísticas mejoradas para colaborador: ${colaboradorUserId}`);
+    
+    // Obtener estadísticas básicas de registros manuales
+    const estadisticasBasicas = await obtenerEstadisticasColaborador(userId, colaboradorUserId);
+    
+    // Obtener datos automáticos de cobros usando la función corregida
+    try {
+      const integracionService = require('./integracionGestionService');
+      const resumenCobros = await integracionService.obtenerResumenCobrosColaboradorCorregido(
+        colaboradorUserId
+      );
+      
+      console.log(`📊 Datos de cobros para ${colaboradorUserId}:`, {
+        ventas: resumenCobros.totalVentas,
+        cobros: resumenCobros.totalCobros,
+        faltantes: resumenCobros.totalFaltantes,
+        gastos: resumenCobros.totalGastosImprevistos
+      });
+      
+      return {
+        ...estadisticasBasicas,
+        cobrosAutomaticos: {
+          totalVentas: resumenCobros.totalVentas,
+          totalCobros: resumenCobros.totalCobros,
+          faltantesPendientes: resumenCobros.totalFaltantes,
+          gastosPendientes: resumenCobros.totalGastosImprevistos,
+          mensaje: resumenCobros.mensaje
+        },
+        totalFaltantesConCobros: estadisticasBasicas.totalFaltantes + resumenCobros.totalFaltantes,
+        totalGastosConCobros: estadisticasBasicas.totalGastos + resumenCobros.totalGastosImprevistos,
+        totalAPagarConCobros: estadisticasBasicas.totalPagosDiarios - 
+          (estadisticasBasicas.totalFaltantes + resumenCobros.totalFaltantes + estadisticasBasicas.totalAdelantos)
+      };
+      
+    } catch (cobroError) {
+      console.warn(`⚠️ No se pudieron obtener datos automáticos de cobros para ${colaboradorUserId}:`, cobroError.message);
+      return {
+        ...estadisticasBasicas,
+        cobrosAutomaticos: null,
+        advertencia: 'No se pudieron obtener datos automáticos de cobros'
+      };
+    }
+    
+  } catch (error) {
+    throw new Error('Error al calcular estadísticas mejoradas: ' + error.message);
+  }
+};
+
 // Actualizar registro existente
 const actualizarRegistro = async (userId, registroId, datosActualizados) => {
   try {
@@ -157,5 +286,6 @@ module.exports = {
   crearRegistro,
   obtenerRegistrosPorColaborador,
   obtenerEstadisticasColaborador,
+  obtenerEstadisticasColaboradorConCobros,
   actualizarRegistro
 };

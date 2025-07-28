@@ -52,6 +52,35 @@ const gestionPersonalSchema = new mongoose.Schema({
     email: String,
     sueldo: Number,
     departamento: String
+  },
+
+  // Referencias a cobros relacionados (opcional)
+  cobrosRelacionados: [{
+    cobroId: {
+      type: mongoose.Schema.Types.ObjectId,
+      ref: 'Cobro'
+    },
+    montoFaltante: {
+      type: Number,
+      default: 0
+    },
+    montoGastoImprevisto: {
+      type: Number,
+      default: 0
+    }
+  }],
+
+  // Indicador si los datos fueron sugeridos automáticamente
+  datosSugeridos: {
+    type: Boolean,
+    default: false
+  },
+
+  // Notas sobre la fuente de los datos
+  fuenteDatos: {
+    type: String,
+    enum: ['manual', 'automatico_cobros', 'mixto'],
+    default: 'manual'
   }
 
 }, {

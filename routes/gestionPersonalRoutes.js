@@ -3,6 +3,7 @@ const router = express.Router();
 const { obtenerFechaActual, convertirFechaAFechaLocal, convertirFechaALocalUtc } = require('../utils/fechaHoraUtils');
 const { authenticate } = require('../middleware/authenticate');
 const gestionService = require('../services/gestionPersonalService');
+const integracionService = require('../services/integracionGestionService');
 const GestionPersonal = require('../models/GestionPersonal');
 const User = require('../models/User');
 
@@ -184,7 +185,8 @@ router.post('/', authenticate, async (req, res) => {
       descripcion,
       monto = 0,
       faltante = 0,
-      adelanto = 0
+      adelanto = 0,
+      incluirDatosCobros = false // Nuevo flag para activar integración automática
     } = req.body;
 
     // Validaciones
@@ -229,15 +231,17 @@ router.post('/', authenticate, async (req, res) => {
       monto: parseFloat(monto) || 0,
       faltante: parseFloat(faltante) || 0,
       adelanto: parseFloat(adelanto) || 0,
+      incluirDatosCobros, // Pasar el flag al servicio
       colaboradorInfo: {
         nombre: colaborador.nombre_negocio || 'Sin nombre',
         email: colaborador.email,
         sueldo: colaborador.sueldo || 0,
         departamento: colaborador.departamento || 'ventas'
       }
-    };    // Crear registro (pago diario se calcula automáticamente)
-    const nuevoRegistro = new GestionPersonal(datosRegistro);
-    await nuevoRegistro.save();
+    };
+
+    // Crear registro usando el servicio (que maneja automáticamente la integración si se solicita)
+    const nuevoRegistro = await gestionService.crearRegistro(datosRegistro);
     
     console.log('Registro creado:', nuevoRegistro); // Debug
 
@@ -314,6 +318,35 @@ router.get('/colaborador/:colaboradorId/estadisticas', authenticate, async (req,
     console.error('Error al obtener estadísticas:', error);
     res.status(500).json({ 
       message: 'Error al obtener estadísticas',
+      error: error.message 
+    });
+  }
+});
+
+// NUEVA RUTA: Obtener estadísticas mejoradas con datos automáticos de cobros
+router.get('/colaborador/:colaboradorId/estadisticas-mejoradas', authenticate, async (req, res) => {
+  try {
+    const userId = req.user.clerk_id;
+    const { colaboradorId } = req.params;
+
+    console.log(`🔍 Obteniendo estadísticas mejoradas para colaborador: ${colaboradorId}`);
+
+    const estadisticasMejoradas = await gestionService.obtenerEstadisticasColaboradorConCobros(
+      userId, 
+      colaboradorId
+    );
+    
+    res.json({
+      success: true,
+      colaboradorId,
+      estadisticas: estadisticasMejoradas,
+      timestamp: new Date().toISOString()
+    });
+  } catch (error) {
+    console.error('Error al obtener estadísticas mejoradas:', error);
+    res.status(500).json({ 
+      success: false,
+      message: 'Error al obtener estadísticas mejoradas',
       error: error.message 
     });
   }
@@ -422,6 +455,218 @@ router.get('/resumen/:colaboradorUserId', async (req, res) => {
   } catch (error) {
     console.error('Error al obtener resumen de colaborador:', error);
     res.status(500).json({ message: 'Error al obtener resumen', error: error.message });
+  }
+});
+
+// ====== NUEVO ENDPOINT: DIAGNÓSTICO DE RELACIONES ======
+
+// Diagnóstico completo de la relación Ventas → Cobros → Gestión Personal
+router.get('/diagnostico/:colaboradorUserId', authenticate, async (req, res) => {
+  try {
+    const { colaboradorUserId } = req.params;
+    
+    console.log('🔍 Iniciando diagnóstico para colaborador:', colaboradorUserId);
+    
+    const diagnostico = await integracionService.diagnosticarRelacionVentasCobrosGestion(
+      colaboradorUserId
+    );
+    
+    res.json({
+      success: true,
+      colaboradorUserId,
+      diagnostico,
+      timestamp: new Date().toISOString(),
+      mensaje: 'Diagnóstico completado exitosamente'
+    });
+  } catch (error) {
+    console.error('❌ Error en diagnóstico:', error);
+    res.status(500).json({ 
+      success: false,
+      message: 'Error al realizar diagnóstico', 
+      error: error.message 
+    });
+  }
+});
+
+// ====== ENDPOINTS PARA INTEGRACIÓN CON COBROS ======
+
+// Obtener resumen de cobros (faltantes y gastos) de un colaborador - VERSIÓN CORREGIDA
+router.get('/cobros-resumen/:colaboradorUserId', authenticate, async (req, res) => {
+  try {
+    const { colaboradorUserId } = req.params;
+    const { fechaInicio, fechaFin, metodo = 'corregido' } = req.query;
+    
+    console.log(`🔍 Obteniendo resumen de cobros para: ${colaboradorUserId} (método: ${metodo})`);
+    
+    let resumen;
+    
+    // Usar el método corregido por defecto
+    if (metodo === 'corregido' || !metodo) {
+      resumen = await integracionService.obtenerResumenCobrosColaboradorCorregido(
+        colaboradorUserId
+      );
+    } else if (metodo === 'original') {
+      resumen = await integracionService.obtenerResumenCobrosColaborador(
+        colaboradorUserId,
+        fechaInicio,
+        fechaFin
+      );
+    } else if (metodo === 'simple') {
+      resumen = await integracionService.obtenerResumenCobrosColaboradorSimple(
+        colaboradorUserId
+      );
+    } else {
+      return res.status(400).json({
+        message: 'Método no válido. Use: corregido, original, o simple'
+      });
+    }
+    
+    res.json({
+      success: true,
+      metodoUsado: metodo === 'corregido' || !metodo ? 'corregido' : metodo,
+      colaboradorUserId,
+      resumen,
+      timestamp: new Date().toISOString()
+    });
+  } catch (error) {
+    console.error('Error al obtener resumen de cobros:', error);
+    res.status(500).json({ 
+      success: false,
+      message: 'Error al obtener resumen de cobros', 
+      error: error.message 
+    });
+  }
+});
+
+// Obtener datos sugeridos para crear un nuevo registro de gestión
+router.get('/datos-sugeridos/:colaboradorUserId', authenticate, async (req, res) => {
+  try {
+    const { colaboradorUserId } = req.params;
+    const { fechaGestion } = req.query;
+    
+    if (!fechaGestion) {
+      return res.status(400).json({ 
+        message: 'La fecha de gestión es requerida' 
+      });
+    }
+    
+    console.log('Obteniendo datos sugeridos para:', colaboradorUserId, 'fecha:', fechaGestion);
+    
+    const datosSugeridos = await integracionService.obtenerDatosSugeridosGestion(
+      colaboradorUserId,
+      fechaGestion
+    );
+    
+    res.json(datosSugeridos);
+  } catch (error) {
+    console.error('Error al obtener datos sugeridos:', error);
+    res.status(500).json({ 
+      message: 'Error al obtener datos sugeridos', 
+      error: error.message 
+    });
+  }
+});
+
+// Obtener historial completo de un colaborador (ventas, cobros, gestión)
+router.get('/historial-completo/:colaboradorUserId', authenticate, async (req, res) => {
+  try {
+    const { colaboradorUserId } = req.params;
+    const { limite } = req.query;
+    
+    console.log('Obteniendo historial completo para:', colaboradorUserId);
+    
+    const historial = await integracionService.obtenerHistorialCompletoColaborador(
+      colaboradorUserId,
+      limite ? parseInt(limite) : 50
+    );
+    
+    res.json(historial);
+  } catch (error) {
+    console.error('Error al obtener historial completo:', error);
+    res.status(500).json({ 
+      message: 'Error al obtener historial completo', 
+      error: error.message 
+    });
+  }
+});
+
+// Crear registro con datos sugeridos automáticamente
+router.post('/crear-con-sugerencias', authenticate, async (req, res) => {
+  try {
+    const userId = req.user.clerk_id;
+    const {
+      colaboradorUserId,
+      fechaDeGestion,
+      usarDatosSugeridos = true,
+      descripcionPersonalizada,
+      montoAdicional = 0,
+      faltanteAdicional = 0,
+      adelantoAdicional = 0
+    } = req.body;
+
+    console.log('Creando registro con sugerencias para:', colaboradorUserId);
+
+    // Obtener datos sugeridos
+    const datosSugeridos = await integracionService.obtenerDatosSugeridosGestion(
+      colaboradorUserId,
+      fechaDeGestion
+    );
+
+    // Verificar si ya existe un registro para esta fecha
+    if (datosSugeridos.registroExistente) {
+      return res.status(400).json({
+        message: 'Ya existe un registro para esta fecha',
+        registroExistente: datosSugeridos.registroExistente
+      });
+    }
+
+    // Preparar datos para el nuevo registro
+    const datosRegistro = {
+      userId,
+      colaboradorUserId,
+      fechaDeGestion,
+      descripcion: descripcionPersonalizada || datosSugeridos.datosSugeridos.descripcionSugerida,
+      monto: montoAdicional,
+      faltante: usarDatosSugeridos ? 
+        (datosSugeridos.datosSugeridos.faltante + faltanteAdicional) : 
+        faltanteAdicional,
+      adelanto: adelantoAdicional,
+      pagodiario: datosSugeridos.datosSugeridos.pagodiario,
+      colaboradorInfo: {
+        nombre: datosSugeridos.colaborador.nombre,
+        email: datosSugeridos.colaborador.email,
+        sueldo: datosSugeridos.colaborador.sueldo,
+        departamento: datosSugeridos.colaborador.departamento
+      },
+      datosSugeridos: usarDatosSugeridos,
+      fuenteDatos: usarDatosSugeridos ? 'automatico_cobros' : 'manual'
+    };
+
+    // Si se usaron datos sugeridos, agregar referencias a cobros
+    if (usarDatosSugeridos && datosSugeridos.resumenCobros.cobrosDetalle.length > 0) {
+      datosRegistro.cobrosRelacionados = datosSugeridos.resumenCobros.cobrosDetalle.map(cobro => ({
+        cobroId: cobro.cobroId,
+        montoFaltante: cobro.faltantes,
+        montoGastoImprevisto: cobro.gastosImprevistos
+      }));
+    }
+
+    // Crear el registro usando el servicio existente
+    const nuevoRegistro = await gestionService.crearRegistro(datosRegistro);
+
+    res.status(201).json({
+      message: 'Registro creado exitosamente con datos sugeridos',
+      registro: nuevoRegistro,
+      datosSugeridos: datosSugeridos.datosSugeridos,
+      resumenCobros: datosSugeridos.resumenCobros
+    });
+
+  } catch (error) {
+    console.error('Error al crear registro con sugerencias:', error);
+    res.status(500).json({ 
+      message: 'Error al crear registro con sugerencias', 
+      error: error.message 
+    });
   }
 });
 
