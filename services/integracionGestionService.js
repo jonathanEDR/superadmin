@@ -58,9 +58,15 @@ const obtenerResumenCobrosColaboradorCorregido = async (colaboradorUserId) => {
       };
     }
     
-    // PASO 3: Calcular totales acumulados de faltantes y gastos
+    // PASO 3: Mapear cobros con fechas de venta específicas
     let totalFaltantes = 0;
     let totalGastosImprevistos = 0;
+    
+    // Crear mapa de ventas para acceso rápido
+    const ventasMap = {};
+    ventas.forEach(venta => {
+      ventasMap[venta._id.toString()] = venta;
+    });
     
     const cobrosDetalle = cobros.map(cobro => {
       const faltantes = Number(cobro.faltantes) || 0;
@@ -69,7 +75,17 @@ const obtenerResumenCobrosColaboradorCorregido = async (colaboradorUserId) => {
       totalFaltantes += faltantes;
       totalGastosImprevistos += gastos;
       
-      console.log(`   📝 Cobro ${cobro._id}: Faltantes=${faltantes}, Gastos=${gastos}, CreadorCobro=${cobro.creatorId}, VentasIds=${cobro.ventasId?.length || 0}`);
+      // Obtener fechas de venta relacionadas
+      const ventasRelacionadas = (cobro.ventasId || []).map(ventaId => {
+        const venta = ventasMap[ventaId.toString()];
+        return venta ? {
+          ventaId: venta._id,
+          fechaVenta: venta.fechadeVenta,
+          montoVenta: venta.montoTotal
+        } : null;
+      }).filter(Boolean);
+      
+      console.log(`   📝 Cobro ${cobro._id}: Faltantes=${faltantes}, Gastos=${gastos}, VentasRelacionadas=${ventasRelacionadas.length}`);
       
       return {
         cobroId: cobro._id,
@@ -79,8 +95,8 @@ const obtenerResumenCobrosColaboradorCorregido = async (colaboradorUserId) => {
         descripcion: cobro.descripcion || '',
         montoPagado: cobro.montoPagado || 0,
         creadorCobro: cobro.creatorId,
-        ventasRelacionadas: cobro.ventasId || [],
-        tipoRelacion: 'venta_propietario' // El colaborador es propietario de las ventas
+        ventasRelacionadas: ventasRelacionadas, // INCLUYE FECHAS DE VENTA
+        tipoRelacion: 'venta_propietario'
       };
     });
     
