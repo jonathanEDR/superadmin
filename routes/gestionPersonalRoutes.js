@@ -389,6 +389,120 @@ router.get('/colaborador/:colaboradorId/estadisticas-mejoradas', authenticate, a
   }
 });
 
+// 🚀 NUEVA RUTA OPTIMIZADA: Obtener estadísticas para múltiples colaboradores en paralelo
+router.get('/estadisticas-bulk', authenticate, async (req, res) => {
+  try {
+    const userId = req.user.clerk_id;
+    const userRole = req.user.role;
+    const { colaboradorIds } = req.query;
+    
+    console.log('🔍 Obteniendo estadísticas bulk para múltiples colaboradores...');
+    
+    let idsParaProcesar = [];
+    
+    if (colaboradorIds) {
+      // Si se especifican IDs específicos
+      idsParaProcesar = colaboradorIds.split(',').filter(id => id.trim());
+    } else {
+      // Si no se especifican, obtener todos los colaboradores según el rol
+      let query = {};
+      
+      if (userRole === 'super_admin') {
+        query = { is_active: true };
+      } else if (userRole === 'admin') {
+        query = { role: { $ne: 'super_admin' }, is_active: true };
+      } else {
+        query = { clerk_id: { $ne: userId }, role: 'user', is_active: true };
+      }
+      
+      const colaboradores = await User.find(query, 'clerk_id');
+      idsParaProcesar = colaboradores.map(c => c.clerk_id);
+    }
+    
+    if (idsParaProcesar.length === 0) {
+      return res.json({
+        success: true,
+        resultados: [],
+        totalProcesados: 0,
+        exitosos: 0,
+        conErrores: 0,
+        mensaje: 'No hay colaboradores para procesar'
+      });
+    }
+    
+    console.log(`📊 Procesando ${idsParaProcesar.length} colaboradores en paralelo...`);
+    
+    // 🚀 OPTIMIZACIÓN: Ejecutar todas las estadísticas en paralelo
+    const promesasEstadisticas = idsParaProcesar.map(async (colaboradorId) => {
+      try {
+        const estadisticas = await gestionService.obtenerEstadisticasColaboradorConCobros(
+          userId, 
+          colaboradorId
+        );
+        
+        return { 
+          colaboradorId, 
+          estadisticas, 
+          success: true,
+          error: null
+        };
+      } catch (error) {
+        console.warn(`⚠️ Error al obtener estadísticas para ${colaboradorId}:`, error.message);
+        
+        // Fallback: intentar estadísticas básicas
+        try {
+          const estadisticasBasicas = await gestionService.obtenerEstadisticasColaborador(
+            userId, 
+            colaboradorId
+          );
+          
+          return { 
+            colaboradorId, 
+            estadisticas: estadisticasBasicas, 
+            success: true,
+            error: null,
+            fallback: true
+          };
+        } catch (fallbackError) {
+          return { 
+            colaboradorId, 
+            estadisticas: null, 
+            success: false,
+            error: fallbackError.message
+          };
+        }
+      }
+    });
+    
+    // Ejecutar todas las promesas en paralelo
+    const resultados = await Promise.all(promesasEstadisticas);
+    
+    const exitosos = resultados.filter(r => r.success).length;
+    const conErrores = resultados.filter(r => !r.success).length;
+    const conFallback = resultados.filter(r => r.fallback).length;
+    
+    console.log(`✅ Estadísticas bulk completadas: ${exitosos} exitosos, ${conErrores} con errores, ${conFallback} con fallback`);
+    
+    res.json({
+      success: true,
+      resultados,
+      totalProcesados: resultados.length,
+      exitosos,
+      conErrores,
+      conFallback,
+      tiempoRespuesta: new Date().toISOString()
+    });
+    
+  } catch (error) {
+    console.error('❌ Error al obtener estadísticas bulk:', error);
+    res.status(500).json({ 
+      success: false,
+      message: 'Error al obtener estadísticas bulk',
+      error: error.message 
+    });
+  }
+});
+
 // Actualizar registro existente
 router.put('/:id', authenticate, async (req, res) => {
   try {
