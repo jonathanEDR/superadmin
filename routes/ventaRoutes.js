@@ -235,6 +235,145 @@ async function deleteVentaService(id, userId) {
 
 // ===== RUTAS CRUD PRINCIPALES =====
 
+// 📊 Endpoint optimizado para gráficos - obtener ventas por rango de fechas
+router.get('/graficos', authenticate, requireUser, async (req, res) => {
+  const userId = req.user.clerk_id;
+  const userRole = req.user.role;
+  
+  try {
+    const { startDate, endDate, timeFilter } = req.query;
+    
+    // Validar parámetros de fecha
+    if (!startDate || !endDate) {
+      return res.status(400).json({ 
+        message: 'Los parámetros startDate y endDate son requeridos' 
+      });
+    }
+
+    const start = new Date(startDate);
+    const end = new Date(endDate);
+    
+    if (isNaN(start.getTime()) || isNaN(end.getTime())) {
+      return res.status(400).json({ 
+        message: 'Formato de fecha inválido. Use formato ISO (YYYY-MM-DDTHH:mm:ss.sssZ)' 
+      });
+    }
+
+    // Construir query basado en el rol y rango de fechas
+    let query = {
+      fechadeVenta: {
+        $gte: start,
+        $lt: end
+      }
+    };
+    
+    if (!canModifyAllVentas(userRole)) {
+      query.userId = userId;
+    }
+
+    console.log('🗓️ Query para gráficos:', {
+      timeFilter,
+      query,
+      startDate: start.toISOString(),
+      endDate: end.toISOString()
+    });
+
+    // Obtener solo las ventas necesarias con populate optimizado
+    const ventas = await Venta.find(query)
+      .populate({
+        path: 'productos.productoId',
+        select: 'nombre precio', // Solo campos necesarios
+      })
+      .select('fechadeVenta productos montoTotal cantidadVendida estadoPago completionStatus') // Solo campos necesarios
+      .sort({ fechadeVenta: 1 }) // Ordenar por fecha ascendente
+      .lean(); // Usar lean() para mejor performance
+
+    console.log(`📊 Ventas encontradas para gráficos: ${ventas.length}`);
+
+    res.json({
+      ventas,
+      totalVentas: ventas.length,
+      rangoFechas: {
+        inicio: start.toISOString(),
+        fin: end.toISOString()
+      }
+    });
+  } catch (error) {
+    console.error('Error al obtener ventas para gráficos:', error);
+    res.status(500).json({ message: 'Error al obtener ventas para gráficos' });
+  }
+});
+
+// 📊 Nuevo endpoint específico para gráfico de productos vendidos
+router.get('/productos-vendidos', authenticate, requireUser, async (req, res) => {
+  const userId = req.user.clerk_id;
+  const userRole = req.user.role;
+  
+  try {
+    const { startDate, endDate, timeFilter } = req.query;
+    
+    // Validar parámetros de fecha
+    if (!startDate || !endDate) {
+      return res.status(400).json({ 
+        message: 'Los parámetros startDate y endDate son requeridos' 
+      });
+    }
+
+    const start = new Date(startDate);
+    const end = new Date(endDate);
+    
+    if (isNaN(start.getTime()) || isNaN(end.getTime())) {
+      return res.status(400).json({ 
+        message: 'Formato de fecha inválido. Use formato ISO (YYYY-MM-DDTHH:mm:ss.sssZ)' 
+      });
+    }
+
+    // Construir query basado en el rol y rango de fechas
+    let query = {
+      fechadeVenta: {
+        $gte: start,
+        $lt: end
+      }
+      // ✅ SIN filtros de estado - para mostrar TODAS las ventas como productos vendidos
+    };
+    
+    if (!canModifyAllVentas(userRole)) {
+      query.userId = userId;
+    }
+
+    console.log('🗓️ Query para productos vendidos:', {
+      timeFilter,
+      query,
+      startDate: start.toISOString(),
+      endDate: end.toISOString()
+    });
+
+    // Obtener solo las ventas necesarias con populate optimizado
+    const ventas = await Venta.find(query)
+      .populate({
+        path: 'productos.productoId',
+        select: 'nombre precio', // Solo campos necesarios
+      })
+      .select('fechadeVenta productos montoTotal cantidadVendida estadoPago completionStatus') // Solo campos necesarios
+      .sort({ fechadeVenta: 1 }) // Ordenar por fecha ascendente
+      .lean(); // Usar lean() para mejor performance
+
+    console.log(`� Ventas encontradas para productos vendidos: ${ventas.length}`);
+
+    res.json({
+      ventas,
+      totalVentas: ventas.length,
+      rangoFechas: {
+        inicio: start.toISOString(),
+        fin: end.toISOString()
+      }
+    });
+  } catch (error) {
+    console.error('Error al obtener ventas para productos vendidos:', error);
+    res.status(500).json({ message: 'Error al obtener ventas para productos vendidos' });
+  }
+});
+
 // Obtener ventas (filtradas por rol)
 router.get('/', authenticate, requireUser, async (req, res) => {
   const userId = req.user.clerk_id;
