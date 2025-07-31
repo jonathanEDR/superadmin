@@ -15,10 +15,75 @@ class CajaService {
   }
 
   // Obtener saldo actual
-  static async obtenerSaldoActual(userId) {
+  static async obtenerSaldoActual(userId, userRole = 'user') {
     try {
+      let query = { userId };
+      
+      // Si es admin o super_admin, obtener el saldo consolidado de todos los usuarios
+      if (['admin', 'super_admin'].includes(userRole)) {
+        query = {}; // Sin filtro de userId para ver todos los movimientos
+      }
+      
+      // Para admin/super_admin, calcular saldo consolidado con filtro de duplicados
+      if (['admin', 'super_admin'].includes(userRole)) {
+        const todosMovimientos = await MovimientoCaja.find({}).sort({ fecha: 1, createdAt: 1 });
+        
+        // Aplicar el mismo filtro de duplicados que en obtenerMovimientos
+        const movimientosFiltrados = [];
+        const pagosPersonalesVistos = new Map();
+
+        for (const movimiento of todosMovimientos) {
+          if (movimiento.categoria === 'pago_personal') {
+            // Crear una clave única basada en colaboradorNombre, monto y fecha
+            const fechaStr = new Date(movimiento.fecha).toISOString().split('T')[0];
+            const claveUnica = `${movimiento.colaboradorNombre || 'sin_nombre'}_${movimiento.monto}_${fechaStr}`;
+            
+            if (!pagosPersonalesVistos.has(claveUnica)) {
+              // Primera vez que vemos este pago personal
+              pagosPersonalesVistos.set(claveUnica, movimiento);
+              movimientosFiltrados.push(movimiento);
+            } else {
+              // Ya existe un movimiento similar
+              const movimientoExistente = pagosPersonalesVistos.get(claveUnica);
+              
+              // Priorizar el que tiene referenciaModelo 'PagoRealizado'
+              if (movimiento.referenciaModelo === 'PagoRealizado' && 
+                  movimientoExistente.referenciaModelo !== 'PagoRealizado') {
+                
+                // Reemplazar el movimiento existente en el array filtrado
+                const indiceExistente = movimientosFiltrados.findIndex(m => {
+                  const fechaExistenteStr = new Date(m.fecha).toISOString().split('T')[0];
+                  const claveExistente = `${m.colaboradorNombre || 'sin_nombre'}_${m.monto}_${fechaExistenteStr}`;
+                  return claveExistente === claveUnica;
+                });
+                
+                if (indiceExistente !== -1) {
+                  movimientosFiltrados[indiceExistente] = movimiento;
+                  pagosPersonalesVistos.set(claveUnica, movimiento);
+                }
+              }
+            }
+          } else {
+            // No es pago personal, agregar normalmente
+            movimientosFiltrados.push(movimiento);
+          }
+        }
+        
+        // Calcular saldo con movimientos filtrados
+        let saldoConsolidado = 0;
+        movimientosFiltrados.forEach(mov => {
+          if (mov.tipo === 'ingreso') {
+            saldoConsolidado += mov.monto;
+          } else {
+            saldoConsolidado -= mov.monto;
+          }
+        });
+        
+        return saldoConsolidado;
+      }
+      
       const ultimoMovimiento = await MovimientoCaja
-        .findOne({ userId })
+        .findOne(query)
         .sort({ fecha: -1, createdAt: -1 });
       
       return ultimoMovimiento ? ultimoMovimiento.saldoActual : 0;
@@ -29,33 +94,80 @@ class CajaService {
   }
 
   // Obtener resumen de la caja
-  static async obtenerResumenCaja(userId, periodo = 'day') {
+  static async obtenerResumenCaja(userId, periodo = 'day', userRole = 'user') {
     try {
       const fechaInicio = this.calcularFechaInicio(periodo);
       
       // Obtener saldo actual
-      const saldoActual = await this.obtenerSaldoActual(userId);
+      const saldoActual = await this.obtenerSaldoActual(userId, userRole);
+      
+      // Configurar query según el rol
+      let movimientosQuery = {
+        fecha: { $gte: fechaInicio }
+      };
+      
+      // Solo filtrar por userId si no es admin o super_admin
+      if (!['admin', 'super_admin'].includes(userRole)) {
+        movimientosQuery.userId = userId;
+      }
       
       // Obtener movimientos del período
-      const movimientos = await MovimientoCaja.find({
-        userId,
-        fecha: { $gte: fechaInicio }
-      }).sort({ fecha: -1 });
+      const movimientos = await MovimientoCaja.find(movimientosQuery).sort({ fecha: -1 });
 
-      // Calcular totales del período
-      const totalIngresos = movimientos
+      // Para admin y super_admin, aplicar filtro de duplicados también aquí
+      let movimientosFiltrados = movimientos;
+      if (['admin', 'super_admin'].includes(userRole)) {
+        const movimientosFiltradosArray = [];
+        const pagosPersonalesVistos = new Map();
+
+        for (const movimiento of movimientos) {
+          if (movimiento.categoria === 'pago_personal') {
+            const fechaStr = new Date(movimiento.fecha).toISOString().split('T')[0];
+            const claveUnica = `${movimiento.colaboradorNombre || 'sin_nombre'}_${movimiento.monto}_${fechaStr}`;
+            
+            if (!pagosPersonalesVistos.has(claveUnica)) {
+              pagosPersonalesVistos.set(claveUnica, movimiento);
+              movimientosFiltradosArray.push(movimiento);
+            } else {
+              const movimientoExistente = pagosPersonalesVistos.get(claveUnica);
+              
+              if (movimiento.referenciaModelo === 'PagoRealizado' && 
+                  movimientoExistente.referenciaModelo !== 'PagoRealizado') {
+                
+                const indiceExistente = movimientosFiltradosArray.findIndex(m => {
+                  const fechaExistenteStr = new Date(m.fecha).toISOString().split('T')[0];
+                  const claveExistente = `${m.colaboradorNombre || 'sin_nombre'}_${m.monto}_${fechaExistenteStr}`;
+                  return claveExistente === claveUnica;
+                });
+                
+                if (indiceExistente !== -1) {
+                  movimientosFiltradosArray[indiceExistente] = movimiento;
+                  pagosPersonalesVistos.set(claveUnica, movimiento);
+                }
+              }
+            }
+          } else {
+            movimientosFiltradosArray.push(movimiento);
+          }
+        }
+        
+        movimientosFiltrados = movimientosFiltradosArray;
+      }
+
+      // Calcular totales del período con movimientos filtrados
+      const totalIngresos = movimientosFiltrados
         .filter(m => m.tipo === 'ingreso')
         .reduce((sum, m) => sum + m.monto, 0);
       
-      const totalEgresos = movimientos
+      const totalEgresos = movimientosFiltrados
         .filter(m => m.tipo === 'egreso')
         .reduce((sum, m) => sum + m.monto, 0);
 
-      // Agrupar por categoría
+      // Agrupar por categoría con movimientos filtrados
       const ingresosPorCategoria = {};
       const egresosPorCategoria = {};
       
-      movimientos.forEach(mov => {
+      movimientosFiltrados.forEach(mov => {
         if (mov.tipo === 'ingreso') {
           ingresosPorCategoria[mov.categoria] = (ingresosPorCategoria[mov.categoria] || 0) + mov.monto;
         } else {
@@ -68,10 +180,10 @@ class CajaService {
         totalIngresos,
         totalEgresos,
         flujoNeto: totalIngresos - totalEgresos,
-        cantidadMovimientos: movimientos.length,
+        cantidadMovimientos: movimientosFiltrados.length,
         ingresosPorCategoria,
         egresosPorCategoria,
-        movimientosRecientes: movimientos.slice(0, 10)
+        movimientosRecientes: movimientosFiltrados.slice(0, 10)
       };
     } catch (error) {
       console.error('Error al obtener resumen de caja:', error);
@@ -80,9 +192,14 @@ class CajaService {
   }
 
   // Obtener movimientos con filtros
-  static async obtenerMovimientos(userId, filtros = {}) {
+  static async obtenerMovimientos(userId, filtros = {}, userRole = 'user') {
     try {
-      const query = { userId };
+      let query = {};
+      
+      // Solo filtrar por userId si no es admin o super_admin
+      if (!['admin', 'super_admin'].includes(userRole)) {
+        query.userId = userId;
+      }
       
       if (filtros.tipo) query.tipo = filtros.tipo;
       if (filtros.categoria) query.categoria = filtros.categoria;
@@ -103,6 +220,62 @@ class CajaService {
           .limit(limit),
         MovimientoCaja.countDocuments(query)
       ]);
+
+      // Para admin y super_admin, filtrar duplicados de pagos personales
+      if (['admin', 'super_admin'].includes(userRole)) {
+        const movimientosFiltrados = [];
+        const pagosPersonalesVistos = new Map();
+
+        for (const movimiento of movimientos) {
+          if (movimiento.categoria === 'pago_personal') {
+            // Crear una clave única basada en colaboradorNombre, monto y fecha
+            const fechaStr = new Date(movimiento.fecha).toISOString().split('T')[0]; // Solo la fecha, sin hora
+            const claveUnica = `${movimiento.colaboradorNombre || 'sin_nombre'}_${movimiento.monto}_${fechaStr}`;
+            
+            if (!pagosPersonalesVistos.has(claveUnica)) {
+              // Primera vez que vemos este pago personal
+              pagosPersonalesVistos.set(claveUnica, movimiento);
+              movimientosFiltrados.push(movimiento);
+            } else {
+              // Ya existe un movimiento similar
+              const movimientoExistente = pagosPersonalesVistos.get(claveUnica);
+              
+              // Priorizar el que tiene referenciaModelo 'PagoRealizado'
+              if (movimiento.referenciaModelo === 'PagoRealizado' && 
+                  movimientoExistente.referenciaModelo !== 'PagoRealizado') {
+                
+                // Reemplazar el movimiento existente en el array filtrado
+                const indiceExistente = movimientosFiltrados.findIndex(m => {
+                  const fechaExistenteStr = new Date(m.fecha).toISOString().split('T')[0];
+                  const claveExistente = `${m.colaboradorNombre || 'sin_nombre'}_${m.monto}_${fechaExistenteStr}`;
+                  return claveExistente === claveUnica;
+                });
+                
+                if (indiceExistente !== -1) {
+                  movimientosFiltrados[indiceExistente] = movimiento;
+                  pagosPersonalesVistos.set(claveUnica, movimiento);
+                }
+              }
+              // Si el actual es 'Gasto' o el existente ya es 'PagoRealizado', ignorar el actual
+            }
+          } else {
+            // No es pago personal, agregar normalmente
+            movimientosFiltrados.push(movimiento);
+          }
+        }
+
+        console.log(`Filtrados ${movimientos.length} movimientos a ${movimientosFiltrados.length}`);
+        
+        return {
+          movimientos: movimientosFiltrados,
+          pagination: {
+            currentPage: page,
+            totalPages: Math.ceil(total / limit),
+            totalItems: total,
+            itemsPerPage: limit
+          }
+        };
+      }
 
       return {
         movimientos,
@@ -184,7 +357,7 @@ class CajaService {
   }
 
   // Obtener estadísticas rápidas
-  static async obtenerEstadisticasRapidas(userId) {
+  static async obtenerEstadisticasRapidas(userId, userRole = 'user') {
     try {
       const hoy = new Date();
       const inicioMes = new Date(hoy.getFullYear(), hoy.getMonth(), 1);
@@ -192,9 +365,9 @@ class CajaService {
       inicioSemana.setDate(hoy.getDate() - hoy.getDay());
 
       const [saldoActual, estadisticasMes, estadisticasSemana] = await Promise.all([
-        this.obtenerSaldoActual(userId),
-        this.obtenerResumenCaja(userId, 'month'),
-        this.obtenerResumenCaja(userId, 'week')
+        this.obtenerSaldoActual(userId, userRole),
+        this.obtenerResumenCaja(userId, 'month', userRole),
+        this.obtenerResumenCaja(userId, 'week', userRole)
       ]);
 
       return {
