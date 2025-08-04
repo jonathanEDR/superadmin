@@ -42,6 +42,13 @@ const inventarioRoutes = require('./routes/inventarioRoutes');
 const inventarioProductoRoutes = require('./routes/inventarioProductoRoutes');
 const debugRoutes = require('./routes/debugRoutes');
 
+// Rutas del módulo de finanzas
+const finanzasRoutes = require('./routes/finanzasRoutes');
+const cuentasBancariasRoutes = require('./routes/cuentasBancariasRoutes');
+const prestamosRoutes = require('./routes/prestamosRoutes');
+const pagosFinanciamientoRoutes = require('./routes/pagosFinanciamientoRoutes');
+const garantiasRoutes = require('./routes/garantiasRoutes');
+
 const app = express();
 const port = process.env.PORT || 5000;
 
@@ -165,6 +172,15 @@ app.use('/api/estadisticas', estadisticasRoutes);
 app.use('/api/categories', categoryRoutes);
 app.use('/api/inventario', inventarioRoutes);
 app.use('/api/inventario-producto', inventarioProductoRoutes);
+
+// Rutas del módulo de finanzas
+console.log('💰 Registrando rutas de finanzas...');
+app.use('/api/finanzas', finanzasRoutes);
+app.use('/api/cuentas-bancarias', cuentasBancariasRoutes);
+app.use('/api/prestamos', prestamosRoutes);
+app.use('/api/pagos-financiamiento', pagosFinanciamientoRoutes);
+app.use('/api/garantias', garantiasRoutes);
+console.log('✅ Módulo de finanzas registrado exitosamente');
 
 // Ruta de debug (solo en desarrollo)
 if (process.env.NODE_ENV !== 'production') {
