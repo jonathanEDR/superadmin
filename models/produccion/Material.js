@@ -10,8 +10,7 @@ const materialSchema = new mongoose.Schema({
     productoReferencia: {
         type: mongoose.Schema.Types.ObjectId,
         ref: 'CatalogoProduccion',
-        required: true,
-        index: true
+        required: true
     },
     // Tipo de material: solo 'catalogo'
     tipoMaterial: {
