@@ -102,7 +102,12 @@ const authenticate = async (req, res, next) => {
         is_active: user.is_active
       };
 
-      console.log('Usuario autenticado:', req.user);
+      console.log('🔐 Usuario autenticado exitosamente:', {
+        _id: req.user._id,
+        id: req.user.id,
+        email: req.user.email,
+        nombre_negocio: req.user.nombre_negocio
+      });
       next();
     } catch (dbError) {
       console.error('Error en la base de datos:', dbError);
