@@ -1,7 +1,7 @@
-const PagoFinanciamiento = require('../models/finanzas/PagoFinanciamiento');
-const Prestamo = require('../models/finanzas/Prestamo');
-const CuentaBancaria = require('../models/finanzas/CuentaBancaria');
-const MovimientoBancario = require('../models/finanzas/MovimientoBancario');
+const PagoFinanciamiento = require('../../models/finanzas/PagoFinanciamiento');
+const Prestamo = require('../../models/finanzas/Prestamo');
+const CuentaBancaria = require('../../models/finanzas/CuentaBancaria');
+const MovimientoBancario = require('../../models/finanzas/MovimientoBancario');
 
 class PagosFinanciamientoService {
     /**

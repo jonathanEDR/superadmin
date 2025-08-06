@@ -18,8 +18,8 @@ const prestamoSchema = new mongoose.Schema({
     estado: {
         type: String,
         required: true,
-        enum: ['solicitado', 'aprobado', 'desembolsado', 'activo', 'vencido', 'cancelado', 'rechazado'],
-        default: 'solicitado'
+        enum: ['aprobado', 'cancelado'], // ✅ Solo dos estados: aprobado y cancelado
+        default: 'aprobado' // ✅ Auto-aprobación: todo préstamo nuevo es aprobado
     },
     // Datos financieros
     montoSolicitado: {
@@ -258,31 +258,75 @@ prestamoSchema.index({ createdAt: -1 });
 
 // Middleware para generar código automático
 prestamoSchema.pre('save', async function(next) {
-    if (this.isNew && !this.codigo) {
-        const ultimoPrestamo = await this.constructor.findOne(
-            { userId: this.userId },
-            {},
-            { sort: { codigo: -1 } }
-        );
+    try {
+        if (this.isNew && !this.codigo) {
+            console.log('🔧 Generando código para nuevo préstamo, userId:', this.userId);
+            
+            const ultimoPrestamo = await this.constructor.findOne(
+                { userId: this.userId },
+                {},
+                { sort: { codigo: -1 } }
+            );
+            
+            let numeroSecuencial = 1;
+            if (ultimoPrestamo && ultimoPrestamo.codigo) {
+                console.log('📋 Último préstamo encontrado:', ultimoPrestamo.codigo);
+                const match = ultimoPrestamo.codigo.match(/PREST(\d+)$/);
+                if (match) {
+                    numeroSecuencial = parseInt(match[1]) + 1;
+                }
+            }
+            
+            this.codigo = `PREST${numeroSecuencial.toString().padStart(3, '0')}`;
+            console.log('✅ Código generado:', this.codigo);
+        }
         
-        let numeroSecuencial = 1;
-        if (ultimoPrestamo && ultimoPrestamo.codigo) {
-            const match = ultimoPrestamo.codigo.match(/PREST(\d+)$/);
-            if (match) {
-                numeroSecuencial = parseInt(match[1]) + 1;
+        // Asegurar que siempre tenga un código (fallback)
+        if (!this.codigo) {
+            const timestamp = Date.now().toString().slice(-6);
+            this.codigo = `PREST${timestamp}`;
+            console.log('🔄 Código fallback generado:', this.codigo);
+        }
+        
+        // ✅ AUTO-APROBACIÓN: Establecer datos de aprobación automáticamente
+        if (this.isNew) {
+            console.log('🎯 Auto-aprobando nuevo préstamo...');
+            
+            // Establecer monto aprobado igual al solicitado
+            if (!this.montoAprobado && this.montoSolicitado) {
+                this.montoAprobado = this.montoSolicitado;
+                console.log('💰 Monto aprobado automáticamente:', this.montoAprobado);
+            }
+            
+            // Establecer fecha de aprobación
+            if (!this.fechaAprobacion) {
+                this.fechaAprobacion = new Date();
+                console.log('📅 Fecha de aprobación establecida:', this.fechaAprobacion);
+            }
+            
+            // Establecer saldo pendiente
+            if (this.montoAprobado && this.saldoPendiente === 0) {
+                this.saldoPendiente = this.montoAprobado;
+                console.log('💳 Saldo pendiente establecido:', this.saldoPendiente);
             }
         }
         
-        this.codigo = `PREST${numeroSecuencial.toString().padStart(3, '0')}`;
+        // Calcular fecha de vencimiento si no existe
+        if (this.isNew && this.fechaDesembolso && !this.fechaVencimiento) {
+            const fechaVenc = new Date(this.fechaDesembolso);
+            fechaVenc.setMonth(fechaVenc.getMonth() + this.plazoMeses);
+            this.fechaVencimiento = fechaVenc;
+        }
+        
+        next();
+    } catch (error) {
+        console.error('❌ Error en middleware de código:', error);
+        // Generar código de emergencia
+        const timestamp = Date.now().toString().slice(-6);
+        this.codigo = `PREST${timestamp}`;
+        console.log('🚨 Código de emergencia generado:', this.codigo);
+        next();
     }
-    
-    // Calcular fecha de vencimiento si no existe
-    if (this.isNew && this.fechaDesembolso && !this.fechaVencimiento) {
-        const fechaVenc = new Date(this.fechaDesembolso);
-        fechaVenc.setMonth(fechaVenc.getMonth() + this.plazoMeses);
-        this.fechaVencimiento = fechaVenc;
-    }
-    
     // Establecer saldo pendiente igual al monto aprobado si es nuevo
     if (this.isNew && this.montoAprobado && this.saldoPendiente === 0) {
         this.saldoPendiente = this.montoAprobado;
@@ -444,7 +488,7 @@ prestamoSchema.statics.obtenerPorEntidad = function(entidad, userId = null) {
 prestamoSchema.statics.obtenerVencidos = function(userId = null) {
     const hoy = new Date();
     const filtro = {
-        estado: { $in: ['activo', 'desembolsado'] },
+        estado: 'aprobado', // ✅ Solo préstamos aprobados pueden estar vencidos
         fechaProximoPago: { $lt: hoy }
     };
     if (userId) {
@@ -459,7 +503,7 @@ prestamoSchema.statics.obtenerProximosVencer = function(dias = 30, userId = null
     fechaLimite.setDate(hoy.getDate() + dias);
     
     const filtro = {
-        estado: { $in: ['activo', 'desembolsado'] },
+        estado: 'aprobado', // ✅ Solo préstamos aprobados pueden vencer
         fechaProximoPago: { $gte: hoy, $lte: fechaLimite }
     };
     if (userId) {
@@ -478,13 +522,13 @@ prestamoSchema.statics.obtenerEstadisticas = async function(userId = null) {
                 _id: null,
                 totalPrestamos: { $sum: 1 },
                 prestamosActivos: {
-                    $sum: { $cond: [{ $in: ['$estado', ['activo', 'desembolsado']] }, 1, 0] }
+                    $sum: { $cond: [{ $eq: ['$estado', 'aprobado'] }, 1, 0] } // ✅ Solo aprobados están "activos"
                 },
                 prestamosPendientes: {
-                    $sum: { $cond: [{ $eq: ['$estado', 'solicitado'] }, 1, 0] }
+                    $sum: { $cond: [{ $eq: ['$estado', 'aprobado'] }, 1, 0] } // ✅ Aprobados = pendientes de pago
                 },
-                prestamosVencidos: {
-                    $sum: { $cond: [{ $eq: ['$estado', 'vencido'] }, 1, 0] }
+                prestamosCancelados: {
+                    $sum: { $cond: [{ $eq: ['$estado', 'cancelado'] }, 1, 0] } // ✅ Nueva métrica: cancelados
                 },
                 montoTotalSolicitado: { $sum: '$montoSolicitado' },
                 montoTotalAprobado: { $sum: '$montoAprobado' },
@@ -499,7 +543,7 @@ prestamoSchema.statics.obtenerEstadisticas = async function(userId = null) {
         totalPrestamos: 0,
         prestamosActivos: 0,
         prestamosPendientes: 0,
-        prestamosVencidos: 0,
+        prestamosCancelados: 0, // ✅ Nueva métrica
         montoTotalSolicitado: 0,
         montoTotalAprobado: 0,
         saldoTotalPendiente: 0,

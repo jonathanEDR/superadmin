@@ -1,6 +1,6 @@
-const CuentaBancaria = require('../models/finanzas/CuentaBancaria');
-const MovimientoBancario = require('../models/finanzas/MovimientoBancario');
-const FlujoCaja = require('../models/finanzas/FlujoCaja');
+const CuentaBancaria = require('../../models/finanzas/CuentaBancaria');
+const MovimientoBancario = require('../../models/finanzas/MovimientoBancario');
+const FlujoCaja = require('../../models/finanzas/FlujoCaja');
 
 class FinanzasService {
     /**

@@ -1,7 +1,41 @@
-const CuentaBancaria = require('../models/finanzas/CuentaBancaria');
-const MovimientoBancario = require('../models/finanzas/MovimientoBancario');
+const CuentaBancaria = require('../../models/finanzas/CuentaBancaria');
+const MovimientoBancario = require('../../models/finanzas/MovimientoBancario');
 
 class CuentasBancariasService {
+    /**
+     * Generar código único para la cuenta bancaria
+     */
+    static async generarCodigoCuenta(banco, tipoCuenta, userId) {
+        try {
+            // Generar prefijo basado en banco y tipo de cuenta
+            const bancoPrefijo = banco.substring(0, 3).toUpperCase();
+            const tipoPrefijo = tipoCuenta.substring(0, 2).toUpperCase();
+            
+            // Obtener contador de cuentas del usuario
+            const contadorCuentas = await CuentaBancaria.countDocuments({ userId }) + 1;
+            
+            // Generar timestamp corto
+            const timestamp = Date.now().toString().slice(-4);
+            
+            // Formato: BANCOTIPO-USER-COUNT-TIME
+            const codigo = `${bancoPrefijo}${tipoPrefijo}-${contadorCuentas.toString().padStart(3, '0')}-${timestamp}`;
+            
+            // Verificar que no exista el código
+            const codigoExistente = await CuentaBancaria.findOne({ codigo });
+            if (codigoExistente) {
+                // Si existe, agregar un sufijo aleatorio
+                const sufijo = Math.random().toString(36).substring(2, 5).toUpperCase();
+                return `${codigo}-${sufijo}`;
+            }
+            
+            return codigo;
+        } catch (error) {
+            console.error('❌ Error generando código:', error);
+            // Fallback: generar código aleatorio
+            return `CTA-${Date.now()}-${Math.random().toString(36).substring(2, 8).toUpperCase()}`;
+        }
+    }
+
     /**
      * Obtener cuentas bancarias con filtros
      */
@@ -32,6 +66,19 @@ class CuentasBancariasService {
                 .sort({ activa: -1, createdAt: -1 });
             
             console.log(`✅ ${cuentas.length} cuentas encontradas`);
+            
+            // Debug: Log de las cuentas encontradas
+            cuentas.forEach((cuenta, index) => {
+                console.log(`📊 Cuenta ${index + 1}:`, {
+                    codigo: cuenta.codigo,
+                    nombre: cuenta.nombre,
+                    saldoActual: cuenta.saldoActual,
+                    saldoInicial: cuenta.saldoInicial,
+                    tipo: typeof cuenta.saldoActual,
+                    moneda: cuenta.moneda
+                });
+            });
+            
             return cuentas;
             
         } catch (error) {
@@ -89,11 +136,18 @@ class CuentasBancariasService {
                 throw new Error('Ya existe una cuenta con este número en el mismo banco');
             }
             
+            // Generar código único para la cuenta
+            const codigo = await this.generarCodigoCuenta(datosCuenta.banco, datosCuenta.tipoCuenta, userData.userId);
+            
             // Crear la cuenta
+            const saldoInicialNum = parseFloat(datosCuenta.saldoInicial) || 0;
+            
             const nuevaCuenta = new CuentaBancaria({
                 ...datosCuenta,
                 ...userData,
-                saldoActual: datosCuenta.saldoInicial || 0
+                codigo: codigo,
+                saldoInicial: saldoInicialNum,
+                saldoActual: saldoInicialNum
             });
             
             await nuevaCuenta.save();
@@ -301,6 +355,158 @@ class CuentasBancariasService {
             throw new Error(`Error al ajustar saldo: ${error.message}`);
         }
     }
+
+    /**
+     * Realizar depósito en cuenta
+     */
+    static async realizarDeposito(id, monto, motivo, operador) {
+        try {
+            console.log(`💰 Realizando depósito de ${monto} en cuenta ${id}`);
+            
+            const cuenta = await CuentaBancaria.findById(id);
+            if (!cuenta) {
+                throw new Error('Cuenta bancaria no encontrada');
+            }
+            
+            if (!cuenta.activa) {
+                throw new Error('No se puede depositar en una cuenta inactiva');
+            }
+            
+            const saldoAnterior = cuenta.saldoActual;
+            const saldoNuevo = saldoAnterior + monto;
+            
+            // Actualizar saldo
+            cuenta.saldoActual = saldoNuevo;
+            await cuenta.save();
+            
+            // Registrar movimiento
+            const MovimientoCaja = require('../../models/MovimientoCaja');
+            const movimiento = new MovimientoCaja({
+                tipoMovimiento: 'ingreso',
+                tipoOperacion: 'deposito',
+                monto: monto,
+                descripcion: `Depósito: ${motivo}`,
+                metodoPago: 'transferencia',
+                categoriaId: null,
+                subcategoriaId: null,
+                cuentaBancariaId: id,
+                moneda: cuenta.moneda,
+                fechaMovimiento: new Date(),
+                fechaValor: new Date(),
+                numeroOperacion: `DEP-${Date.now()}`,
+                saldoAnterior: saldoAnterior,
+                saldoPosterior: saldoNuevo,
+                estado: 'procesado',
+                responsable: {
+                    nombre: operador,
+                    email: `${operador}@sistema.com`
+                },
+                userId: cuenta.userId,
+                creatorId: cuenta.userId,
+                creatorName: operador,
+                creatorEmail: `${operador}@sistema.com`,
+                creatorRole: 'user',
+                observaciones: `Depósito manual: ${motivo}`
+            });
+            
+            await movimiento.save();
+            
+            console.log('✅ Depósito realizado exitosamente');
+            return {
+                cuenta: cuenta,
+                movimiento: movimiento,
+                operacion: {
+                    tipo: 'deposito',
+                    monto,
+                    saldoAnterior,
+                    saldoNuevo,
+                    motivo
+                }
+            };
+            
+        } catch (error) {
+            console.error('❌ Error realizando depósito:', error);
+            throw new Error(`Error al realizar depósito: ${error.message}`);
+        }
+    }
+
+    /**
+     * Realizar retiro de cuenta
+     */
+    static async realizarRetiro(id, monto, motivo, operador) {
+        try {
+            console.log(`💸 Realizando retiro de ${monto} de cuenta ${id}`);
+            
+            const cuenta = await CuentaBancaria.findById(id);
+            if (!cuenta) {
+                throw new Error('Cuenta bancaria no encontrada');
+            }
+            
+            if (!cuenta.activa) {
+                throw new Error('No se puede retirar de una cuenta inactiva');
+            }
+            
+            if (cuenta.saldoActual < monto) {
+                throw new Error('Saldo insuficiente para realizar el retiro');
+            }
+            
+            const saldoAnterior = cuenta.saldoActual;
+            const saldoNuevo = saldoAnterior - monto;
+            
+            // Actualizar saldo
+            cuenta.saldoActual = saldoNuevo;
+            await cuenta.save();
+            
+            // Registrar movimiento
+            const MovimientoCaja = require('../../models/MovimientoCaja');
+            const movimiento = new MovimientoCaja({
+                tipoMovimiento: 'egreso',
+                tipoOperacion: 'retiro',
+                monto: monto,
+                descripcion: `Retiro: ${motivo}`,
+                metodoPago: 'transferencia',
+                categoriaId: null,
+                subcategoriaId: null,
+                cuentaBancariaId: id,
+                moneda: cuenta.moneda,
+                fechaMovimiento: new Date(),
+                fechaValor: new Date(),
+                numeroOperacion: `RET-${Date.now()}`,
+                saldoAnterior: saldoAnterior,
+                saldoPosterior: saldoNuevo,
+                estado: 'procesado',
+                responsable: {
+                    nombre: operador,
+                    email: `${operador}@sistema.com`
+                },
+                userId: cuenta.userId,
+                creatorId: cuenta.userId,
+                creatorName: operador,
+                creatorEmail: `${operador}@sistema.com`,
+                creatorRole: 'user',
+                observaciones: `Retiro manual: ${motivo}`
+            });
+            
+            await movimiento.save();
+            
+            console.log('✅ Retiro realizado exitosamente');
+            return {
+                cuenta: cuenta,
+                movimiento: movimiento,
+                operacion: {
+                    tipo: 'retiro',
+                    monto,
+                    saldoAnterior,
+                    saldoNuevo,
+                    motivo
+                }
+            };
+            
+        } catch (error) {
+            console.error('❌ Error realizando retiro:', error);
+            throw new Error(`Error al realizar retiro: ${error.message}`);
+        }
+    }
     
     /**
      * Obtener movimientos de una cuenta
@@ -438,7 +644,7 @@ class CuentasBancariasService {
         try {
             console.log('📊 Obteniendo resumen de cuentas para usuario:', userId);
             
-            const cuentas = await CuentaBancaria.obtenerPorUsuario(userId);
+            const cuentas = await CuentaBancaria.obtenerPorUsuario(userId, null); // null para obtener todas (activas e inactivas)
             const estadisticas = await CuentaBancaria.obtenerEstadisticas(userId);
             
             // Agrupar por banco
@@ -467,7 +673,7 @@ class CuentasBancariasService {
             // Agrupar por moneda
             const agrupadoPorMoneda = {};
             cuentas.forEach(cuenta => {
-                if (!agruladoPorMoneda[cuenta.moneda]) {
+                if (!agrupadoPorMoneda[cuenta.moneda]) {
                     agrupadoPorMoneda[cuenta.moneda] = {
                         moneda: cuenta.moneda,
                         totalCuentas: 0,
@@ -589,8 +795,52 @@ class CuentasBancariasService {
     
     // ==================== MÉTODOS AUXILIARES ====================
     
+    /**
+     * Generar código único para movimiento bancario
+     */
+    static async generarCodigoMovimiento(tipo, cuentaId) {
+        try {
+            // Prefijo basado en el tipo de movimiento
+            const tipoPrefijo = {
+                'ingreso': 'ING',
+                'egreso': 'EGR',
+                'transferencia_entrada': 'TEN',
+                'transferencia_salida': 'TSA'
+            };
+            
+            const prefijo = tipoPrefijo[tipo] || 'MOV';
+            
+            // Obtener contador de movimientos de la cuenta
+            const contadorMovimientos = await MovimientoBancario.countDocuments({ cuentaBancariaId: cuentaId }) + 1;
+            
+            // Generar timestamp corto
+            const timestamp = Date.now().toString().slice(-6);
+            
+            // Formato: TIPOCUENTA-COUNT-TIME
+            const codigo = `${prefijo}-${contadorMovimientos.toString().padStart(4, '0')}-${timestamp}`;
+            
+            // Verificar que no exista el código
+            const codigoExistente = await MovimientoBancario.findOne({ codigo });
+            if (codigoExistente) {
+                // Si existe, agregar un sufijo aleatorio
+                const sufijo = Math.random().toString(36).substring(2, 5).toUpperCase();
+                return `${codigo}-${sufijo}`;
+            }
+            
+            return codigo;
+        } catch (error) {
+            console.error('❌ Error generando código de movimiento:', error);
+            // Fallback: generar código aleatorio
+            return `MOV-${Date.now()}-${Math.random().toString(36).substring(2, 8).toUpperCase()}`;
+        }
+    }
+
     static async registrarMovimientoInicial(cuenta, userData) {
+        // Generar código único para el movimiento
+        const codigo = await this.generarCodigoMovimiento('ingreso', cuenta._id);
+        
         const movimiento = new MovimientoBancario({
+            codigo: codigo,
             cuentaBancariaId: cuenta._id,
             tipo: 'ingreso',
             categoria: 'ingreso_extra',

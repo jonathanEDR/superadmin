@@ -1,4 +1,4 @@
-const MovimientoCajaFinanzas = require('../models/finanzas/MovimientoCaja');
+const MovimientoCajaFinanzas = require('../../models/finanzas/MovimientoCaja');
 
 class MovimientosCajaFinanzasService {
     

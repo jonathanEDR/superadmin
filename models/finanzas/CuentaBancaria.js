@@ -115,8 +115,21 @@ cuentaBancariaSchema.index({ banco: 1, tipoCuenta: 1 });
 cuentaBancariaSchema.index({ moneda: 1 });
 cuentaBancariaSchema.index({ createdAt: -1 });
 
-// Middleware para generar código automático
+// Middleware para generar código automático y validar datos
 cuentaBancariaSchema.pre('save', async function(next) {
+    // Convertir saldos a números si vienen como strings
+    if (typeof this.saldoInicial === 'string') {
+        this.saldoInicial = parseFloat(this.saldoInicial) || 0;
+    }
+    if (typeof this.saldoActual === 'string') {
+        this.saldoActual = parseFloat(this.saldoActual) || 0;
+    }
+    
+    // Si es nueva cuenta y no se ha establecido saldoActual, usar saldoInicial
+    if (this.isNew && this.saldoActual === 0 && this.saldoInicial > 0) {
+        this.saldoActual = this.saldoInicial;
+    }
+    
     if (this.isNew && !this.codigo) {
         const ultimaCuenta = await this.constructor.findOne(
             { userId: this.userId },

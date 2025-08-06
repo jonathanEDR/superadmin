@@ -1,8 +1,8 @@
-const Prestamo = require('../models/finanzas/Prestamo');
-const PagoFinanciamiento = require('../models/finanzas/PagoFinanciamiento');
-const Garantia = require('../models/finanzas/Garantia');
-const CuentaBancaria = require('../models/finanzas/CuentaBancaria');
-const MovimientoBancario = require('../models/finanzas/MovimientoBancario');
+const Prestamo = require('../../models/finanzas/Prestamo');
+const PagoFinanciamiento = require('../../models/finanzas/PagoFinanciamiento');
+const Garantia = require('../../models/finanzas/Garantia');
+const CuentaBancaria = require('../../models/finanzas/CuentaBancaria');
+const MovimientoBancario = require('../../models/finanzas/MovimientoBancario');
 
 class PrestamosService {
     /**
@@ -118,7 +118,7 @@ class PrestamosService {
      */
     static async crearPrestamo(datosPrestamo, userData) {
         try {
-            console.log('➕ Creando nuevo préstamo para:', datosPrestamo.prestatario?.nombre);
+            console.log('➕ Creando nuevo préstamo con datos:', datosPrestamo);
             
             // Validaciones básicas
             if (!datosPrestamo.montoSolicitado || datosPrestamo.montoSolicitado <= 0) {
@@ -133,17 +133,20 @@ class PrestamosService {
                 throw new Error('El plazo en meses debe ser mayor a cero');
             }
             
-            if (!datosPrestamo.prestatario?.nombre) {
-                throw new Error('El nombre del prestatario es requerido');
-            }
-            
-            if (!datosPrestamo.prestatario?.documento?.numero) {
-                throw new Error('El documento del prestatario es requerido');
-            }
-            
             if (!datosPrestamo.entidadFinanciera?.nombre) {
                 throw new Error('La entidad financiera es requerida');
             }
+            
+            // Auto-completar información del prestatario con datos del usuario logueado
+            const prestatarioCompleto = {
+                nombre: userData.creatorName || userData.name || 'Usuario del Sistema',
+                documento: {
+                    tipo: 'DNI', // Por defecto, se puede cambiar después
+                    numero: userData.documentNumber || 'No especificado'
+                },
+                telefono: userData.phone || '',
+                email: userData.creatorEmail || userData.email || ''
+            };
             
             // Verificar que las cuentas existan si se proporcionan
             if (datosPrestamo.cuentaDesembolso) {
@@ -160,11 +163,24 @@ class PrestamosService {
                 }
             }
             
-            // Crear el préstamo
-            const prestamo = new Prestamo({
+            // Preparar datos completos del préstamo
+            const datosCompletos = {
                 ...datosPrestamo,
+                prestatario: prestatarioCompleto,
                 ...userData
-            });
+            };
+            
+            console.log('📋 Datos completos preparados:', JSON.stringify(datosCompletos, null, 2));
+            
+            // Crear el préstamo
+            const prestamo = new Prestamo(datosCompletos);
+            
+            // Verificación adicional: asegurar que el código se genere
+            if (!prestamo.codigo) {
+                const timestamp = Date.now().toString().slice(-6);
+                prestamo.codigo = `PREST${timestamp}`;
+                console.log('🔄 Código manual asignado:', prestamo.codigo);
+            }
             
             await prestamo.save();
             

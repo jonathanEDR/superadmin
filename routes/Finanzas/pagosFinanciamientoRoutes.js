@@ -1,7 +1,7 @@
 const express = require('express');
 const router = express.Router();
-const { authenticate } = require('../middleware/authenticate');
-const PagosFinanciamientoService = require('../services/pagosFinanciamientoService');
+const { authenticate } = require('../../middleware/authenticate');
+const PagosFinanciamientoService = require('../../services/Finanzas/pagosFinanciamientoService');
 
 // Middleware de autenticación para todas las rutas
 router.use(authenticate);

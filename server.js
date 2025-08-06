@@ -24,7 +24,6 @@ const gestionPersonalRoutes = require('./routes/gestionPersonalRoutes');
 const pagosRealizadosRoutes = require('./routes/pagosRealizadosRoutes');
 const gastoRoutes = require('./routes/GastoRoutes');
 const cajaRoutes = require('./routes/cajaRoutes');
-const movimientosCajaRoutes = require('./routes/movimientosCajaRoutes');
 const reservaRoutes = require('./routes/reservaRoutes');
 // Rutas del módulo de producción
 const ingredienteRoutes = require('./routes/ingredienteRoutes');
@@ -44,11 +43,12 @@ const inventarioProductoRoutes = require('./routes/inventarioProductoRoutes');
 const debugRoutes = require('./routes/debugRoutes');
 
 // Rutas del módulo de finanzas
-const finanzasRoutes = require('./routes/finanzasRoutes');
-const cuentasBancariasRoutes = require('./routes/cuentasBancariasRoutes');
-const prestamosRoutes = require('./routes/prestamosRoutes');
-const pagosFinanciamientoRoutes = require('./routes/pagosFinanciamientoRoutes');
-const garantiasRoutes = require('./routes/garantiasRoutes');
+const finanzasRoutes = require('./routes/Finanzas/finanzasRoutes');
+const cuentasBancariasRoutes = require('./routes/Finanzas/cuentasBancariasRoutes'); // Ruta directa para cuentas bancarias
+const prestamosRoutes = require('./routes/Finanzas/prestamosRoutes');
+const pagosFinanciamientoRoutes = require('./routes/Finanzas/pagosFinanciamientoRoutes');
+const garantiasRoutes = require('./routes/Finanzas/garantiasRoutes');
+const movimientosCajaRoutes = require('./routes/Finanzas/movimientosCajaRoutes');
 
 const app = express();
 const port = process.env.PORT || 5000;
@@ -178,7 +178,7 @@ app.use('/api/inventario-producto', inventarioProductoRoutes);
 // Rutas del módulo de finanzas
 console.log('💰 Registrando rutas de finanzas...');
 app.use('/api/finanzas', finanzasRoutes);
-app.use('/api/cuentas-bancarias', cuentasBancariasRoutes);
+app.use('/api/cuentas-bancarias', cuentasBancariasRoutes); // Ruta directa para cuentas bancarias
 app.use('/api/prestamos', prestamosRoutes);
 app.use('/api/pagos-financiamiento', pagosFinanciamientoRoutes);
 app.use('/api/garantias', garantiasRoutes);

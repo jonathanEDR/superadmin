@@ -1,7 +1,7 @@
 const express = require('express');
 const router = express.Router();
-const { authenticate } = require('../middleware/authenticate');
-const PrestamosService = require('../services/prestamosService');
+const { authenticate } = require('../../middleware/authenticate');
+const PrestamosService = require('../../services/Finanzas/prestamosService');
 
 // Middleware de autenticación para todas las rutas
 router.use(authenticate);
@@ -15,7 +15,7 @@ router.use(authenticate);
 router.get('/', async (req, res) => {
     try {
         const filtros = {
-            userId: req.user.userId,
+            userId: req.user.id, // ✅ Corregido: usar req.user.id en lugar de req.user.userId
             estado: req.query.estado,
             tipo: req.query.tipo,
             entidad: req.query.entidad,
@@ -77,9 +77,9 @@ router.get('/:id', async (req, res) => {
 router.post('/', async (req, res) => {
     try {
         const userData = {
-            userId: req.user.userId,
-            creatorId: req.user.userId,
-            creatorName: req.user.name || req.user.email,
+            userId: req.user.id, // ✅ Corregido
+            creatorId: req.user.id, // ✅ Corregido
+            creatorName: req.user.nombre_negocio || req.user.email,
             creatorEmail: req.user.email,
             creatorRole: req.user.role || 'user'
         };

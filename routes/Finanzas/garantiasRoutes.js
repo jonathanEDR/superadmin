@@ -1,7 +1,7 @@
 const express = require('express');
 const router = express.Router();
-const GarantiasService = require('../services/garantiasService');
-const { authenticate } = require('../middleware/authenticate');
+const GarantiasService = require('../../services/Finanzas/garantiasService');
+const { authenticate } = require('../../middleware/authenticate');
 
 // Middleware de autenticación para todas las rutas
 router.use(authenticate);

@@ -1,5 +1,5 @@
-const Garantia = require('../models/finanzas/Garantia');
-const Prestamo = require('../models/finanzas/Prestamo');
+const Garantia = require('../../models/finanzas/Garantia');
+const Prestamo = require('../../models/finanzas/Prestamo');
 
 class GarantiasService {
     /**

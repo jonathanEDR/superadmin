@@ -1,7 +1,7 @@
 const express = require('express');
 const router = express.Router();
-const MovimientosCajaFinanzasService = require('../services/movimientosCajaFinanzasService');
-const { authenticate } = require('../middleware/authenticate');
+const MovimientosCajaFinanzasService = require('../../services/Finanzas/movimientosCajaFinanzasService');
+const { authenticate } = require('../../middleware/authenticate');
 
 // === REGISTRAR MOVIMIENTOS ===
 

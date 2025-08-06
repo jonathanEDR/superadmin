@@ -1,7 +1,7 @@
 const express = require('express');
 const router = express.Router();
-const cuentasBancariasService = require('../services/cuentasBancariasService');
-const { authenticate, requireAdmin, requireUser } = require('../middleware/authenticate');
+const cuentasBancariasService = require('../../services/Finanzas/cuentasBancariasService');
+const { authenticate, requireAdmin, requireUser } = require('../../middleware/authenticate');
 
 console.log('🎯 cuentasBancariasRoutes.js cargado correctamente');
 
@@ -134,7 +134,7 @@ router.get('/:id', requireUser, async (req, res) => {
 });
 
 // POST /api/cuentas-bancarias - Crear nueva cuenta bancaria
-router.post('/', requireAdmin, async (req, res) => {
+router.post('/', requireUser, async (req, res) => {
     try {
         console.log('➕ Creando nueva cuenta bancaria');
         console.log('📝 Datos recibidos:', req.body);
@@ -308,6 +308,92 @@ router.get('/:id/movimientos', requireUser, async (req, res) => {
     } catch (error) {
         console.error('❌ Error obteniendo movimientos:', error);
         res.status(500).json({
+            success: false,
+            message: error.message
+        });
+    }
+});
+
+// POST /api/cuentas-bancarias/:id/depositar - Realizar depósito
+router.post('/:id/depositar', requireUser, async (req, res) => {
+    try {
+        console.log('💰 Realizando depósito en cuenta:', req.params.id);
+        
+        const { monto, motivo } = req.body;
+        const operador = req.user.email?.split('@')[0] || 'Usuario';
+        
+        if (!monto || typeof monto !== 'number' || monto <= 0) {
+            return res.status(400).json({
+                success: false,
+                message: 'El monto debe ser un número mayor a 0'
+            });
+        }
+        
+        if (!motivo || motivo.trim().length === 0) {
+            return res.status(400).json({
+                success: false,
+                message: 'El motivo del depósito es requerido'
+            });
+        }
+        
+        const resultado = await cuentasBancariasService.realizarDeposito(
+            req.params.id,
+            monto,
+            motivo,
+            operador
+        );
+        
+        res.json({
+            success: true,
+            data: resultado,
+            message: 'Depósito realizado exitosamente'
+        });
+    } catch (error) {
+        console.error('❌ Error realizando depósito:', error);
+        res.status(400).json({
+            success: false,
+            message: error.message
+        });
+    }
+});
+
+// POST /api/cuentas-bancarias/:id/retirar - Realizar retiro
+router.post('/:id/retirar', requireUser, async (req, res) => {
+    try {
+        console.log('💸 Realizando retiro de cuenta:', req.params.id);
+        
+        const { monto, motivo } = req.body;
+        const operador = req.user.email?.split('@')[0] || 'Usuario';
+        
+        if (!monto || typeof monto !== 'number' || monto <= 0) {
+            return res.status(400).json({
+                success: false,
+                message: 'El monto debe ser un número mayor a 0'
+            });
+        }
+        
+        if (!motivo || motivo.trim().length === 0) {
+            return res.status(400).json({
+                success: false,
+                message: 'El motivo del retiro es requerido'
+            });
+        }
+        
+        const resultado = await cuentasBancariasService.realizarRetiro(
+            req.params.id,
+            monto,
+            motivo,
+            operador
+        );
+        
+        res.json({
+            success: true,
+            data: resultado,
+            message: 'Retiro realizado exitosamente'
+        });
+    } catch (error) {
+        console.error('❌ Error realizando retiro:', error);
+        res.status(400).json({
             success: false,
             message: error.message
         });

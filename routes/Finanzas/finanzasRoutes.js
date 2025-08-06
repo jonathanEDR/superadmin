@@ -1,7 +1,11 @@
 const express = require('express');
 const router = express.Router();
-const finanzasService = require('../services/finanzasService');
-const { authenticate, requireAdmin, requireUser } = require('../middleware/authenticate');
+const finanzasService = require('../../services/Finanzas/finanzasService');
+const cuentasBancariasService = require('../../services/Finanzas/cuentasBancariasService');
+const { authenticate, requireAdmin, requireUser } = require('../../middleware/authenticate');
+
+// Importar sub-rutas
+const cuentasBancariasRoutes = require('./cuentasBancariasRoutes');
 
 console.log('🎯 finanzasRoutes.js cargado correctamente');
 
@@ -34,8 +38,36 @@ router.get('/test', (req, res) => {
     });
 });
 
+// GET /api/finanzas/test-cuentas - Endpoint de prueba para cuentas bancarias (sin autenticación)
+router.get('/test-cuentas', (req, res) => {
+    console.log('✅ Test cuentas endpoint alcanzado');
+    res.json({
+        success: true,
+        message: 'Endpoint de cuentas bancarias funcionando',
+        timestamp: new Date().toISOString(),
+        data: [
+            {
+                id: 1,
+                nombre: 'Cuenta Test',
+                banco: 'Banco Test',
+                saldoActual: 1000,
+                moneda: 'PEN'
+            }
+        ]
+    });
+});
+
 // Middleware de autenticación para las rutas protegidas
 router.use(authenticate);
+
+// ==================== SUB-RUTAS ANIDADAS ====================
+// IMPORTANTE: Registrar las sub-rutas ANTES que las rutas principales
+// para evitar conflictos de coincidencia de patrones
+
+// Rutas de cuentas bancarias anidadas: /api/finanzas/cuentas-bancarias
+console.log('🏦 Registrando sub-rutas de cuentas bancarias...');
+router.use('/cuentas-bancarias', cuentasBancariasRoutes);
+console.log('✅ Sub-rutas de cuentas bancarias registradas exitosamente');
 
 // ==================== DASHBOARD PRINCIPAL ====================
 
@@ -69,13 +101,18 @@ router.get('/resumen', requireUser, async (req, res) => {
         console.log('📋 Obteniendo resumen financiero para usuario:', req.user.email);
         
         const userId = req.user.clerk_id || req.user.id;
-        const { año, mes } = req.query;
         
-        const resumen = await finanzasService.obtenerResumenFinanciero(
-            userId, 
-            año ? parseInt(año) : new Date().getFullYear(),
-            mes ? parseInt(mes) : null
-        );
+        // Obtener resumen de cuentas bancarias desde el servicio especializado
+        const resumenCuentas = await cuentasBancariasService.obtenerResumenCuentas(userId);
+        
+        // Por ahora solo devolvemos el resumen de cuentas bancarias
+        // En el futuro aquí se pueden agregar otros módulos financieros
+        const resumen = {
+            cuentasBancarias: resumenCuentas,
+            prestamos: { total: 0, activos: 0 },
+            inversiones: { total: 0, activas: 0 },
+            garantias: { total: 0, activas: 0 }
+        };
         
         res.json({
             success: true,
@@ -392,59 +429,72 @@ router.post('/prestamos', requireUser, async (req, res) => {
 });
 
 // ==================== CUENTAS BANCARIAS ====================
+// NOTA: Las rutas de cuentas bancarias están manejadas por cuentasBancariasRoutes.js
+// para evitar duplicación de rutas
 
-// GET /api/finanzas/cuentas-bancarias - Obtener todas las cuentas bancarias
-router.get('/cuentas-bancarias', requireUser, async (req, res) => {
-    try {
-        console.log('🏦 Obteniendo cuentas bancarias para usuario:', req.user.email);
+// // GET /api/finanzas/cuentas-bancarias - Obtener todas las cuentas bancarias
+// router.get('/cuentas-bancarias', requireUser, async (req, res) => {
+//     try {
+//         console.log('🏦 Obteniendo cuentas bancarias para usuario:', req.user.email);
         
-        const userId = req.user.clerk_id || req.user.id;
-        const { estado, banco, tipo, limite, pagina } = req.query;
+//         const userId = req.user.clerk_id || req.user.id;
+//         const { estado, banco, tipo, limite, pagina } = req.query;
         
-        const cuentas = await finanzasService.obtenerCuentasBancarias(userId, {
-            estado,
-            banco,
-            tipo,
-            limite: parseInt(limite) || 10,
-            pagina: parseInt(pagina) || 1
-        });
+//         const cuentas = await finanzasService.obtenerCuentasBancarias(userId, {
+//             estado,
+//             banco,
+//             tipo,
+//             limite: parseInt(limite) || 10,
+//             pagina: parseInt(pagina) || 1
+//         });
         
-        res.json({
-            success: true,
-            data: Array.isArray(cuentas) ? cuentas : [],
-            message: 'Cuentas bancarias obtenidas exitosamente'
-        });
-    } catch (error) {
-        console.error('❌ Error obteniendo cuentas bancarias:', error);
-        res.status(500).json({
-            success: false,
-            message: error.message,
-            data: []
-        });
-    }
-});
+//         res.json({
+//             success: true,
+//             data: Array.isArray(cuentas) ? cuentas : [],
+//             message: 'Cuentas bancarias obtenidas exitosamente'
+//         });
+//     } catch (error) {
+//         console.error('❌ Error obteniendo cuentas bancarias:', error);
+//         res.status(500).json({
+//             success: false,
+//             message: error.message,
+//             data: []
+//         });
+//     }
+// });
 
-// POST /api/finanzas/cuentas-bancarias - Crear nueva cuenta bancaria
-router.post('/cuentas-bancarias', requireUser, async (req, res) => {
-    try {
-        console.log('➕ Creando nueva cuenta bancaria');
+// // POST /api/finanzas/cuentas-bancarias - Crear nueva cuenta bancaria
+// router.post('/cuentas-bancarias', requireUser, async (req, res) => {
+//     try {
+//         console.log('➕ Creando nueva cuenta bancaria');
+//         console.log('📝 Datos recibidos:', req.body);
         
-        const userId = req.user.clerk_id || req.user.id;
-        const cuenta = await finanzasService.crearCuentaBancaria(userId, req.body);
+//         const userId = req.user.clerk_id || req.user.id;
         
-        res.status(201).json({
-            success: true,
-            data: cuenta,
-            message: 'Cuenta bancaria creada exitosamente'
-        });
-    } catch (error) {
-        console.error('❌ Error creando cuenta bancaria:', error);
-        res.status(500).json({
-            success: false,
-            message: error.message
-        });
-    }
-});
+//         const userData = {
+//             userId: userId,
+//             creatorId: userId,
+//             creatorName: req.user.email?.split('@')[0] || 'Usuario',
+//             creatorEmail: req.user.email,
+//             creatorRole: req.user.role || 'user'
+//         };
+        
+//         const cuenta = await cuentasBancariasService.crearCuenta(req.body, userData);
+        
+//         res.status(201).json({
+//             success: true,
+//             data: cuenta,
+//             message: 'Cuenta bancaria creada exitosamente'
+//         });
+//     } catch (error) {
+//         console.error('❌ Error creando cuenta bancaria:', error);
+//         res.status(400).json({
+//             success: false,
+//             message: error.message,
+//             error: error.toString()
+//         });
+//     }
+// });
 
 // ==================== PAGOS FINANCIAMIENTO ====================
 
