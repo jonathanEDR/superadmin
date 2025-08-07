@@ -6,56 +6,8 @@ const { authenticate, requireAdmin, requireUser } = require('../../middleware/au
 
 // Importar sub-rutas
 const cuentasBancariasRoutes = require('./cuentasBancariasRoutes');
+const movimientosCajaRoutes = require('./movimientosCajaRoutes');
 
-console.log('🎯 finanzasRoutes.js cargado correctamente');
-
-// Middleware de logging para este router específico
-router.use((req, res, next) => {
-    console.log(`💰 Finanzas Route: ${req.method} ${req.originalUrl}`);
-    console.log(`💰 Full path: ${req.baseUrl}${req.path}`);
-    console.log(`💰 Query params:`, req.query);
-    next();
-});
-
-// ==================== RUTAS PÚBLICAS DE PRUEBA ====================
-
-// GET /api/finanzas/test - Endpoint de prueba (sin autenticación)
-router.get('/test', (req, res) => {
-    console.log('✅ Test endpoint alcanzado correctamente');
-    res.json({
-        success: true,
-        message: 'Módulo de finanzas funcionando correctamente!',
-        timestamp: new Date().toISOString(),
-        path: req.originalUrl,
-        modules: [
-            'cuentas_bancarias',
-            'movimientos_bancarios', 
-            'flujo_caja',
-            'prestamos',
-            'inversiones',
-            'proyecciones'
-        ]
-    });
-});
-
-// GET /api/finanzas/test-cuentas - Endpoint de prueba para cuentas bancarias (sin autenticación)
-router.get('/test-cuentas', (req, res) => {
-    console.log('✅ Test cuentas endpoint alcanzado');
-    res.json({
-        success: true,
-        message: 'Endpoint de cuentas bancarias funcionando',
-        timestamp: new Date().toISOString(),
-        data: [
-            {
-                id: 1,
-                nombre: 'Cuenta Test',
-                banco: 'Banco Test',
-                saldoActual: 1000,
-                moneda: 'PEN'
-            }
-        ]
-    });
-});
 
 // Middleware de autenticación para las rutas protegidas
 router.use(authenticate);
@@ -65,16 +17,21 @@ router.use(authenticate);
 // para evitar conflictos de coincidencia de patrones
 
 // Rutas de cuentas bancarias anidadas: /api/finanzas/cuentas-bancarias
-console.log('🏦 Registrando sub-rutas de cuentas bancarias...');
+// ...existing code...
 router.use('/cuentas-bancarias', cuentasBancariasRoutes);
-console.log('✅ Sub-rutas de cuentas bancarias registradas exitosamente');
+// ...existing code...
+
+// Rutas de movimientos de caja anidadas: /api/finanzas/movimientos-caja
+// ...existing code...
+router.use('/movimientos-caja', movimientosCajaRoutes);
+// ...existing code...
 
 // ==================== DASHBOARD PRINCIPAL ====================
 
 // GET /api/finanzas/dashboard - Dashboard principal de finanzas
 router.get('/dashboard', requireUser, async (req, res) => {
     try {
-        console.log('📊 Obteniendo dashboard de finanzas para usuario:', req.user.email);
+        // ...existing code...
         
         const userId = req.user.clerk_id || req.user.id;
         const { periodo = 'mes' } = req.query;
@@ -98,7 +55,7 @@ router.get('/dashboard', requireUser, async (req, res) => {
 // GET /api/finanzas/resumen - Resumen financiero consolidado
 router.get('/resumen', requireUser, async (req, res) => {
     try {
-        console.log('📋 Obteniendo resumen financiero para usuario:', req.user.email);
+        // ...existing code...
         
         const userId = req.user.clerk_id || req.user.id;
         
@@ -133,7 +90,7 @@ router.get('/resumen', requireUser, async (req, res) => {
 // GET /api/finanzas/estadisticas - Estadísticas generales del módulo
 router.get('/estadisticas', requireUser, async (req, res) => {
     try {
-        console.log('📈 Obteniendo estadísticas de finanzas');
+        // ...existing code...
         
         const userId = req.user.clerk_id || req.user.id;
         const { periodo = 'año' } = req.query;
@@ -157,7 +114,7 @@ router.get('/estadisticas', requireUser, async (req, res) => {
 // GET /api/finanzas/kpis - Indicadores clave de rendimiento financiero
 router.get('/kpis', requireUser, async (req, res) => {
     try {
-        console.log('📊 Obteniendo KPIs financieros');
+        // ...existing code...
         
         const userId = req.user.clerk_id || req.user.id;
         const { fechaInicio, fechaFin } = req.query;
@@ -183,7 +140,7 @@ router.get('/kpis', requireUser, async (req, res) => {
 // GET /api/finanzas/alertas - Obtener alertas financieras
 router.get('/alertas', requireUser, async (req, res) => {
     try {
-        console.log('🚨 Obteniendo alertas financieras');
+        // ...existing code...
         
         const userId = req.user.clerk_id || req.user.id;
         
@@ -208,7 +165,7 @@ router.get('/alertas', requireUser, async (req, res) => {
 // GET /api/finanzas/reportes/estado-financiero - Estado financiero consolidado
 router.get('/reportes/estado-financiero', requireUser, async (req, res) => {
     try {
-        console.log('📄 Generando estado financiero');
+        // ...existing code...
         
         const userId = req.user.clerk_id || req.user.id;
         const { año, mes, incluirDetalle = false } = req.query;
@@ -237,7 +194,7 @@ router.get('/reportes/estado-financiero', requireUser, async (req, res) => {
 // GET /api/finanzas/reportes/flujo-efectivo - Reporte de flujo de efectivo
 router.get('/reportes/flujo-efectivo', requireUser, async (req, res) => {
     try {
-        console.log('💸 Generando reporte de flujo de efectivo');
+        // ...existing code...
         
         const userId = req.user.clerk_id || req.user.id;
         const { fechaInicio, fechaFin, agruparPor = 'mes' } = req.query;
@@ -268,7 +225,7 @@ router.get('/reportes/flujo-efectivo', requireUser, async (req, res) => {
 // GET /api/finanzas/configuracion - Obtener configuración del módulo
 router.get('/configuracion', requireAdmin, async (req, res) => {
     try {
-        console.log('⚙️ Obteniendo configuración del módulo de finanzas');
+        // ...existing code...
         
         const configuracion = finanzasService.obtenerConfiguracionModulo();
         
@@ -289,7 +246,7 @@ router.get('/configuracion', requireAdmin, async (req, res) => {
 // POST /api/finanzas/inicializar - Inicializar datos por defecto
 router.post('/inicializar', requireAdmin, async (req, res) => {
     try {
-        console.log('🔧 Inicializando datos por defecto del módulo de finanzas');
+        // ...existing code...
         
         const userId = req.user.clerk_id || req.user.id;
         const userData = {
@@ -321,7 +278,7 @@ router.post('/inicializar', requireAdmin, async (req, res) => {
 // GET /api/finanzas/garantias - Obtener todas las garantías
 router.get('/garantias', requireUser, async (req, res) => {
     try {
-        console.log('🛡️ Obteniendo garantías para usuario:', req.user.email);
+        // ...existing code...
         
         const userId = req.user.clerk_id || req.user.id;
         const { estado, tipo, desde, hasta, limite, pagina } = req.query;
@@ -353,7 +310,7 @@ router.get('/garantias', requireUser, async (req, res) => {
 // POST /api/finanzas/garantias - Crear nueva garantía
 router.post('/garantias', requireUser, async (req, res) => {
     try {
-        console.log('➕ Creando nueva garantía');
+        // ...existing code...
         
         const userId = req.user.clerk_id || req.user.id;
         const garantia = await finanzasService.crearGarantia(userId, req.body);
@@ -377,7 +334,7 @@ router.post('/garantias', requireUser, async (req, res) => {
 // GET /api/finanzas/prestamos - Obtener todos los préstamos
 router.get('/prestamos', requireUser, async (req, res) => {
     try {
-        console.log('💰 Obteniendo préstamos para usuario:', req.user.email);
+        // ...existing code...
         
         const userId = req.user.clerk_id || req.user.id;
         const { estado, tipo, desde, hasta, limite, pagina } = req.query;
@@ -409,7 +366,7 @@ router.get('/prestamos', requireUser, async (req, res) => {
 // POST /api/finanzas/prestamos - Crear nuevo préstamo
 router.post('/prestamos', requireUser, async (req, res) => {
     try {
-        console.log('➕ Creando nuevo préstamo');
+        // ...existing code...
         
         const userId = req.user.clerk_id || req.user.id;
         const prestamo = await finanzasService.crearPrestamo(userId, req.body);
@@ -428,80 +385,14 @@ router.post('/prestamos', requireUser, async (req, res) => {
     }
 });
 
-// ==================== CUENTAS BANCARIAS ====================
-// NOTA: Las rutas de cuentas bancarias están manejadas por cuentasBancariasRoutes.js
-// para evitar duplicación de rutas
 
-// // GET /api/finanzas/cuentas-bancarias - Obtener todas las cuentas bancarias
-// router.get('/cuentas-bancarias', requireUser, async (req, res) => {
-//     try {
-//         console.log('🏦 Obteniendo cuentas bancarias para usuario:', req.user.email);
-        
-//         const userId = req.user.clerk_id || req.user.id;
-//         const { estado, banco, tipo, limite, pagina } = req.query;
-        
-//         const cuentas = await finanzasService.obtenerCuentasBancarias(userId, {
-//             estado,
-//             banco,
-//             tipo,
-//             limite: parseInt(limite) || 10,
-//             pagina: parseInt(pagina) || 1
-//         });
-        
-//         res.json({
-//             success: true,
-//             data: Array.isArray(cuentas) ? cuentas : [],
-//             message: 'Cuentas bancarias obtenidas exitosamente'
-//         });
-//     } catch (error) {
-//         console.error('❌ Error obteniendo cuentas bancarias:', error);
-//         res.status(500).json({
-//             success: false,
-//             message: error.message,
-//             data: []
-//         });
-//     }
-// });
-
-// // POST /api/finanzas/cuentas-bancarias - Crear nueva cuenta bancaria
-// router.post('/cuentas-bancarias', requireUser, async (req, res) => {
-//     try {
-//         console.log('➕ Creando nueva cuenta bancaria');
-//         console.log('📝 Datos recibidos:', req.body);
-        
-//         const userId = req.user.clerk_id || req.user.id;
-        
-//         const userData = {
-//             userId: userId,
-//             creatorId: userId,
-//             creatorName: req.user.email?.split('@')[0] || 'Usuario',
-//             creatorEmail: req.user.email,
-//             creatorRole: req.user.role || 'user'
-//         };
-        
-//         const cuenta = await cuentasBancariasService.crearCuenta(req.body, userData);
-        
-//         res.status(201).json({
-//             success: true,
-//             data: cuenta,
-//             message: 'Cuenta bancaria creada exitosamente'
-//         });
-//     } catch (error) {
-//         console.error('❌ Error creando cuenta bancaria:', error);
-//         res.status(400).json({
-//             success: false,
-//             message: error.message,
-//             error: error.toString()
-//         });
-//     }
-// });
 
 // ==================== PAGOS FINANCIAMIENTO ====================
 
 // GET /api/finanzas/pagos-financiamiento - Obtener todos los pagos de financiamiento
 router.get('/pagos-financiamiento', requireUser, async (req, res) => {
     try {
-        console.log('💸 Obteniendo pagos de financiamiento para usuario:', req.user.email);
+        // ...existing code...
         
         const userId = req.user.clerk_id || req.user.id;
         const { estado, tipo, desde, hasta, limite, pagina } = req.query;
@@ -533,7 +424,7 @@ router.get('/pagos-financiamiento', requireUser, async (req, res) => {
 // POST /api/finanzas/pagos-financiamiento - Crear nuevo pago de financiamiento
 router.post('/pagos-financiamiento', requireUser, async (req, res) => {
     try {
-        console.log('➕ Creando nuevo pago de financiamiento');
+        // ...existing code...
         
         const userId = req.user.clerk_id || req.user.id;
         const pago = await finanzasService.crearPagoFinanciamiento(userId, req.body);
@@ -557,7 +448,7 @@ router.post('/pagos-financiamiento', requireUser, async (req, res) => {
 // GET /api/finanzas/categorias - Obtener categorías disponibles
 router.get('/categorias', requireUser, async (req, res) => {
     try {
-        console.log('📋 Obteniendo categorías financieras');
+        // ...existing code...
         
         const categorias = finanzasService.obtenerCategoriasFinancieras();
         
@@ -578,7 +469,7 @@ router.get('/categorias', requireUser, async (req, res) => {
 // GET /api/finanzas/monedas - Obtener monedas soportadas
 router.get('/monedas', requireUser, async (req, res) => {
     try {
-        console.log('💱 Obteniendo monedas soportadas');
+        // ...existing code...
         
         const monedas = finanzasService.obtenerMonedasSoportadas();
         

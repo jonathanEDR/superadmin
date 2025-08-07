@@ -65,8 +65,7 @@ const allowedOrigins = [
   'https://fsuperadmin.vercel.app'
 ];
 
-console.log('Allowed CORS origins:', allowedOrigins);
-console.log('Environment CORS_ORIGINS:', process.env.CORS_ORIGINS);
+// ...existing code...
 
 // Middleware para CORS y Body Parser
 app.use(cors({
@@ -82,7 +81,7 @@ app.use(cors({
     if (allowedOrigins.includes(origin)) {
       callback(null, true);
     } else {
-      console.log('CORS blocked origin:', origin);
+      // ...existing code...
       callback(new Error('Not allowed by CORS'));
     }
   },
@@ -111,17 +110,6 @@ app.use(bodyParser.urlencoded({ extended: true }));
 // Aplicar middleware de zona horaria de Perú
 app.use(setPeruTimezone);
 
-// Middleware de logging para todas las requests
-app.use((req, res, next) => {
-  console.log(`🔍 ${new Date().toISOString()} - ${req.method} ${req.originalUrl}`);
-  console.log('Headers:', {
-    'user-agent': req.get('user-agent'),
-    'authorization': req.get('authorization') ? 'Bearer [PRESENT]' : 'NOT_PRESENT',
-    'x-user-role': req.get('x-user-role') || 'NOT_SET'
-  });
-  console.log('🕐 Timezone del servidor:', process.env.TZ || 'Sistema');
-  next();
-});
 
 // Health check endpoint
 app.get('/api/health', (req, res) => {
@@ -159,7 +147,7 @@ app.use('/api/caja', cajaRoutes);
 app.use('/api/movimientos-caja', movimientosCajaRoutes);
 app.use('/api/reservas', reservaRoutes);
 // Rutas del módulo de producción
-console.log('🔧 Registrando rutas de producción...');
+// ...existing code...
 app.use('/api/ingredientes', ingredienteRoutes);
 app.use('/api/materiales', materialRoutes);
 app.use('/api/recetas', recetaRoutes);
@@ -167,7 +155,7 @@ app.use('/api/produccion', produccionRoutes);
 app.use('/api/movimientos', movimientoRoutes);
 app.use('/api/movimientos-unificados', movimientoUnificadoRoutes);
 app.use('/api/residuos', residuoRoutes);
-console.log('🎯 Registrando ruta: /api/catalogo-produccion');
+// ...existing code...
 app.use('/api/catalogo-produccion', catalogoProduccionRoutes);
 app.use('/api/dashboard', dashboardRoutes);
 app.use('/api/estadisticas', estadisticasRoutes);
@@ -176,13 +164,14 @@ app.use('/api/inventario', inventarioRoutes);
 app.use('/api/inventario-producto', inventarioProductoRoutes);
 
 // Rutas del módulo de finanzas
-console.log('💰 Registrando rutas de finanzas...');
+// ...existing code...
 app.use('/api/finanzas', finanzasRoutes);
 app.use('/api/cuentas-bancarias', cuentasBancariasRoutes); // Ruta directa para cuentas bancarias
+app.use('/api/movimientos-caja', movimientosCajaRoutes); // Ruta directa para movimientos de caja
 app.use('/api/prestamos', prestamosRoutes);
 app.use('/api/pagos-financiamiento', pagosFinanciamientoRoutes);
 app.use('/api/garantias', garantiasRoutes);
-console.log('✅ Módulo de finanzas registrado exitosamente');
+// ...existing code...
 
 // Ruta de debug (solo en desarrollo)
 if (process.env.NODE_ENV !== 'production') {
@@ -252,8 +241,7 @@ const connectDB = async () => {
       socketTimeoutMS: 45000,
     });
     
-    console.log(`MongoDB Connected: ${conn.connection.host}`);
-    console.log(`Database: ${conn.connection.name}`);
+    // ...existing code...
   } catch (error) {
     console.error('Error connecting to MongoDB:', error.message);
     process.exit(1);
@@ -263,26 +251,20 @@ const connectDB = async () => {
 // Conectar a la base de datos
 connectDB();
 
+
 // Manejo de señales para cierre graceful
 process.on('SIGTERM', async () => {
-  console.log('SIGTERM received, shutting down gracefully');
   await mongoose.connection.close();
   process.exit(0);
 });
 
 process.on('SIGINT', async () => {
-  console.log('SIGINT received, shutting down gracefully');
   await mongoose.connection.close();
   process.exit(0);
 });
 
-
 if (require.main === module) {
-  app.listen(port, '0.0.0.0', () => {
-    console.log(`🚀 Server running on port ${port}`);
-    console.log(`📝 Environment: ${process.env.NODE_ENV || 'development'}`);
-    console.log(`🔗 Health check: http://localhost:${port}/health`);
-  });
+  app.listen(port, '0.0.0.0');
 }
 
 module.exports = app;

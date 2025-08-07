@@ -108,6 +108,34 @@ const movimientoCajaSchema = new mongoose.Schema({
         trim: true
     },
 
+    // === INTEGRACIÓN CON CUENTAS BANCARIAS ===
+    cuentaBancariaId: {
+        type: mongoose.Schema.Types.ObjectId,
+        ref: 'CuentaBancaria',
+        required: false, // Opcional para mantener compatibilidad con movimientos en efectivo
+        index: true
+    },
+    afectaCuentaBancaria: {
+        type: Boolean,
+        default: false,
+        index: true
+    },
+    // Referencia al movimiento bancario creado automáticamente
+    movimientoBancarioId: {
+        type: mongoose.Schema.Types.ObjectId,
+        ref: 'MovimientoBancario',
+        required: false
+    },
+    // Saldo anterior y posterior de la cuenta bancaria (para trazabilidad)
+    saldoBancarioAnterior: {
+        type: Number,
+        required: false
+    },
+    saldoBancarioPosterior: {
+        type: Number,
+        required: false
+    },
+
     // === DISTRIBUCIÓN AUTOMÁTICA ===
     distribucion: {
         moduloDestino: {
@@ -179,6 +207,10 @@ movimientoCajaSchema.index({ tipo: 1, fecha: -1 });
 movimientoCajaSchema.index({ categoria: 1, fecha: -1 });
 movimientoCajaSchema.index({ 'metodoPago.tipo': 1, fecha: -1 });
 movimientoCajaSchema.index({ estado: 1, fecha: -1 });
+// Nuevos índices para integración bancaria
+movimientoCajaSchema.index({ cuentaBancariaId: 1, fecha: -1 });
+movimientoCajaSchema.index({ afectaCuentaBancaria: 1, fecha: -1 });
+movimientoCajaSchema.index({ userId: 1, afectaCuentaBancaria: 1, fecha: -1 });
 
 // === MIDDLEWARE PRE-SAVE ===
 movimientoCajaSchema.pre('save', async function(next) {
@@ -204,31 +236,42 @@ movimientoCajaSchema.pre('save', async function(next) {
             
             console.log('🏷️ Parámetros para código:', { prefijo, fechaCodigo, userId: this.userId });
             
-            // Buscar el último número del día con un patrón más específico
-            const patronCodigo = `^${prefijo}${fechaCodigo}\\d{4}$`; // Patrón exacto: INGyyyymmdd####
-            const ultimoMovimiento = await this.constructor.findOne(
-                { 
-                    codigo: { $regex: patronCodigo },
-                    userId: this.userId
-                },
-                {},
-                { sort: { codigo: -1 } }
-            );
+            // 🔧 ESTRATEGIA MEJORADA: Usar timestamp para evitar colisiones
+            let numeroSecuencial;
+            let intentos = 0;
+            let codigoUnico = false;
             
-            console.log('🔍 Último movimiento encontrado:', ultimoMovimiento?.codigo);
-            
-            let numeroSecuencial = 1;
-            if (ultimoMovimiento && ultimoMovimiento.codigo) {
-                // Extraer solo los últimos 4 dígitos
-                const match = ultimoMovimiento.codigo.match(/(\d{4})$/);
-                if (match) {
-                    numeroSecuencial = parseInt(match[1]) + 1;
+            while (!codigoUnico && intentos < 10) {
+                // Usar timestamp más milisegundos para mayor unicidad
+                const timestamp = Date.now();
+                const ultimosCuatroDigitos = timestamp.toString().slice(-4);
+                numeroSecuencial = ultimosCuatroDigitos;
+                
+                const codigoTentativo = `${prefijo}${fechaCodigo}${numeroSecuencial}`;
+                
+                // Verificar si ya existe
+                const existecodigo = await this.constructor.findOne({ 
+                    codigo: codigoTentativo 
+                });
+                
+                if (!existecodigo) {
+                    this.codigo = codigoTentativo;
+                    codigoUnico = true;
+                    console.log('✅ Código único generado:', this.codigo);
+                } else {
+                    intentos++;
+                    console.log(`⚠️ Intento ${intentos}: Código ${codigoTentativo} ya existe, reintentando...`);
+                    // Esperar 1ms antes del siguiente intento
+                    await new Promise(resolve => setTimeout(resolve, 1));
                 }
-                console.log('📊 Número secuencial calculado:', numeroSecuencial);
             }
             
-            this.codigo = `${prefijo}${fechaCodigo}${numeroSecuencial.toString().padStart(4, '0')}`;
-            console.log('✅ Código generado:', this.codigo);
+            if (!codigoUnico) {
+                // Fallback: usar timestamp completo si no se logra generar uno único
+                const timestampCompleto = Date.now().toString();
+                this.codigo = `${prefijo}${fechaCodigo}${timestampCompleto.slice(-6)}`;
+                console.log('🆘 Fallback: Código generado con timestamp completo:', this.codigo);
+            }
         }
         
         // Validar monto de efectivo
@@ -366,6 +409,46 @@ movimientoCajaSchema.statics.obtenerTotalEfectivo = async function(userId, fecha
         egresos,
         saldoActual: ingresos - egresos
     };
+};
+
+// === MÉTODOS PARA INTEGRACIÓN BANCARIA ===
+
+// Obtener movimientos que afectan cuentas bancarias
+movimientoCajaSchema.statics.obtenerMovimientosBancarios = function(userId, filtros = {}) {
+    const match = {
+        userId,
+        afectaCuentaBancaria: true,
+        estado: { $ne: 'anulado' },
+        ...filtros
+    };
+    
+    return this.find(match)
+        .populate('cuentaBancariaId', 'nombre banco numeroCuenta moneda saldoActual')
+        .populate('movimientoBancarioId')
+        .sort({ fecha: -1, createdAt: -1 })
+        .lean();
+};
+
+// Obtener resumen por cuenta bancaria
+movimientoCajaSchema.statics.obtenerResumenPorCuentaBancaria = async function(userId, cuentaBancariaId, fechaInicio, fechaFin) {
+    return await this.aggregate([
+        {
+            $match: {
+                userId,
+                cuentaBancariaId: new mongoose.Types.ObjectId(cuentaBancariaId),
+                fecha: { $gte: fechaInicio, $lte: fechaFin },
+                estado: { $ne: 'anulado' }
+            }
+        },
+        {
+            $group: {
+                _id: '$tipo',
+                total: { $sum: '$monto' },
+                cantidad: { $sum: 1 },
+                ultimoMovimiento: { $last: '$fecha' }
+            }
+        }
+    ]);
 };
 
 module.exports = mongoose.model('MovimientoCajaFinanzas', movimientoCajaSchema);

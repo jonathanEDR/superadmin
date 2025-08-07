@@ -11,17 +11,17 @@ const { authenticate } = require('../../middleware/authenticate');
  */
 router.post('/ingreso', authenticate, async (req, res) => {
     try {
-        console.log('📥 Registrando ingreso:', req.body);
-        console.log('👤 Usuario autenticado:', req.user);
+        // ...existing code...
         
         const userData = {
-            userId: req.user._id || req.user.id,
+            userId: req.user.clerk_id, // 🔧 Usar clerk_id específicamente para cuentas bancarias  
             creatorId: req.user._id || req.user.id,
             creatorName: req.user.nombre_negocio || req.user.firstName || 'Usuario',
-            creatorEmail: req.user.email
+            creatorEmail: req.user.email,
+            creatorRole: req.user.role || 'user'
         };
         
-        console.log('📋 Datos de usuario para movimiento:', userData);
+        // ...existing code...
         
         const movimiento = await MovimientosCajaFinanzasService.registrarIngreso(req.body, userData);
         
@@ -47,17 +47,17 @@ router.post('/ingreso', authenticate, async (req, res) => {
  */
 router.post('/egreso', authenticate, async (req, res) => {
     try {
-        console.log('📤 Registrando egreso:', req.body);
-        console.log('👤 Usuario autenticado:', req.user);
+        // ...existing code...
         
         const userData = {
-            userId: req.user._id || req.user.id,
+            userId: req.user.clerk_id, // 🔧 Usar clerk_id específicamente para cuentas bancarias  
             creatorId: req.user._id || req.user.id,
             creatorName: req.user.nombre_negocio || req.user.firstName || 'Usuario',
-            creatorEmail: req.user.email
+            creatorEmail: req.user.email,
+            creatorRole: req.user.role || 'user'
         };
         
-        console.log('📋 Datos de usuario para movimiento:', userData);
+        // ...existing code...
         
         const movimiento = await MovimientosCajaFinanzasService.registrarEgreso(req.body, userData);
         
@@ -86,14 +86,13 @@ router.post('/egreso', authenticate, async (req, res) => {
 router.get('/resumen-dia', authenticate, async (req, res) => {
     try {
         const fecha = req.query.fecha ? new Date(req.query.fecha) : new Date();
-        const userId = req.user._id || req.user.id;
+        const userId = req.user.clerk_id;
         
-        console.log('📊 Obteniendo resumen para usuario:', userId);
-        console.log('📅 Fecha de consulta:', fecha);
+        // ...existing code...
         
         const resumen = await MovimientosCajaFinanzasService.obtenerResumenDia(userId, fecha);
         
-        console.log('✅ Resumen obtenido:', resumen);
+        // ...existing code...
         
         res.json({
             success: true,
@@ -138,7 +137,7 @@ router.get('/movimientos', authenticate, async (req, res) => {
         if (limite) filtros.limite = parseInt(limite);
         if (pagina) filtros.pagina = parseInt(pagina);
         
-        const resultado = await MovimientosCajaFinanzasService.obtenerMovimientos(req.user._id || req.user.id, filtros);
+        const resultado = await MovimientosCajaFinanzasService.obtenerMovimientos(req.user.clerk_id, filtros);
         
         res.json({
             success: true,
@@ -325,6 +324,135 @@ router.get('/metodos-pago', (req, res) => {
         res.status(500).json({
             success: false,
             message: 'Error al obtener métodos de pago',
+            error: error.message
+        });
+    }
+});
+
+// === NUEVAS RUTAS PARA INTEGRACIÓN BANCARIA ===
+
+/**
+ * GET /api/movimientos-caja/cuentas-disponibles
+ * Obtener cuentas bancarias disponibles para el usuario
+ */
+router.get('/cuentas-disponibles', authenticate, async (req, res) => {
+    try {
+        // ...existing code...
+        
+        const userId = req.user.clerk_id;
+        // ...existing code...
+        
+        // Pasar el usuario completo para tener acceso al clerk_id
+        const cuentas = await MovimientosCajaFinanzasService.obtenerCuentasDisponibles(userId, req.user);
+        
+        res.json({
+            success: true,
+            data: cuentas,
+            message: `${cuentas.length} cuentas bancarias disponibles`
+        });
+        
+    } catch (error) {
+        console.error('❌ Error obteniendo cuentas disponibles:', error);
+        res.status(500).json({
+            success: false,
+            message: 'Error al obtener cuentas disponibles',
+            error: error.message
+        });
+    }
+});
+
+/**
+ * GET /api/movimientos-caja/movimientos-integrados
+ * Obtener movimientos integrados (caja + bancarios)
+ */
+router.get('/movimientos-integrados', authenticate, async (req, res) => {
+    try {
+        // ...existing code...
+        
+        const userId = req.user._id || req.user.id;
+        const filtros = req.query;
+        
+        const movimientos = await MovimientosCajaFinanzasService.obtenerMovimientosIntegrados(userId, filtros);
+        
+        res.json({
+            success: true,
+            data: movimientos,
+            message: `${movimientos.length} movimientos encontrados`
+        });
+        
+    } catch (error) {
+        console.error('❌ Error obteniendo movimientos integrados:', error);
+        res.status(500).json({
+            success: false,
+            message: 'Error al obtener movimientos integrados',
+            error: error.message
+        });
+    }
+});
+
+/**
+ * PUT /api/movimientos-caja/:id/anular-integrado
+ * Anular movimiento con reversión bancaria
+ */
+router.put('/:id/anular-integrado', authenticate, async (req, res) => {
+    try {
+        // ...existing code...
+        
+        const userData = {
+            userId: req.user._id || req.user.id,
+            creatorName: req.user.nombre_negocio || req.user.firstName || 'Usuario',
+            creatorEmail: req.user.email
+        };
+        
+        const resultado = await MovimientosCajaFinanzasService.anularMovimiento(
+            req.params.id, 
+            req.body.motivo || 'Sin motivo especificado', 
+            userData
+        );
+        
+        res.json({
+            success: true,
+            data: resultado,
+            message: 'Movimiento anulado correctamente'
+        });
+        
+    } catch (error) {
+        console.error('❌ Error anulando movimiento:', error);
+        res.status(500).json({
+            success: false,
+            message: 'Error al anular movimiento',
+            error: error.message
+        });
+    }
+});
+
+/**
+ * GET /api/movimientos-caja/resumen-integracion
+ * Obtener resumen de movimientos integrados
+ */
+router.get('/resumen-integracion', authenticate, async (req, res) => {
+    try {
+        // ...existing code...
+        
+        const userId = req.user._id || req.user.id;
+        const { fechaInicio, fechaFin } = req.query;
+        
+        const inicio = fechaInicio ? new Date(fechaInicio) : new Date(new Date().setDate(new Date().getDate() - 30));
+        const fin = fechaFin ? new Date(fechaFin) : new Date();
+        
+        const resumen = await MovimientosCajaFinanzasService.obtenerResumenIntegracion(userId, inicio, fin);
+        
+        res.json({
+            success: true,
+            data: resumen,
+            message: 'Resumen de integración obtenido correctamente'
+        });
+        
+    } catch (error) {
+        console.error('❌ Error obteniendo resumen de integración:', error);
+        res.status(500).json({
+            success: false,
+            message: 'Error al obtener resumen de integración',
             error: error.message
         });
     }

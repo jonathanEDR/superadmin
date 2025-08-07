@@ -1,4 +1,5 @@
 const MovimientoCajaFinanzas = require('../../models/finanzas/MovimientoCaja');
+const IntegracionFinanzasService = require('./integracionFinanzasService');
 
 class MovimientosCajaFinanzasService {
     
@@ -9,10 +10,8 @@ class MovimientosCajaFinanzasService {
      */
     static async registrarIngreso(data, userData) {
         try {
-            console.log('💰 Registrando ingreso en caja finanzas:', data);
-            console.log('👤 Usuario data recibida:', userData);
-            
-            const movimiento = new MovimientoCajaFinanzas({
+            // Preparar datos del movimiento
+            const datosMovimiento = {
                 tipo: 'ingreso',
                 monto: data.monto,
                 concepto: data.concepto,
@@ -23,25 +22,28 @@ class MovimientosCajaFinanzasService {
                 documento: data.documento,
                 cliente: data.cliente,
                 observaciones: data.observaciones,
-                userId: userData.userId.toString(), // Convertir explícitamente a string
-                creatorId: userData.creatorId,
-                creatorName: userData.creatorName,
-                creatorEmail: userData.creatorEmail
-            });
+                // Nuevos campos para integración bancaria
+                afectaCuentaBancaria: data.afectaCuentaBancaria || false,
+                cuentaBancariaId: data.cuentaBancariaId || null,
+                fecha: data.fecha || new Date()
+            };
             
-            console.log('📋 Objeto movimiento antes de save:', {
-                tipo: movimiento.tipo,
-                userId: movimiento.userId,
-                isNew: movimiento.isNew,
-                codigo: movimiento.codigo
-            });
-            
-            console.log('🔄 Intentando guardar movimiento...');
-            await movimiento.save();
-            console.log('✅ Movimiento guardado exitosamente!');
-            
-            console.log('✅ Ingreso registrado:', movimiento.codigo);
-            return movimiento;
+            // Usar servicio de integración si afecta cuenta bancaria
+            if (datosMovimiento.afectaCuentaBancaria) {
+                const resultado = await IntegracionFinanzasService.registrarMovimientoIntegrado(datosMovimiento, userData);
+                return resultado.movimientoCaja;
+            } else {
+                const movimiento = new MovimientoCajaFinanzas({
+                    ...datosMovimiento,
+                    userId: userData.userId.toString(),
+                    creatorId: userData.creatorId,
+                    creatorName: userData.creatorName,
+                    creatorEmail: userData.creatorEmail
+                });
+                
+                await movimiento.save();
+                return movimiento;
+            }
             
         } catch (error) {
             console.error('❌ Error registrando ingreso:', error);
@@ -54,9 +56,8 @@ class MovimientosCajaFinanzasService {
      */
     static async registrarEgreso(data, userData) {
         try {
-            console.log('💸 Registrando egreso en caja finanzas:', data);
-            
-            const movimiento = new MovimientoCajaFinanzas({
+            // Preparar datos del movimiento
+            const datosMovimiento = {
                 tipo: 'egreso',
                 monto: data.monto,
                 concepto: data.concepto,
@@ -67,16 +68,29 @@ class MovimientosCajaFinanzasService {
                 documento: data.documento,
                 proveedor: data.proveedor,
                 observaciones: data.observaciones,
-                userId: userData.userId,
-                creatorId: userData.creatorId,
-                creatorName: userData.creatorName,
-                creatorEmail: userData.creatorEmail
-            });
+                // Nuevos campos para integración bancaria
+                afectaCuentaBancaria: data.afectaCuentaBancaria || false,
+                cuentaBancariaId: data.cuentaBancariaId || null,
+                fecha: data.fecha || new Date()
+            };
             
-            await movimiento.save();
-            
-            console.log('✅ Egreso registrado:', movimiento.codigo);
-            return movimiento;
+            // Usar servicio de integración si afecta cuenta bancaria
+            if (datosMovimiento.afectaCuentaBancaria) {
+                const resultado = await IntegracionFinanzasService.registrarMovimientoIntegrado(datosMovimiento, userData);
+                return resultado.movimientoCaja;
+            } else {
+                // Registro tradicional solo en caja
+                const movimiento = new MovimientoCajaFinanzas({
+                    ...datosMovimiento,
+                    userId: userData.userId.toString(),
+                    creatorId: userData.creatorId,
+                    creatorName: userData.creatorName,
+                    creatorEmail: userData.creatorEmail
+                });
+                
+                await movimiento.save();
+                return movimiento;
+            }
             
         } catch (error) {
             console.error('❌ Error registrando egreso:', error);
@@ -91,8 +105,6 @@ class MovimientosCajaFinanzasService {
      */
     static async obtenerResumenDia(userId, fecha = new Date()) {
         try {
-            console.log('📊 Obteniendo resumen del día para userId:', userId);
-            console.log('📅 Fecha de consulta:', fecha);
             
             // Convertir userId a string si es necesario
             const userIdString = userId.toString();
@@ -103,7 +115,6 @@ class MovimientosCajaFinanzasService {
             const finDelDia = new Date(fecha);
             finDelDia.setHours(23, 59, 59, 999);
             
-            console.log('⏰ Rango de fechas:', { inicioDelDia, finDelDia });
             
             const resumen = await MovimientoCajaFinanzas.aggregate([
                 {
@@ -122,7 +133,6 @@ class MovimientosCajaFinanzasService {
                 }
             ]);
             
-            console.log('📊 Resultado del aggregate:', resumen);
             
             let ingresos = 0;
             let egresos = 0;
@@ -158,7 +168,6 @@ class MovimientosCajaFinanzasService {
                 }
             ]);
             
-            console.log('💵 Efectivo aggregate:', totalEfectivo);
             
             let efectivoIngresos = 0;
             let efectivoEgresos = 0;
@@ -189,7 +198,6 @@ class MovimientosCajaFinanzasService {
                 ultimaActualizacion: new Date().toISOString()
             };
             
-            console.log('📋 Resumen calculado:', resultado);
             return resultado;
             
         } catch (error) {
@@ -203,8 +211,6 @@ class MovimientosCajaFinanzasService {
      */
     static async obtenerMovimientos(userId, filtros = {}) {
         try {
-            console.log('📋 Obteniendo movimientos con filtros:', filtros);
-            console.log('👤 UserId para consulta:', userId);
             
             const {
                 fechaInicio,
@@ -232,9 +238,7 @@ class MovimientosCajaFinanzasService {
                 fechaFinFinal.setHours(23, 59, 59, 999);
                 
                 query.fecha = { $gte: fechaInicioFinal, $lte: fechaFinFinal };
-                console.log('📅 Rango de fechas aplicado:', { fechaInicioFinal, fechaFinFinal });
             } else {
-                console.log('📅 Sin filtros de fecha - buscando todos los movimientos');
             }
             
             if (tipo) query.tipo = tipo;
@@ -247,7 +251,6 @@ class MovimientosCajaFinanzasService {
                 query.estado = { $ne: 'anulado' };
             }
             
-            console.log('� Query construida:', JSON.stringify(query, null, 2));
             
             const [movimientos, total] = await Promise.all([
                 MovimientoCajaFinanzas.find(query)
@@ -258,37 +261,17 @@ class MovimientosCajaFinanzasService {
                 MovimientoCajaFinanzas.countDocuments(query)
             ]);
             
-            console.log('📊 Resultados de consulta:', {
-                movimientosEncontrados: movimientos.length,
-                totalRegistros: total,
-                primerosMovimientos: movimientos.slice(0, 2).map(m => ({
-                    codigo: m.codigo,
-                    tipo: m.tipo,
-                    monto: m.monto,
-                    fecha: m.fecha,
-                    userId: m.userId
-                }))
-            });
             
             // Debug adicional: contar todos los movimientos del usuario sin filtros
             const totalMovimientosUsuario = await MovimientoCajaFinanzas.countDocuments({
                 userId: userId.toString()
             });
-            console.log('📊 Total de movimientos del usuario (sin filtros):', totalMovimientosUsuario);
             
             // Mostrar algunos movimientos de ejemplo
             if (totalMovimientosUsuario > 0) {
                 const ejemploMovimientos = await MovimientoCajaFinanzas.find({
                     userId: userId.toString()
                 }).limit(3).lean();
-                console.log('📋 Ejemplo de movimientos del usuario:', ejemploMovimientos.map(m => ({
-                    codigo: m.codigo,
-                    tipo: m.tipo,
-                    monto: m.monto,
-                    fecha: m.fecha,
-                    categoria: m.categoria,
-                    estado: m.estado
-                })));
             }
             
             return {
@@ -547,6 +530,124 @@ class MovimientosCajaFinanzasService {
             'transferencia',
             'tarjeta'
         ];
+    }
+
+    // === MÉTODOS PARA INTEGRACIÓN BANCARIA ===
+
+    /**
+     * Obtener cuentas bancarias disponibles para el usuario
+     */
+    static async obtenerCuentasDisponibles(userId, userData = null) {
+        try {
+            const CuentaBancaria = require('../../models/finanzas/CuentaBancaria');
+            
+            
+            // Primero verificar todas las cuentas en la BD
+            const todasLasCuentas = await CuentaBancaria.find({}).select('userId nombre activa').lean();
+            
+            // Construir filtro para buscar por múltiples identificadores
+            const filtroUserId = [];
+            
+            // Agregar el userId principal
+            if (userId) {
+                filtroUserId.push({ userId: userId.toString() });
+            }
+            
+            // Si tenemos userData, agregar el clerk_id también
+            if (userData && userData.clerk_id) {
+                filtroUserId.push({ userId: userData.clerk_id });
+            }
+            
+            // Si no hay userData pero podemos inferir clerk_id desde las cuentas existentes
+            if (!userData && todasLasCuentas.length > 0) {
+                // Buscar si alguna cuenta tiene un clerk_id pattern
+                const clerkIds = todasLasCuentas
+                    .map(c => c.userId)
+                    .filter(id => id.startsWith('user_'));
+                
+                if (clerkIds.length > 0) {
+                    clerkIds.forEach(clerkId => {
+                        filtroUserId.push({ userId: clerkId });
+                    });
+                }
+            }
+            
+            
+            const cuentas = await CuentaBancaria.find({
+                $or: filtroUserId,
+                activa: true
+            }).select('nombre banco tipoCuenta numeroCuenta moneda saldoActual').lean();
+            
+            
+            // Log detallado de cada cuenta
+            cuentas.forEach((cuenta, index) => {
+                console.log(`🏦 [obtenerCuentasDisponibles] Cuenta ${index + 1}:`, {
+                    id: cuenta._id,
+                    nombre: cuenta.nombre,
+                    banco: cuenta.banco,
+                    saldoActual: cuenta.saldoActual,
+                    moneda: cuenta.moneda
+                });
+            });
+            
+            const cuentasFormateadas = cuentas.map(cuenta => ({
+                _id: cuenta._id.toString(),
+                nombre: cuenta.nombre,
+                banco: cuenta.banco,
+                tipoCuenta: cuenta.tipoCuenta,
+                numeroCuenta: cuenta.numeroCuenta,
+                moneda: cuenta.moneda,
+                saldo: cuenta.saldoActual,
+                saldoActual: cuenta.saldoActual,
+                // También mantener el formato original para compatibilidad
+                value: cuenta._id.toString(),
+                label: `${cuenta.nombre} - ${cuenta.banco} (${cuenta.moneda} ${cuenta.saldoActual.toFixed(2)})`,
+                data: cuenta
+            }));
+            
+            
+            return cuentasFormateadas;
+            
+        } catch (error) {
+            console.error('❌ Error obteniendo cuentas disponibles:', error);
+            throw new Error(`Error al obtener cuentas disponibles: ${error.message}`);
+        }
+    }
+
+    /**
+     * Obtener movimientos integrados (caja + bancarios)
+     */
+    static async obtenerMovimientosIntegrados(userId, filtros = {}) {
+        try {
+            return await IntegracionFinanzasService.obtenerMovimientosIntegrados(userId, filtros);
+        } catch (error) {
+            console.error('❌ Error obteniendo movimientos integrados:', error);
+            throw error;
+        }
+    }
+
+    /**
+     * Anular movimiento (incluye reversión bancaria si aplica)
+     */
+    static async anularMovimiento(movimientoId, motivo, userData) {
+        try {
+            return await IntegracionFinanzasService.anularMovimientoIntegrado(movimientoId, motivo, userData);
+        } catch (error) {
+            console.error('❌ Error anulando movimiento:', error);
+            throw error;
+        }
+    }
+
+    /**
+     * Obtener resumen de integración
+     */
+    static async obtenerResumenIntegracion(userId, fechaInicio, fechaFin) {
+        try {
+            return await IntegracionFinanzasService.obtenerResumenIntegracion(userId, fechaInicio, fechaFin);
+        } catch (error) {
+            console.error('❌ Error obteniendo resumen de integración:', error);
+            throw error;
+        }
     }
 }
 
