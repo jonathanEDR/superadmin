@@ -77,8 +77,8 @@ router.get('/:id', async (req, res) => {
 router.post('/', async (req, res) => {
     try {
         const userData = {
-            userId: req.user.id, // ✅ Corregido
-            creatorId: req.user.id, // ✅ Corregido
+            userId: req.user.clerk_id, // 🔧 Usar clerk_id para consistencia con movimientos de caja
+            creatorId: req.user.id, // ObjectId del usuario en la base de datos
             creatorName: req.user.nombre_negocio || req.user.email,
             creatorEmail: req.user.email,
             creatorRole: req.user.role || 'user'
@@ -187,9 +187,9 @@ router.post('/:id/desembolsar', async (req, res) => {
         const { montoDesembolsado, cuentaDesembolsoId, observaciones } = req.body;
         
         const userData = {
-            userId: req.user.userId,
-            creatorId: req.user.userId,
-            creatorName: req.user.name || req.user.email,
+            userId: req.user.clerk_id, // 🔧 Usar clerk_id para consistencia con movimientos de caja
+            creatorId: req.user.id, // ObjectId del usuario en la base de datos
+            creatorName: req.user.nombre_negocio || req.user.email,
             creatorEmail: req.user.email,
             creatorRole: req.user.role || 'user'
         };

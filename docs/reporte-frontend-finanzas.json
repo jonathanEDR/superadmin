@@ -1,0 +1,824 @@
+{
+  "componentes": [
+    {
+      "archivo": "ModalIngresoFinanzas.jsx",
+      "ruta": "C:\\Users\\pc1\\Desktop\\login\\my-app\\src\\components\\Finanzas\\MovimientoCaja\\ModalIngresoFinanzas.jsx",
+      "tamaño": 56.07,
+      "lineas": 934,
+      "imports": 3,
+      "exports": 1,
+      "hooks": {
+        "useState": 8,
+        "useEffect": 3,
+        "useCallback": 0,
+        "useMemo": 0,
+        "useContext": 0,
+        "custom": 0
+      },
+      "componentes": 2,
+      "problemas": [
+        "Archivo muy largo: 934 líneas",
+        "Demasiados useState: 8",
+        "Posible falta de optimización: no usa useCallback",
+        "Posible falta de optimización: no usa useMemo"
+      ]
+    },
+    {
+      "archivo": "ModalEgresoFinanzas.jsx",
+      "ruta": "C:\\Users\\pc1\\Desktop\\login\\my-app\\src\\components\\Finanzas\\MovimientoCaja\\ModalEgresoFinanzas.jsx",
+      "tamaño": 54.27,
+      "lineas": 885,
+      "imports": 3,
+      "exports": 1,
+      "hooks": {
+        "useState": 8,
+        "useEffect": 4,
+        "useCallback": 0,
+        "useMemo": 0,
+        "useContext": 0,
+        "custom": 0
+      },
+      "componentes": 6,
+      "problemas": [
+        "Archivo muy largo: 885 líneas",
+        "Demasiados useState: 8",
+        "Demasiados useEffect: 4",
+        "Posible falta de optimización: no usa useCallback",
+        "Posible falta de optimización: no usa useMemo"
+      ]
+    },
+    {
+      "archivo": "PrestamosCore.jsx",
+      "ruta": "C:\\Users\\pc1\\Desktop\\login\\my-app\\src\\components\\Finanzas\\Prestamos\\PrestamosCore.jsx",
+      "tamaño": 17.33,
+      "lineas": 475,
+      "imports": 5,
+      "exports": 1,
+      "hooks": {
+        "useState": 14,
+        "useEffect": 3,
+        "useCallback": 3,
+        "useMemo": 0,
+        "useContext": 0,
+        "custom": 5
+      },
+      "componentes": 0,
+      "problemas": [
+        "Archivo muy largo: 475 líneas",
+        "Demasiados useState: 14",
+        "Posible falta de optimización: no usa useMemo"
+      ]
+    },
+    {
+      "archivo": "TablaCuentasBancarias.jsx",
+      "ruta": "C:\\Users\\pc1\\Desktop\\login\\my-app\\src\\components\\Finanzas\\CuentasBancarias\\TablaCuentasBancarias.jsx",
+      "tamaño": 21.76,
+      "lineas": 441,
+      "imports": 2,
+      "exports": 1,
+      "hooks": {
+        "useState": 3,
+        "useEffect": 0,
+        "useCallback": 0,
+        "useMemo": 0,
+        "useContext": 0,
+        "custom": 0
+      },
+      "componentes": 4,
+      "problemas": [
+        "Archivo muy largo: 441 líneas",
+        "Posible falta de optimización: no usa useCallback",
+        "Posible falta de optimización: no usa useMemo"
+      ]
+    },
+    {
+      "archivo": "prestamosConfig.jsx",
+      "ruta": "C:\\Users\\pc1\\Desktop\\login\\my-app\\src\\components\\Finanzas\\Prestamos\\prestamosConfig.jsx",
+      "tamaño": 14.26,
+      "lineas": 404,
+      "imports": 1,
+      "exports": 16,
+      "hooks": {
+        "useState": 0,
+        "useEffect": 0,
+        "useCallback": 0,
+        "useMemo": 0,
+        "useContext": 0,
+        "custom": 0
+      },
+      "componentes": 0,
+      "problemas": [
+        "Archivo muy largo: 404 líneas",
+        "Posible falta de optimización: no usa useMemo"
+      ]
+    },
+    {
+      "archivo": "MovimientosCajaFinanzas.jsx",
+      "ruta": "C:\\Users\\pc1\\Desktop\\login\\my-app\\src\\components\\Finanzas\\MovimientoCaja\\MovimientosCajaFinanzas.jsx",
+      "tamaño": 18.14,
+      "lineas": 402,
+      "imports": 7,
+      "exports": 1,
+      "hooks": {
+        "useState": 8,
+        "useEffect": 2,
+        "useCallback": 0,
+        "useMemo": 0,
+        "useContext": 0,
+        "custom": 0
+      },
+      "componentes": 14,
+      "problemas": [
+        "Archivo muy largo: 402 líneas",
+        "Demasiados useState: 8",
+        "Posible falta de optimización: no usa useCallback",
+        "Posible falta de optimización: no usa useMemo"
+      ]
+    },
+    {
+      "archivo": "TablaPrestamos.jsx",
+      "ruta": "C:\\Users\\pc1\\Desktop\\login\\my-app\\src\\components\\Finanzas\\Prestamos\\TablaPrestamos.jsx",
+      "tamaño": 21.38,
+      "lineas": 399,
+      "imports": 3,
+      "exports": 1,
+      "hooks": {
+        "useState": 0,
+        "useEffect": 1,
+        "useCallback": 0,
+        "useMemo": 2,
+        "useContext": 0,
+        "custom": 0
+      },
+      "componentes": 1,
+      "problemas": [
+        "Archivo muy largo: 399 líneas"
+      ]
+    },
+    {
+      "archivo": "TablaMovimientosFinanzas.jsx",
+      "ruta": "C:\\Users\\pc1\\Desktop\\login\\my-app\\src\\components\\Finanzas\\MovimientoCaja\\TablaMovimientosFinanzas.jsx",
+      "tamaño": 18.37,
+      "lineas": 357,
+      "imports": 3,
+      "exports": 1,
+      "hooks": {
+        "useState": 3,
+        "useEffect": 0,
+        "useCallback": 0,
+        "useMemo": 0,
+        "useContext": 0,
+        "custom": 0
+      },
+      "componentes": 9,
+      "problemas": [
+        "Archivo muy largo: 357 líneas",
+        "Posible falta de optimización: no usa useCallback",
+        "Posible falta de optimización: no usa useMemo"
+      ]
+    },
+    {
+      "archivo": "ModalArqueoFinanzas.jsx",
+      "ruta": "C:\\Users\\pc1\\Desktop\\login\\my-app\\src\\components\\Finanzas\\MovimientoCaja\\ModalArqueoFinanzas.jsx",
+      "tamaño": 17.14,
+      "lineas": 282,
+      "imports": 3,
+      "exports": 1,
+      "hooks": {
+        "useState": 4,
+        "useEffect": 2,
+        "useCallback": 0,
+        "useMemo": 0,
+        "useContext": 0,
+        "custom": 0
+      },
+      "componentes": 4,
+      "problemas": [
+        "Posible falta de optimización: no usa useCallback",
+        "Posible falta de optimización: no usa useMemo"
+      ]
+    },
+    {
+      "archivo": "AccesosRapidosFinanzas.jsx",
+      "ruta": "C:\\Users\\pc1\\Desktop\\login\\my-app\\src\\components\\Finanzas\\AccesosRapidosFinanzas.jsx",
+      "tamaño": 9.4,
+      "lineas": 247,
+      "imports": 3,
+      "exports": 1,
+      "hooks": {
+        "useState": 3,
+        "useEffect": 2,
+        "useCallback": 0,
+        "useMemo": 0,
+        "useContext": 0,
+        "custom": 2
+      },
+      "componentes": 1,
+      "problemas": [
+        "Posible falta de optimización: no usa useCallback",
+        "Posible falta de optimización: no usa useMemo"
+      ]
+    },
+    {
+      "archivo": "TablaAmortizacion.jsx",
+      "ruta": "C:\\Users\\pc1\\Desktop\\login\\my-app\\src\\components\\Finanzas\\Prestamos\\TablaAmortizacion.jsx",
+      "tamaño": 11.64,
+      "lineas": 246,
+      "imports": 1,
+      "exports": 1,
+      "hooks": {
+        "useState": 0,
+        "useEffect": 0,
+        "useCallback": 0,
+        "useMemo": 2,
+        "useContext": 0,
+        "custom": 0
+      },
+      "componentes": 0,
+      "problemas": []
+    },
+    {
+      "archivo": "ModalPrestamo.jsx",
+      "ruta": "C:\\Users\\pc1\\Desktop\\login\\my-app\\src\\components\\Finanzas\\Prestamos\\ModalPrestamo.jsx",
+      "tamaño": 10.93,
+      "lineas": 226,
+      "imports": 4,
+      "exports": 1,
+      "hooks": {
+        "useState": 0,
+        "useEffect": 0,
+        "useCallback": 0,
+        "useMemo": 0,
+        "useContext": 0,
+        "custom": 0
+      },
+      "componentes": 12,
+      "problemas": [
+        "Posible falta de optimización: no usa useMemo"
+      ]
+    },
+    {
+      "archivo": "CuentasBancariasCore.jsx",
+      "ruta": "C:\\Users\\pc1\\Desktop\\login\\my-app\\src\\components\\Finanzas\\CuentasBancarias\\CuentasBancariasCore.jsx",
+      "tamaño": 7.5,
+      "lineas": 216,
+      "imports": 4,
+      "exports": 1,
+      "hooks": {
+        "useState": 8,
+        "useEffect": 4,
+        "useCallback": 3,
+        "useMemo": 0,
+        "useContext": 0,
+        "custom": 4
+      },
+      "componentes": 0,
+      "problemas": [
+        "Demasiados useState: 8",
+        "Demasiados useEffect: 4",
+        "Posible falta de optimización: no usa useMemo"
+      ]
+    },
+    {
+      "archivo": "ModalDetallesPrestamo.jsx",
+      "ruta": "C:\\Users\\pc1\\Desktop\\login\\my-app\\src\\components\\Finanzas\\Prestamos\\ModalDetallesPrestamo.jsx",
+      "tamaño": 12.45,
+      "lineas": 210,
+      "imports": 2,
+      "exports": 1,
+      "hooks": {
+        "useState": 1,
+        "useEffect": 0,
+        "useCallback": 0,
+        "useMemo": 0,
+        "useContext": 0,
+        "custom": 0
+      },
+      "componentes": 1,
+      "problemas": [
+        "Posible falta de optimización: no usa useCallback",
+        "Posible falta de optimización: no usa useMemo"
+      ]
+    },
+    {
+      "archivo": "ModalTablaAmortizacion.jsx",
+      "ruta": "C:\\Users\\pc1\\Desktop\\login\\my-app\\src\\components\\Finanzas\\Prestamos\\ModalTablaAmortizacion.jsx",
+      "tamaño": 9.05,
+      "lineas": 176,
+      "imports": 3,
+      "exports": 1,
+      "hooks": {
+        "useState": 0,
+        "useEffect": 0,
+        "useCallback": 0,
+        "useMemo": 0,
+        "useContext": 0,
+        "custom": 0
+      },
+      "componentes": 1,
+      "problemas": [
+        "Posible falta de optimización: no usa useMemo"
+      ]
+    },
+    {
+      "archivo": "CampoCuentasBancarias.jsx",
+      "ruta": "C:\\Users\\pc1\\Desktop\\login\\my-app\\src\\components\\Finanzas\\CuentasBancarias\\CampoCuentasBancarias.jsx",
+      "tamaño": 5.2,
+      "lineas": 163,
+      "imports": 1,
+      "exports": 1,
+      "hooks": {
+        "useState": 0,
+        "useEffect": 0,
+        "useCallback": 0,
+        "useMemo": 0,
+        "useContext": 0,
+        "custom": 0
+      },
+      "componentes": 0,
+      "problemas": [
+        "Posible falta de optimización: no usa useMemo"
+      ]
+    },
+    {
+      "archivo": "CampoGarantia.jsx",
+      "ruta": "C:\\Users\\pc1\\Desktop\\login\\my-app\\src\\components\\Finanzas\\Garantias\\CampoGarantia.jsx",
+      "tamaño": 5.17,
+      "lineas": 163,
+      "imports": 1,
+      "exports": 1,
+      "hooks": {
+        "useState": 0,
+        "useEffect": 0,
+        "useCallback": 0,
+        "useMemo": 0,
+        "useContext": 0,
+        "custom": 0
+      },
+      "componentes": 0,
+      "problemas": [
+        "Posible falta de optimización: no usa useMemo"
+      ]
+    },
+    {
+      "archivo": "CampoPagosFinanciamiento.jsx",
+      "ruta": "C:\\Users\\pc1\\Desktop\\login\\my-app\\src\\components\\Finanzas\\PagosFinanciamiento\\CampoPagosFinanciamiento.jsx",
+      "tamaño": 5.21,
+      "lineas": 163,
+      "imports": 1,
+      "exports": 1,
+      "hooks": {
+        "useState": 0,
+        "useEffect": 0,
+        "useCallback": 0,
+        "useMemo": 0,
+        "useContext": 0,
+        "custom": 0
+      },
+      "componentes": 0,
+      "problemas": [
+        "Posible falta de optimización: no usa useMemo"
+      ]
+    },
+    {
+      "archivo": "CampoPrestamos.jsx",
+      "ruta": "C:\\Users\\pc1\\Desktop\\login\\my-app\\src\\components\\Finanzas\\Prestamos\\CampoPrestamos.jsx",
+      "tamaño": 5.18,
+      "lineas": 163,
+      "imports": 1,
+      "exports": 1,
+      "hooks": {
+        "useState": 0,
+        "useEffect": 0,
+        "useCallback": 0,
+        "useMemo": 0,
+        "useContext": 0,
+        "custom": 0
+      },
+      "componentes": 0,
+      "problemas": [
+        "Posible falta de optimización: no usa useMemo"
+      ]
+    },
+    {
+      "archivo": "ModalCalculadoraCuota.jsx",
+      "ruta": "C:\\Users\\pc1\\Desktop\\login\\my-app\\src\\components\\Finanzas\\Prestamos\\ModalCalculadoraCuota.jsx",
+      "tamaño": 7.34,
+      "lineas": 154,
+      "imports": 2,
+      "exports": 1,
+      "hooks": {
+        "useState": 0,
+        "useEffect": 0,
+        "useCallback": 0,
+        "useMemo": 0,
+        "useContext": 0,
+        "custom": 0
+      },
+      "componentes": 3,
+      "problemas": [
+        "Posible falta de optimización: no usa useMemo"
+      ]
+    },
+    {
+      "archivo": "cuentasBancariasConfig.js",
+      "ruta": "C:\\Users\\pc1\\Desktop\\login\\my-app\\src\\components\\Finanzas\\CuentasBancarias\\cuentasBancariasConfig.js",
+      "tamaño": 4.36,
+      "lineas": 149,
+      "imports": 1,
+      "exports": 10,
+      "hooks": {
+        "useState": 0,
+        "useEffect": 0,
+        "useCallback": 0,
+        "useMemo": 0,
+        "useContext": 0,
+        "custom": 0
+      },
+      "componentes": 0,
+      "problemas": [
+        "Posible falta de optimización: no usa useMemo"
+      ]
+    },
+    {
+      "archivo": "ModalCuentaBancaria.jsx",
+      "ruta": "C:\\Users\\pc1\\Desktop\\login\\my-app\\src\\components\\Finanzas\\CuentasBancarias\\ModalCuentaBancaria.jsx",
+      "tamaño": 5.04,
+      "lineas": 126,
+      "imports": 4,
+      "exports": 2,
+      "hooks": {
+        "useState": 0,
+        "useEffect": 0,
+        "useCallback": 0,
+        "useMemo": 0,
+        "useContext": 0,
+        "custom": 0
+      },
+      "componentes": 9,
+      "problemas": [
+        "Posible falta de optimización: no usa useMemo"
+      ]
+    },
+    {
+      "archivo": "useFormularioPrestamos.js",
+      "ruta": "C:\\Users\\pc1\\Desktop\\login\\my-app\\src\\components\\Finanzas\\Prestamos\\useFormularioPrestamos.js",
+      "tamaño": 3.34,
+      "lineas": 117,
+      "imports": 1,
+      "exports": 1,
+      "hooks": {
+        "useState": 4,
+        "useEffect": 0,
+        "useCallback": 0,
+        "useMemo": 0,
+        "useContext": 0,
+        "custom": 1
+      },
+      "componentes": 0,
+      "problemas": [
+        "Posible falta de optimización: no usa useCallback",
+        "Posible falta de optimización: no usa useMemo"
+      ]
+    },
+    {
+      "archivo": "TablaGarantias.jsx",
+      "ruta": "C:\\Users\\pc1\\Desktop\\login\\my-app\\src\\components\\Finanzas\\Garantias\\TablaGarantias.jsx",
+      "tamaño": 4.9,
+      "lineas": 113,
+      "imports": 1,
+      "exports": 1,
+      "hooks": {
+        "useState": 0,
+        "useEffect": 0,
+        "useCallback": 0,
+        "useMemo": 0,
+        "useContext": 0,
+        "custom": 0
+      },
+      "componentes": 0,
+      "problemas": [
+        "Posible falta de optimización: no usa useMemo"
+      ]
+    },
+    {
+      "archivo": "TablaPagosFinanciamiento.jsx",
+      "ruta": "C:\\Users\\pc1\\Desktop\\login\\my-app\\src\\components\\Finanzas\\PagosFinanciamiento\\TablaPagosFinanciamiento.jsx",
+      "tamaño": 4.93,
+      "lineas": 113,
+      "imports": 1,
+      "exports": 1,
+      "hooks": {
+        "useState": 0,
+        "useEffect": 0,
+        "useCallback": 0,
+        "useMemo": 0,
+        "useContext": 0,
+        "custom": 0
+      },
+      "componentes": 0,
+      "problemas": [
+        "Posible falta de optimización: no usa useMemo"
+      ]
+    },
+    {
+      "archivo": "TablaPrestamosEspecifica.jsx",
+      "ruta": "C:\\Users\\pc1\\Desktop\\login\\my-app\\src\\components\\Finanzas\\Prestamos\\TablaPrestamosEspecifica.jsx",
+      "tamaño": 4.9,
+      "lineas": 113,
+      "imports": 1,
+      "exports": 1,
+      "hooks": {
+        "useState": 0,
+        "useEffect": 0,
+        "useCallback": 0,
+        "useMemo": 0,
+        "useContext": 0,
+        "custom": 0
+      },
+      "componentes": 0,
+      "problemas": [
+        "Posible falta de optimización: no usa useMemo"
+      ]
+    },
+    {
+      "archivo": "ModalCuentasBancariasEspecifico.jsx",
+      "ruta": "C:\\Users\\pc1\\Desktop\\login\\my-app\\src\\components\\Finanzas\\CuentasBancarias\\ModalCuentasBancariasEspecifico.jsx",
+      "tamaño": 4.6,
+      "lineas": 108,
+      "imports": 1,
+      "exports": 1,
+      "hooks": {
+        "useState": 0,
+        "useEffect": 0,
+        "useCallback": 0,
+        "useMemo": 0,
+        "useContext": 0,
+        "custom": 0
+      },
+      "componentes": 0,
+      "problemas": [
+        "Posible falta de optimización: no usa useMemo"
+      ]
+    },
+    {
+      "archivo": "ModalMovimientoBancario.jsx",
+      "ruta": "C:\\Users\\pc1\\Desktop\\login\\my-app\\src\\components\\Finanzas\\CuentasBancarias\\ModalMovimientoBancario.jsx",
+      "tamaño": 4.65,
+      "lineas": 104,
+      "imports": 4,
+      "exports": 2,
+      "hooks": {
+        "useState": 0,
+        "useEffect": 0,
+        "useCallback": 0,
+        "useMemo": 0,
+        "useContext": 0,
+        "custom": 0
+      },
+      "componentes": 5,
+      "problemas": [
+        "Posible falta de optimización: no usa useMemo"
+      ]
+    },
+    {
+      "archivo": "useFormularioCuentasBancarias.js",
+      "ruta": "C:\\Users\\pc1\\Desktop\\login\\my-app\\src\\components\\Finanzas\\CuentasBancarias\\useFormularioCuentasBancarias.js",
+      "tamaño": 2.33,
+      "lineas": 88,
+      "imports": 1,
+      "exports": 1,
+      "hooks": {
+        "useState": 4,
+        "useEffect": 0,
+        "useCallback": 0,
+        "useMemo": 0,
+        "useContext": 0,
+        "custom": 1
+      },
+      "componentes": 0,
+      "problemas": [
+        "Posible falta de optimización: no usa useCallback"
+      ]
+    },
+    {
+      "archivo": "useFormularioGarantias.js",
+      "ruta": "C:\\Users\\pc1\\Desktop\\login\\my-app\\src\\components\\Finanzas\\Garantias\\useFormularioGarantias.js",
+      "tamaño": 2.31,
+      "lineas": 88,
+      "imports": 1,
+      "exports": 1,
+      "hooks": {
+        "useState": 4,
+        "useEffect": 0,
+        "useCallback": 0,
+        "useMemo": 0,
+        "useContext": 0,
+        "custom": 1
+      },
+      "componentes": 0,
+      "problemas": [
+        "Posible falta de optimización: no usa useCallback"
+      ]
+    },
+    {
+      "archivo": "useFormularioPagosFinanciamiento.js",
+      "ruta": "C:\\Users\\pc1\\Desktop\\login\\my-app\\src\\components\\Finanzas\\PagosFinanciamiento\\useFormularioPagosFinanciamiento.js",
+      "tamaño": 2.33,
+      "lineas": 88,
+      "imports": 1,
+      "exports": 1,
+      "hooks": {
+        "useState": 4,
+        "useEffect": 0,
+        "useCallback": 0,
+        "useMemo": 0,
+        "useContext": 0,
+        "custom": 1
+      },
+      "componentes": 0,
+      "problemas": [
+        "Posible falta de optimización: no usa useCallback"
+      ]
+    },
+    {
+      "archivo": "index.js",
+      "ruta": "C:\\Users\\pc1\\Desktop\\login\\my-app\\src\\components\\Finanzas\\Prestamos\\index.js",
+      "tamaño": 0.77,
+      "lineas": 14,
+      "imports": 0,
+      "exports": 11,
+      "hooks": {
+        "useState": 0,
+        "useEffect": 0,
+        "useCallback": 0,
+        "useMemo": 0,
+        "useContext": 0,
+        "custom": 3
+      },
+      "componentes": 0,
+      "problemas": []
+    },
+    {
+      "archivo": "index.js",
+      "ruta": "C:\\Users\\pc1\\Desktop\\login\\my-app\\src\\components\\Finanzas\\CuentasBancarias\\index.js",
+      "tamaño": 0.59,
+      "lineas": 10,
+      "imports": 0,
+      "exports": 8,
+      "hooks": {
+        "useState": 0,
+        "useEffect": 0,
+        "useCallback": 0,
+        "useMemo": 0,
+        "useContext": 0,
+        "custom": 3
+      },
+      "componentes": 0,
+      "problemas": []
+    },
+    {
+      "archivo": "index.js",
+      "ruta": "C:\\Users\\pc1\\Desktop\\login\\my-app\\src\\components\\Finanzas\\index.js",
+      "tamaño": 0.32,
+      "lineas": 10,
+      "imports": 0,
+      "exports": 6,
+      "hooks": {
+        "useState": 0,
+        "useEffect": 0,
+        "useCallback": 0,
+        "useMemo": 0,
+        "useContext": 0,
+        "custom": 0
+      },
+      "componentes": 0,
+      "problemas": []
+    },
+    {
+      "archivo": "index.js",
+      "ruta": "C:\\Users\\pc1\\Desktop\\login\\my-app\\src\\components\\Finanzas\\MovimientoCaja\\index.js",
+      "tamaño": 0.41,
+      "lineas": 7,
+      "imports": 0,
+      "exports": 5,
+      "hooks": {
+        "useState": 0,
+        "useEffect": 0,
+        "useCallback": 0,
+        "useMemo": 0,
+        "useContext": 0,
+        "custom": 0
+      },
+      "componentes": 0,
+      "problemas": []
+    },
+    {
+      "archivo": "index.js",
+      "ruta": "C:\\Users\\pc1\\Desktop\\login\\my-app\\src\\components\\Finanzas\\Garantias\\index.js",
+      "tamaño": 0.22,
+      "lineas": 5,
+      "imports": 0,
+      "exports": 3,
+      "hooks": {
+        "useState": 0,
+        "useEffect": 0,
+        "useCallback": 0,
+        "useMemo": 0,
+        "useContext": 0,
+        "custom": 2
+      },
+      "componentes": 0,
+      "problemas": []
+    },
+    {
+      "archivo": "index.js",
+      "ruta": "C:\\Users\\pc1\\Desktop\\login\\my-app\\src\\components\\Finanzas\\PagosFinanciamiento\\index.js",
+      "tamaño": 0.29,
+      "lineas": 5,
+      "imports": 0,
+      "exports": 3,
+      "hooks": {
+        "useState": 0,
+        "useEffect": 0,
+        "useCallback": 0,
+        "useMemo": 0,
+        "useContext": 0,
+        "custom": 2
+      },
+      "componentes": 0,
+      "problemas": []
+    }
+  ],
+  "servicios": [
+    {
+      "archivo": "finanzasService.js",
+      "ruta": "C:\\Users\\pc1\\Desktop\\login\\my-app\\src\\services\\finanzasService.js",
+      "tamaño": 20.3,
+      "lineas": 671,
+      "imports": 1,
+      "exports": 6,
+      "hooks": {
+        "useState": 0,
+        "useEffect": 0,
+        "useCallback": 0,
+        "useMemo": 0,
+        "useContext": 0,
+        "custom": 0
+      },
+      "componentes": 0,
+      "problemas": [
+        "Archivo muy largo: 671 líneas",
+        "Posible falta de optimización: no usa useMemo"
+      ]
+    },
+    {
+      "archivo": "prestamosService.js",
+      "ruta": "C:\\Users\\pc1\\Desktop\\login\\my-app\\src\\services\\prestamosService.js",
+      "tamaño": 9.47,
+      "lineas": 307,
+      "imports": 1,
+      "exports": 1,
+      "hooks": {
+        "useState": 0,
+        "useEffect": 0,
+        "useCallback": 0,
+        "useMemo": 0,
+        "useContext": 0,
+        "custom": 0
+      },
+      "componentes": 0,
+      "problemas": [
+        "Archivo muy largo: 307 líneas",
+        "Posible falta de optimización: no usa useMemo"
+      ]
+    },
+    {
+      "archivo": "movimientosCajaService.js",
+      "ruta": "C:\\Users\\pc1\\Desktop\\login\\my-app\\src\\services\\movimientosCajaService.js",
+      "tamaño": 9.19,
+      "lineas": 255,
+      "imports": 1,
+      "exports": 2,
+      "hooks": {
+        "useState": 0,
+        "useEffect": 0,
+        "useCallback": 0,
+        "useMemo": 0,
+        "useContext": 0,
+        "custom": 0
+      },
+      "componentes": 0,
+      "problemas": [
+        "Posible falta de optimización: no usa useMemo"
+      ]
+    }
+  ],
+  "totales": {
+    "lineas": 7964,
+    "tamaño": 374.07999999999987,
+    "problemas": 53
+  },
+  "puntuacion": "0.0",
+  "estado": "CRÍTICO"
+}

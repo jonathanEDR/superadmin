@@ -1,0 +1,4377 @@
+{
+  "resultados": [
+    {
+      "archivo": "AccesosRapidosFinanzas.jsx",
+      "ruta": "C:\\Users\\pc1\\Desktop\\login\\my-app\\src\\components\\Finanzas\\AccesosRapidosFinanzas.jsx",
+      "lineas": 247,
+      "practicasEncontradas": {
+        "useReactMemo": {
+          "count": 0,
+          "found": false,
+          "description": "Uso de React.memo para evitar re-renders",
+          "importance": "alta"
+        },
+        "useCallback": {
+          "count": 0,
+          "found": false,
+          "description": "Uso de useCallback para event handlers",
+          "importance": "alta"
+        },
+        "useMemo": {
+          "count": 0,
+          "found": false,
+          "description": "Uso de useMemo para cálculos pesados",
+          "importance": "alta"
+        },
+        "useReducer": {
+          "count": 0,
+          "found": false,
+          "description": "Uso de useReducer para estado complejo",
+          "importance": "media"
+        },
+        "useContext": {
+          "count": 0,
+          "found": false,
+          "description": "Uso de Context API para estado global",
+          "importance": "media"
+        },
+        "keyProp": {
+          "count": 1,
+          "found": true,
+          "description": "Uso de key prop en listas",
+          "importance": "alta"
+        },
+        "customHooks": {
+          "count": 7,
+          "found": true,
+          "description": "Uso de custom hooks",
+          "importance": "media"
+        },
+        "errorBoundary": {
+          "count": 0,
+          "found": false,
+          "description": "Implementación de Error Boundaries",
+          "importance": "media"
+        },
+        "lazyLoading": {
+          "count": 0,
+          "found": false,
+          "description": "Uso de lazy loading",
+          "importance": "media"
+        },
+        "suspense": {
+          "count": 0,
+          "found": false,
+          "description": "Uso de Suspense",
+          "importance": "media"
+        }
+      },
+      "practicasFaltantes": {
+        "useMemo": {
+          "pattern": {},
+          "description": "Uso de useMemo para cálculos pesados",
+          "importance": "alta"
+        }
+      },
+      "antiPatronesEncontrados": {
+        "inlineObjects": {
+          "count": 3,
+          "description": "Objetos inline que causan re-renders",
+          "severity": "alta",
+          "examples": [
+            "={index}",
+            "={fullPath}",
+            "={`\r\n                group relative overflow-hidden rounded-xl border-2 transition-all duration-300 transform hover:scale-105 hover:shadow-lg\r\n                ${acceso.color}"
+          ]
+        },
+        "inlineArrays": {
+          "count": 1,
+          "description": "Arrays inline que causan re-renders",
+          "severity": "media",
+          "examples": [
+            "= [\r\n  {\r\n    label: 'Dashboard Financiero',\r\n    to: '',\r\n    icon: '📊',\r\n    color: 'bg-gradient-to-br from-blue-50 to-blue-100 hover:from-blue-100 hover:to-blue-200 text-blue-800 border-blue-200',\r\n    description: 'Resumen financiero general'\r\n  },\r\n  {\r\n    label: 'Movimientos de Caja',\r\n    to: 'movimientos-caja',\r\n    icon: '💸',\r\n    color: 'bg-gradient-to-br from-emerald-50 to-emerald-100 hover:from-emerald-100 hover:to-emerald-200 text-emerald-800 border-emerald-200',\r\n    description: 'Control de ingresos y egresos'\r\n  },\r\n  {\r\n    label: 'Cuentas Bancarias',\r\n    to: 'cuentas-bancarias',\r\n    icon: '🏦',\r\n    color: 'bg-gradient-to-br from-green-50 to-green-100 hover:from-green-100 hover:to-green-200 text-green-800 border-green-200',\r\n    description: 'Gestionar cuentas bancarias'\r\n  },\r\n  {\r\n    label: 'Gestión de Préstamos',\r\n    to: 'prestamos',\r\n    icon: '💰',\r\n    color: 'bg-gradient-to-br from-yellow-50 to-yellow-100 hover:from-yellow-100 hover:to-yellow-200 text-yellow-800 border-yellow-200',\r\n    description: 'Administrar préstamos'\r\n  },\r\n  {\r\n    label: 'Garantías',\r\n    to: 'garantias',\r\n    icon: '🛡️',\r\n    color: 'bg-gradient-to-br from-purple-50 to-purple-100 hover:from-purple-100 hover:to-purple-200 text-purple-800 border-purple-200',\r\n    description: 'Gestionar garantías'\r\n  },\r\n  {\r\n    label: 'Pagos Financiamiento',\r\n    to: 'pagos-financiamiento',\r\n    icon: '💳',\r\n    color: 'bg-gradient-to-br from-indigo-50 to-indigo-100 hover:from-indigo-100 hover:to-indigo-200 text-indigo-800 border-indigo-200',\r\n    description: 'Pagos y financiamiento'\r\n  }\r\n]"
+          ]
+        },
+        "consoleLogs": {
+          "count": 3,
+          "description": "Console logs en producción",
+          "severity": "baja",
+          "examples": [
+            "console.error",
+            "console.log",
+            "console.log"
+          ]
+        }
+      },
+      "puntuacion": 44,
+      "recomendaciones": [
+        "Usar useMemo() para cálculos pesados",
+        "Mover objetos fuera del render o usar useMemo()",
+        "Remover console.log() para producción"
+      ]
+    },
+    {
+      "archivo": "CampoCuentasBancarias.jsx",
+      "ruta": "C:\\Users\\pc1\\Desktop\\login\\my-app\\src\\components\\Finanzas\\CuentasBancarias\\CampoCuentasBancarias.jsx",
+      "lineas": 163,
+      "practicasEncontradas": {
+        "useReactMemo": {
+          "count": 0,
+          "found": false,
+          "description": "Uso de React.memo para evitar re-renders",
+          "importance": "alta"
+        },
+        "useCallback": {
+          "count": 0,
+          "found": false,
+          "description": "Uso de useCallback para event handlers",
+          "importance": "alta"
+        },
+        "useMemo": {
+          "count": 0,
+          "found": false,
+          "description": "Uso de useMemo para cálculos pesados",
+          "importance": "alta"
+        },
+        "useReducer": {
+          "count": 0,
+          "found": false,
+          "description": "Uso de useReducer para estado complejo",
+          "importance": "media"
+        },
+        "useContext": {
+          "count": 0,
+          "found": false,
+          "description": "Uso de Context API para estado global",
+          "importance": "media"
+        },
+        "keyProp": {
+          "count": 1,
+          "found": true,
+          "description": "Uso de key prop en listas",
+          "importance": "alta"
+        },
+        "customHooks": {
+          "count": 0,
+          "found": false,
+          "description": "Uso de custom hooks",
+          "importance": "media"
+        },
+        "errorBoundary": {
+          "count": 0,
+          "found": false,
+          "description": "Implementación de Error Boundaries",
+          "importance": "media"
+        },
+        "lazyLoading": {
+          "count": 0,
+          "found": false,
+          "description": "Uso de lazy loading",
+          "importance": "media"
+        },
+        "suspense": {
+          "count": 0,
+          "found": false,
+          "description": "Uso de Suspense",
+          "importance": "media"
+        }
+      },
+      "practicasFaltantes": {
+        "useCallback": {
+          "pattern": {},
+          "description": "Uso de useCallback para event handlers",
+          "importance": "alta"
+        },
+        "useMemo": {
+          "pattern": {},
+          "description": "Uso de useMemo para cálculos pesados",
+          "importance": "alta"
+        }
+      },
+      "antiPatronesEncontrados": {
+        "inlineObjects": {
+          "count": 46,
+          "description": "Objetos inline que causan re-renders",
+          "severity": "alta",
+          "examples": [
+            "={name}",
+            "={value || ''}",
+            "={onChange}"
+          ]
+        },
+        "inlineArrays": {
+          "count": 1,
+          "description": "Arrays inline que causan re-renders",
+          "severity": "media",
+          "examples": [
+            "= []"
+          ]
+        },
+        "inlineHandlers": {
+          "count": 6,
+          "description": "Event handlers inline",
+          "severity": "alta",
+          "examples": [
+            "onChange={onChange}",
+            "onChange={onChange}",
+            "onChange={onChange}"
+          ]
+        }
+      },
+      "puntuacion": 0,
+      "recomendaciones": [
+        "Usar useCallback() para event handlers",
+        "Usar useMemo() para cálculos pesados",
+        "Mover objetos fuera del render o usar useMemo()",
+        "Extraer event handlers y usar useCallback()"
+      ]
+    },
+    {
+      "archivo": "cuentasBancariasConfig.js",
+      "ruta": "C:\\Users\\pc1\\Desktop\\login\\my-app\\src\\components\\Finanzas\\CuentasBancarias\\cuentasBancariasConfig.js",
+      "lineas": 149,
+      "practicasEncontradas": {
+        "useReactMemo": {
+          "count": 0,
+          "found": false,
+          "description": "Uso de React.memo para evitar re-renders",
+          "importance": "alta"
+        },
+        "useCallback": {
+          "count": 0,
+          "found": false,
+          "description": "Uso de useCallback para event handlers",
+          "importance": "alta"
+        },
+        "useMemo": {
+          "count": 0,
+          "found": false,
+          "description": "Uso de useMemo para cálculos pesados",
+          "importance": "alta"
+        },
+        "useReducer": {
+          "count": 0,
+          "found": false,
+          "description": "Uso de useReducer para estado complejo",
+          "importance": "media"
+        },
+        "useContext": {
+          "count": 0,
+          "found": false,
+          "description": "Uso de Context API para estado global",
+          "importance": "media"
+        },
+        "keyProp": {
+          "count": 0,
+          "found": false,
+          "description": "Uso de key prop en listas",
+          "importance": "alta"
+        },
+        "customHooks": {
+          "count": 0,
+          "found": false,
+          "description": "Uso de custom hooks",
+          "importance": "media"
+        },
+        "errorBoundary": {
+          "count": 0,
+          "found": false,
+          "description": "Implementación de Error Boundaries",
+          "importance": "media"
+        },
+        "lazyLoading": {
+          "count": 0,
+          "found": false,
+          "description": "Uso de lazy loading",
+          "importance": "media"
+        },
+        "suspense": {
+          "count": 0,
+          "found": false,
+          "description": "Uso de Suspense",
+          "importance": "media"
+        }
+      },
+      "practicasFaltantes": {},
+      "antiPatronesEncontrados": {
+        "inlineObjects": {
+          "count": 6,
+          "description": "Objetos inline que causan re-renders",
+          "severity": "alta",
+          "examples": [
+            "= {\r\n    nombre: (valor) => !valor ? 'El nombre es requerido' : '',\r\n    banco: (valor) => !valor ? 'El banco es requerido' : '',\r\n    tipoCuenta: (valor) => !valor ? 'El tipo de cuenta es requerido' : '',\r\n    numeroCuenta: (valor) => !valor ? 'El número de cuenta es requerido' : '',\r\n    moneda: (valor) => !valor ? 'La moneda es requerida' : '',\r\n    titular: (valor) => !valor ? 'El titular es requerido' : '',\r\n    saldoInicial: (valor) => {\r\n        // Permitir 0 como valor válido\r\n        if (valor === '' || valor === null || valor === undefined) return 'El saldo inicial es requerido';\r\n        if (isNaN(valor) || parseFloat(valor) < 0) return 'El saldo inicial no puede ser negativo';\r\n        return '';\r\n    }",
+            "= {\r\n    monto: (valor) => {\r\n        if (!valor || isNaN(valor) || parseFloat(valor) <= 0) {\r\n            return 'El monto debe ser mayor a cero';\r\n        }",
+            "= {\r\n    nombre: '',\r\n    banco: '',\r\n    tipoCuenta: 'ahorros',  // Valor por defecto válido\r\n    numeroCuenta: '',\r\n    moneda: 'PEN',\r\n    saldoInicial: 0,        // Valor numérico en lugar de string\r\n    titular: '',\r\n    descripcion: '',\r\n    alertas: {\r\n        saldoMinimo: 0,\r\n        notificarMovimientos: true\r\n    }"
+          ]
+        },
+        "inlineArrays": {
+          "count": 2,
+          "description": "Arrays inline que causan re-renders",
+          "severity": "media",
+          "examples": [
+            "= [\r\n    { value: 'transferencia', label: 'Transferencia' },\r\n    { value: 'deposito', label: 'Depósito' },\r\n    { value: 'retiro', label: 'Retiro' },\r\n    { value: 'pago', label: 'Pago' },\r\n    { value: 'cobro', label: 'Cobro' },\r\n    { value: 'ajuste', label: 'Ajuste' }\r\n]",
+            "= [\r\n    { value: 'true', label: 'Activas' },\r\n    { value: 'false', label: 'Inactivas' }\r\n]"
+          ]
+        },
+        "inlineHandlers": {
+          "count": 1,
+          "description": "Event handlers inline",
+          "severity": "alta",
+          "examples": [
+            "onInicial = {\r\n    paginaActual: 1,\r\n    limite: 20\r\n}"
+          ]
+        }
+      },
+      "puntuacion": 30,
+      "recomendaciones": [
+        "Mover objetos fuera del render o usar useMemo()",
+        "Extraer event handlers y usar useCallback()"
+      ]
+    },
+    {
+      "archivo": "CuentasBancariasCore.jsx",
+      "ruta": "C:\\Users\\pc1\\Desktop\\login\\my-app\\src\\components\\Finanzas\\CuentasBancarias\\CuentasBancariasCore.jsx",
+      "lineas": 216,
+      "practicasEncontradas": {
+        "useReactMemo": {
+          "count": 0,
+          "found": false,
+          "description": "Uso de React.memo para evitar re-renders",
+          "importance": "alta"
+        },
+        "useCallback": {
+          "count": 2,
+          "found": true,
+          "description": "Uso de useCallback para event handlers",
+          "importance": "alta"
+        },
+        "useMemo": {
+          "count": 0,
+          "found": false,
+          "description": "Uso de useMemo para cálculos pesados",
+          "importance": "alta"
+        },
+        "useReducer": {
+          "count": 0,
+          "found": false,
+          "description": "Uso de useReducer para estado complejo",
+          "importance": "media"
+        },
+        "useContext": {
+          "count": 0,
+          "found": false,
+          "description": "Uso de Context API para estado global",
+          "importance": "media"
+        },
+        "keyProp": {
+          "count": 0,
+          "found": false,
+          "description": "Uso de key prop en listas",
+          "importance": "alta"
+        },
+        "customHooks": {
+          "count": 19,
+          "found": true,
+          "description": "Uso de custom hooks",
+          "importance": "media"
+        },
+        "errorBoundary": {
+          "count": 0,
+          "found": false,
+          "description": "Implementación de Error Boundaries",
+          "importance": "media"
+        },
+        "lazyLoading": {
+          "count": 0,
+          "found": false,
+          "description": "Uso de lazy loading",
+          "importance": "media"
+        },
+        "suspense": {
+          "count": 0,
+          "found": false,
+          "description": "Uso de Suspense",
+          "importance": "media"
+        }
+      },
+      "practicasFaltantes": {
+        "useReducer": {
+          "pattern": {},
+          "description": "Uso de useReducer para estado complejo",
+          "importance": "media"
+        }
+      },
+      "antiPatronesEncontrados": {
+        "inlineObjects": {
+          "count": 1,
+          "description": "Objetos inline que causan re-renders",
+          "severity": "alta",
+          "examples": [
+            "= {\r\n                ...formularioCuenta.valores,\r\n                saldoInicial: parseFloat(formularioCuenta.valores.saldoInicial) || 0\r\n            }"
+          ]
+        },
+        "consoleLogs": {
+          "count": 14,
+          "description": "Console logs en producción",
+          "severity": "baja",
+          "examples": [
+            "console.log",
+            "console.error",
+            "console.log"
+          ]
+        }
+      },
+      "puntuacion": 72,
+      "recomendaciones": [
+        "Considerar useReducer() para estado complejo",
+        "Mover objetos fuera del render o usar useMemo()",
+        "Remover console.log() para producción"
+      ]
+    },
+    {
+      "archivo": "index.js",
+      "ruta": "C:\\Users\\pc1\\Desktop\\login\\my-app\\src\\components\\Finanzas\\CuentasBancarias\\index.js",
+      "lineas": 10,
+      "practicasEncontradas": {
+        "useReactMemo": {
+          "count": 0,
+          "found": false,
+          "description": "Uso de React.memo para evitar re-renders",
+          "importance": "alta"
+        },
+        "useCallback": {
+          "count": 0,
+          "found": false,
+          "description": "Uso de useCallback para event handlers",
+          "importance": "alta"
+        },
+        "useMemo": {
+          "count": 0,
+          "found": false,
+          "description": "Uso de useMemo para cálculos pesados",
+          "importance": "alta"
+        },
+        "useReducer": {
+          "count": 0,
+          "found": false,
+          "description": "Uso de useReducer para estado complejo",
+          "importance": "media"
+        },
+        "useContext": {
+          "count": 0,
+          "found": false,
+          "description": "Uso de Context API para estado global",
+          "importance": "media"
+        },
+        "keyProp": {
+          "count": 0,
+          "found": false,
+          "description": "Uso de key prop en listas",
+          "importance": "alta"
+        },
+        "customHooks": {
+          "count": 3,
+          "found": true,
+          "description": "Uso de custom hooks",
+          "importance": "media"
+        },
+        "errorBoundary": {
+          "count": 0,
+          "found": false,
+          "description": "Implementación de Error Boundaries",
+          "importance": "media"
+        },
+        "lazyLoading": {
+          "count": 0,
+          "found": false,
+          "description": "Uso de lazy loading",
+          "importance": "media"
+        },
+        "suspense": {
+          "count": 0,
+          "found": false,
+          "description": "Uso de Suspense",
+          "importance": "media"
+        }
+      },
+      "practicasFaltantes": {},
+      "antiPatronesEncontrados": {},
+      "puntuacion": 100,
+      "recomendaciones": []
+    },
+    {
+      "archivo": "ModalCuentaBancaria.jsx",
+      "ruta": "C:\\Users\\pc1\\Desktop\\login\\my-app\\src\\components\\Finanzas\\CuentasBancarias\\ModalCuentaBancaria.jsx",
+      "lineas": 126,
+      "practicasEncontradas": {
+        "useReactMemo": {
+          "count": 0,
+          "found": false,
+          "description": "Uso de React.memo para evitar re-renders",
+          "importance": "alta"
+        },
+        "useCallback": {
+          "count": 0,
+          "found": false,
+          "description": "Uso de useCallback para event handlers",
+          "importance": "alta"
+        },
+        "useMemo": {
+          "count": 0,
+          "found": false,
+          "description": "Uso de useMemo para cálculos pesados",
+          "importance": "alta"
+        },
+        "useReducer": {
+          "count": 0,
+          "found": false,
+          "description": "Uso de useReducer para estado complejo",
+          "importance": "media"
+        },
+        "useContext": {
+          "count": 0,
+          "found": false,
+          "description": "Uso de Context API para estado global",
+          "importance": "media"
+        },
+        "keyProp": {
+          "count": 0,
+          "found": false,
+          "description": "Uso de key prop en listas",
+          "importance": "alta"
+        },
+        "customHooks": {
+          "count": 0,
+          "found": false,
+          "description": "Uso de custom hooks",
+          "importance": "media"
+        },
+        "errorBoundary": {
+          "count": 0,
+          "found": false,
+          "description": "Implementación de Error Boundaries",
+          "importance": "media"
+        },
+        "lazyLoading": {
+          "count": 0,
+          "found": false,
+          "description": "Uso de lazy loading",
+          "importance": "media"
+        },
+        "suspense": {
+          "count": 0,
+          "found": false,
+          "description": "Uso de Suspense",
+          "importance": "media"
+        }
+      },
+      "practicasFaltantes": {
+        "useCallback": {
+          "pattern": {},
+          "description": "Uso de useCallback para event handlers",
+          "importance": "alta"
+        }
+      },
+      "antiPatronesEncontrados": {
+        "inlineObjects": {
+          "count": 30,
+          "description": "Objetos inline que causan re-renders",
+          "severity": "alta",
+          "examples": [
+            "={isOpen}",
+            "={onClose}",
+            "={cuentaEditando ? 'Editar Cuenta' : 'Nueva Cuenta Bancaria'}"
+          ]
+        },
+        "inlineHandlers": {
+          "count": 10,
+          "description": "Event handlers inline",
+          "severity": "alta",
+          "examples": [
+            "onClose={onClose}",
+            "onSubmit={onSubmit}",
+            "onChange={formularioCuenta.manejarCambio}"
+          ]
+        }
+      },
+      "puntuacion": 0,
+      "recomendaciones": [
+        "Usar useCallback() para event handlers",
+        "Mover objetos fuera del render o usar useMemo()",
+        "Extraer event handlers y usar useCallback()"
+      ]
+    },
+    {
+      "archivo": "ModalCuentasBancariasEspecifico.jsx",
+      "ruta": "C:\\Users\\pc1\\Desktop\\login\\my-app\\src\\components\\Finanzas\\CuentasBancarias\\ModalCuentasBancariasEspecifico.jsx",
+      "lineas": 108,
+      "practicasEncontradas": {
+        "useReactMemo": {
+          "count": 0,
+          "found": false,
+          "description": "Uso de React.memo para evitar re-renders",
+          "importance": "alta"
+        },
+        "useCallback": {
+          "count": 0,
+          "found": false,
+          "description": "Uso de useCallback para event handlers",
+          "importance": "alta"
+        },
+        "useMemo": {
+          "count": 0,
+          "found": false,
+          "description": "Uso de useMemo para cálculos pesados",
+          "importance": "alta"
+        },
+        "useReducer": {
+          "count": 0,
+          "found": false,
+          "description": "Uso de useReducer para estado complejo",
+          "importance": "media"
+        },
+        "useContext": {
+          "count": 0,
+          "found": false,
+          "description": "Uso de Context API para estado global",
+          "importance": "media"
+        },
+        "keyProp": {
+          "count": 0,
+          "found": false,
+          "description": "Uso de key prop en listas",
+          "importance": "alta"
+        },
+        "customHooks": {
+          "count": 0,
+          "found": false,
+          "description": "Uso de custom hooks",
+          "importance": "media"
+        },
+        "errorBoundary": {
+          "count": 0,
+          "found": false,
+          "description": "Implementación de Error Boundaries",
+          "importance": "media"
+        },
+        "lazyLoading": {
+          "count": 0,
+          "found": false,
+          "description": "Uso de lazy loading",
+          "importance": "media"
+        },
+        "suspense": {
+          "count": 0,
+          "found": false,
+          "description": "Uso de Suspense",
+          "importance": "media"
+        }
+      },
+      "practicasFaltantes": {
+        "useCallback": {
+          "pattern": {},
+          "description": "Uso de useCallback para event handlers",
+          "importance": "alta"
+        }
+      },
+      "antiPatronesEncontrados": {
+        "inlineObjects": {
+          "count": 10,
+          "description": "Objetos inline que causan re-renders",
+          "severity": "alta",
+          "examples": [
+            "= {\r\n        xs: 'max-w-xs',\r\n        sm: 'max-w-sm', \r\n        md: 'max-w-md',\r\n        lg: 'max-w-lg',\r\n        xl: 'max-w-xl',\r\n        '2xl': 'max-w-2xl'\r\n    }",
+            "={`bg-white rounded-lg shadow-xl w-full ${sizeClasses[size]}",
+            "={onClose}"
+          ]
+        },
+        "inlineHandlers": {
+          "count": 4,
+          "description": "Event handlers inline",
+          "severity": "alta",
+          "examples": [
+            "onClick={onClose}",
+            "onSubmit={handleSubmit}",
+            "onClick={onClose}"
+          ]
+        }
+      },
+      "puntuacion": 0,
+      "recomendaciones": [
+        "Usar useCallback() para event handlers",
+        "Mover objetos fuera del render o usar useMemo()",
+        "Extraer event handlers y usar useCallback()"
+      ]
+    },
+    {
+      "archivo": "ModalMovimientoBancario.jsx",
+      "ruta": "C:\\Users\\pc1\\Desktop\\login\\my-app\\src\\components\\Finanzas\\CuentasBancarias\\ModalMovimientoBancario.jsx",
+      "lineas": 104,
+      "practicasEncontradas": {
+        "useReactMemo": {
+          "count": 0,
+          "found": false,
+          "description": "Uso de React.memo para evitar re-renders",
+          "importance": "alta"
+        },
+        "useCallback": {
+          "count": 0,
+          "found": false,
+          "description": "Uso de useCallback para event handlers",
+          "importance": "alta"
+        },
+        "useMemo": {
+          "count": 0,
+          "found": false,
+          "description": "Uso de useMemo para cálculos pesados",
+          "importance": "alta"
+        },
+        "useReducer": {
+          "count": 0,
+          "found": false,
+          "description": "Uso de useReducer para estado complejo",
+          "importance": "media"
+        },
+        "useContext": {
+          "count": 0,
+          "found": false,
+          "description": "Uso de Context API para estado global",
+          "importance": "media"
+        },
+        "keyProp": {
+          "count": 0,
+          "found": false,
+          "description": "Uso de key prop en listas",
+          "importance": "alta"
+        },
+        "customHooks": {
+          "count": 0,
+          "found": false,
+          "description": "Uso de custom hooks",
+          "importance": "media"
+        },
+        "errorBoundary": {
+          "count": 0,
+          "found": false,
+          "description": "Implementación de Error Boundaries",
+          "importance": "media"
+        },
+        "lazyLoading": {
+          "count": 0,
+          "found": false,
+          "description": "Uso de lazy loading",
+          "importance": "media"
+        },
+        "suspense": {
+          "count": 0,
+          "found": false,
+          "description": "Uso de Suspense",
+          "importance": "media"
+        }
+      },
+      "practicasFaltantes": {
+        "useCallback": {
+          "pattern": {},
+          "description": "Uso de useCallback para event handlers",
+          "importance": "alta"
+        }
+      },
+      "antiPatronesEncontrados": {
+        "inlineObjects": {
+          "count": 18,
+          "description": "Objetos inline que causan re-renders",
+          "severity": "alta",
+          "examples": [
+            "={isOpen}",
+            "={onClose}",
+            "={`${tipoMovimiento === 'deposito' ? 'Depositar en' : 'Retirar de'}"
+          ]
+        },
+        "inlineHandlers": {
+          "count": 6,
+          "description": "Event handlers inline",
+          "severity": "alta",
+          "examples": [
+            "onClose={onClose}",
+            "onSubmit={onSubmit}",
+            "onChange={formularioMovimiento.manejarCambio}"
+          ]
+        }
+      },
+      "puntuacion": 0,
+      "recomendaciones": [
+        "Usar useCallback() para event handlers",
+        "Mover objetos fuera del render o usar useMemo()",
+        "Extraer event handlers y usar useCallback()"
+      ]
+    },
+    {
+      "archivo": "TablaCuentasBancarias.jsx",
+      "ruta": "C:\\Users\\pc1\\Desktop\\login\\my-app\\src\\components\\Finanzas\\CuentasBancarias\\TablaCuentasBancarias.jsx",
+      "lineas": 441,
+      "practicasEncontradas": {
+        "useReactMemo": {
+          "count": 0,
+          "found": false,
+          "description": "Uso de React.memo para evitar re-renders",
+          "importance": "alta"
+        },
+        "useCallback": {
+          "count": 0,
+          "found": false,
+          "description": "Uso de useCallback para event handlers",
+          "importance": "alta"
+        },
+        "useMemo": {
+          "count": 0,
+          "found": false,
+          "description": "Uso de useMemo para cálculos pesados",
+          "importance": "alta"
+        },
+        "useReducer": {
+          "count": 0,
+          "found": false,
+          "description": "Uso de useReducer para estado complejo",
+          "importance": "media"
+        },
+        "useContext": {
+          "count": 0,
+          "found": false,
+          "description": "Uso de Context API para estado global",
+          "importance": "media"
+        },
+        "keyProp": {
+          "count": 4,
+          "found": true,
+          "description": "Uso de key prop en listas",
+          "importance": "alta"
+        },
+        "customHooks": {
+          "count": 3,
+          "found": true,
+          "description": "Uso de custom hooks",
+          "importance": "media"
+        },
+        "errorBoundary": {
+          "count": 0,
+          "found": false,
+          "description": "Implementación de Error Boundaries",
+          "importance": "media"
+        },
+        "lazyLoading": {
+          "count": 0,
+          "found": false,
+          "description": "Uso de lazy loading",
+          "importance": "media"
+        },
+        "suspense": {
+          "count": 0,
+          "found": false,
+          "description": "Uso de Suspense",
+          "importance": "media"
+        }
+      },
+      "practicasFaltantes": {
+        "useCallback": {
+          "pattern": {},
+          "description": "Uso de useCallback para event handlers",
+          "importance": "alta"
+        },
+        "useMemo": {
+          "pattern": {},
+          "description": "Uso de useMemo para cálculos pesados",
+          "importance": "alta"
+        }
+      },
+      "antiPatronesEncontrados": {
+        "inlineObjects": {
+          "count": 29,
+          "description": "Objetos inline que causan re-renders",
+          "severity": "alta",
+          "examples": [
+            "={`font-semibold ${saldoNum >= 0 ? 'text-green-600' : 'text-red-600'}",
+            "={`px-2 py-1 rounded-full text-xs font-medium ${\r\n            activa ? 'bg-green-100 text-green-800' : 'bg-red-100 text-red-800'\r\n        }",
+            "= {\r\n            green: 'bg-green-50 border-green-200',\r\n            blue: 'bg-blue-50 border-blue-200',\r\n            purple: 'bg-purple-50 border-purple-200',\r\n            gray: 'bg-gray-50 border-gray-200',\r\n            yellow: 'bg-yellow-50 border-yellow-200'\r\n        }"
+          ]
+        },
+        "inlineArrays": {
+          "count": 2,
+          "description": "Arrays inline que causan re-renders",
+          "severity": "media",
+          "examples": [
+            "= []",
+            "= []"
+          ]
+        },
+        "inlineHandlers": {
+          "count": 9,
+          "description": "Event handlers inline",
+          "severity": "alta",
+          "examples": [
+            "onColorClasses = {\r\n            green: 'text-green-600',\r\n            blue: 'text-blue-600',\r\n            purple: 'text-purple-600',\r\n            gray: 'text-gray-600',\r\n            yellow: 'text-yellow-600'\r\n        }",
+            "onChange={manejarSeleccionTodos}",
+            "onClick={() => manejarOrdenamiento('codigo')}"
+          ]
+        }
+      },
+      "puntuacion": 0,
+      "recomendaciones": [
+        "Usar useCallback() para event handlers",
+        "Usar useMemo() para cálculos pesados",
+        "Mover objetos fuera del render o usar useMemo()",
+        "Extraer event handlers y usar useCallback()"
+      ]
+    },
+    {
+      "archivo": "useFormularioCuentasBancarias.js",
+      "ruta": "C:\\Users\\pc1\\Desktop\\login\\my-app\\src\\components\\Finanzas\\CuentasBancarias\\useFormularioCuentasBancarias.js",
+      "lineas": 88,
+      "practicasEncontradas": {
+        "useReactMemo": {
+          "count": 0,
+          "found": false,
+          "description": "Uso de React.memo para evitar re-renders",
+          "importance": "alta"
+        },
+        "useCallback": {
+          "count": 0,
+          "found": false,
+          "description": "Uso de useCallback para event handlers",
+          "importance": "alta"
+        },
+        "useMemo": {
+          "count": 0,
+          "found": false,
+          "description": "Uso de useMemo para cálculos pesados",
+          "importance": "alta"
+        },
+        "useReducer": {
+          "count": 0,
+          "found": false,
+          "description": "Uso de useReducer para estado complejo",
+          "importance": "media"
+        },
+        "useContext": {
+          "count": 0,
+          "found": false,
+          "description": "Uso de Context API para estado global",
+          "importance": "media"
+        },
+        "keyProp": {
+          "count": 0,
+          "found": false,
+          "description": "Uso de key prop en listas",
+          "importance": "alta"
+        },
+        "customHooks": {
+          "count": 5,
+          "found": true,
+          "description": "Uso de custom hooks",
+          "importance": "media"
+        },
+        "errorBoundary": {
+          "count": 0,
+          "found": false,
+          "description": "Implementación de Error Boundaries",
+          "importance": "media"
+        },
+        "lazyLoading": {
+          "count": 0,
+          "found": false,
+          "description": "Uso de lazy loading",
+          "importance": "media"
+        },
+        "suspense": {
+          "count": 0,
+          "found": false,
+          "description": "Uso de Suspense",
+          "importance": "media"
+        }
+      },
+      "practicasFaltantes": {
+        "useMemo": {
+          "pattern": {},
+          "description": "Uso de useMemo para cálculos pesados",
+          "importance": "alta"
+        }
+      },
+      "antiPatronesEncontrados": {
+        "inlineObjects": {
+          "count": 3,
+          "description": "Objetos inline que causan re-renders",
+          "severity": "alta",
+          "examples": [
+            "= {}",
+            "= {}",
+            "= {}"
+          ]
+        }
+      },
+      "puntuacion": 55,
+      "recomendaciones": [
+        "Usar useMemo() para cálculos pesados",
+        "Mover objetos fuera del render o usar useMemo()"
+      ]
+    },
+    {
+      "archivo": "CampoGarantia.jsx",
+      "ruta": "C:\\Users\\pc1\\Desktop\\login\\my-app\\src\\components\\Finanzas\\Garantias\\CampoGarantia.jsx",
+      "lineas": 163,
+      "practicasEncontradas": {
+        "useReactMemo": {
+          "count": 0,
+          "found": false,
+          "description": "Uso de React.memo para evitar re-renders",
+          "importance": "alta"
+        },
+        "useCallback": {
+          "count": 0,
+          "found": false,
+          "description": "Uso de useCallback para event handlers",
+          "importance": "alta"
+        },
+        "useMemo": {
+          "count": 0,
+          "found": false,
+          "description": "Uso de useMemo para cálculos pesados",
+          "importance": "alta"
+        },
+        "useReducer": {
+          "count": 0,
+          "found": false,
+          "description": "Uso de useReducer para estado complejo",
+          "importance": "media"
+        },
+        "useContext": {
+          "count": 0,
+          "found": false,
+          "description": "Uso de Context API para estado global",
+          "importance": "media"
+        },
+        "keyProp": {
+          "count": 1,
+          "found": true,
+          "description": "Uso de key prop en listas",
+          "importance": "alta"
+        },
+        "customHooks": {
+          "count": 0,
+          "found": false,
+          "description": "Uso de custom hooks",
+          "importance": "media"
+        },
+        "errorBoundary": {
+          "count": 0,
+          "found": false,
+          "description": "Implementación de Error Boundaries",
+          "importance": "media"
+        },
+        "lazyLoading": {
+          "count": 0,
+          "found": false,
+          "description": "Uso de lazy loading",
+          "importance": "media"
+        },
+        "suspense": {
+          "count": 0,
+          "found": false,
+          "description": "Uso de Suspense",
+          "importance": "media"
+        }
+      },
+      "practicasFaltantes": {
+        "useCallback": {
+          "pattern": {},
+          "description": "Uso de useCallback para event handlers",
+          "importance": "alta"
+        },
+        "useMemo": {
+          "pattern": {},
+          "description": "Uso de useMemo para cálculos pesados",
+          "importance": "alta"
+        }
+      },
+      "antiPatronesEncontrados": {
+        "inlineObjects": {
+          "count": 46,
+          "description": "Objetos inline que causan re-renders",
+          "severity": "alta",
+          "examples": [
+            "={name}",
+            "={value || ''}",
+            "={onChange}"
+          ]
+        },
+        "inlineArrays": {
+          "count": 1,
+          "description": "Arrays inline que causan re-renders",
+          "severity": "media",
+          "examples": [
+            "= []"
+          ]
+        },
+        "inlineHandlers": {
+          "count": 6,
+          "description": "Event handlers inline",
+          "severity": "alta",
+          "examples": [
+            "onChange={onChange}",
+            "onChange={onChange}",
+            "onChange={onChange}"
+          ]
+        }
+      },
+      "puntuacion": 0,
+      "recomendaciones": [
+        "Usar useCallback() para event handlers",
+        "Usar useMemo() para cálculos pesados",
+        "Mover objetos fuera del render o usar useMemo()",
+        "Extraer event handlers y usar useCallback()"
+      ]
+    },
+    {
+      "archivo": "index.js",
+      "ruta": "C:\\Users\\pc1\\Desktop\\login\\my-app\\src\\components\\Finanzas\\Garantias\\index.js",
+      "lineas": 5,
+      "practicasEncontradas": {
+        "useReactMemo": {
+          "count": 0,
+          "found": false,
+          "description": "Uso de React.memo para evitar re-renders",
+          "importance": "alta"
+        },
+        "useCallback": {
+          "count": 0,
+          "found": false,
+          "description": "Uso de useCallback para event handlers",
+          "importance": "alta"
+        },
+        "useMemo": {
+          "count": 0,
+          "found": false,
+          "description": "Uso de useMemo para cálculos pesados",
+          "importance": "alta"
+        },
+        "useReducer": {
+          "count": 0,
+          "found": false,
+          "description": "Uso de useReducer para estado complejo",
+          "importance": "media"
+        },
+        "useContext": {
+          "count": 0,
+          "found": false,
+          "description": "Uso de Context API para estado global",
+          "importance": "media"
+        },
+        "keyProp": {
+          "count": 0,
+          "found": false,
+          "description": "Uso de key prop en listas",
+          "importance": "alta"
+        },
+        "customHooks": {
+          "count": 2,
+          "found": true,
+          "description": "Uso de custom hooks",
+          "importance": "media"
+        },
+        "errorBoundary": {
+          "count": 0,
+          "found": false,
+          "description": "Implementación de Error Boundaries",
+          "importance": "media"
+        },
+        "lazyLoading": {
+          "count": 0,
+          "found": false,
+          "description": "Uso de lazy loading",
+          "importance": "media"
+        },
+        "suspense": {
+          "count": 0,
+          "found": false,
+          "description": "Uso de Suspense",
+          "importance": "media"
+        }
+      },
+      "practicasFaltantes": {},
+      "antiPatronesEncontrados": {},
+      "puntuacion": 100,
+      "recomendaciones": []
+    },
+    {
+      "archivo": "TablaGarantias.jsx",
+      "ruta": "C:\\Users\\pc1\\Desktop\\login\\my-app\\src\\components\\Finanzas\\Garantias\\TablaGarantias.jsx",
+      "lineas": 113,
+      "practicasEncontradas": {
+        "useReactMemo": {
+          "count": 0,
+          "found": false,
+          "description": "Uso de React.memo para evitar re-renders",
+          "importance": "alta"
+        },
+        "useCallback": {
+          "count": 0,
+          "found": false,
+          "description": "Uso de useCallback para event handlers",
+          "importance": "alta"
+        },
+        "useMemo": {
+          "count": 0,
+          "found": false,
+          "description": "Uso de useMemo para cálculos pesados",
+          "importance": "alta"
+        },
+        "useReducer": {
+          "count": 0,
+          "found": false,
+          "description": "Uso de useReducer para estado complejo",
+          "importance": "media"
+        },
+        "useContext": {
+          "count": 0,
+          "found": false,
+          "description": "Uso de Context API para estado global",
+          "importance": "media"
+        },
+        "keyProp": {
+          "count": 4,
+          "found": true,
+          "description": "Uso de key prop en listas",
+          "importance": "alta"
+        },
+        "customHooks": {
+          "count": 0,
+          "found": false,
+          "description": "Uso de custom hooks",
+          "importance": "media"
+        },
+        "errorBoundary": {
+          "count": 0,
+          "found": false,
+          "description": "Implementación de Error Boundaries",
+          "importance": "media"
+        },
+        "lazyLoading": {
+          "count": 0,
+          "found": false,
+          "description": "Uso de lazy loading",
+          "importance": "media"
+        },
+        "suspense": {
+          "count": 0,
+          "found": false,
+          "description": "Uso de Suspense",
+          "importance": "media"
+        }
+      },
+      "practicasFaltantes": {
+        "useCallback": {
+          "pattern": {},
+          "description": "Uso de useCallback para event handlers",
+          "importance": "alta"
+        },
+        "useMemo": {
+          "pattern": {},
+          "description": "Uso de useMemo para cálculos pesados",
+          "importance": "alta"
+        }
+      },
+      "antiPatronesEncontrados": {
+        "inlineObjects": {
+          "count": 8,
+          "description": "Objetos inline que causan re-renders",
+          "severity": "alta",
+          "examples": [
+            "={index}",
+            "={columnas.length + (acciones.length > 0 ? 1 : 0)}",
+            "={fila.id || fila._id || filaIndex}"
+          ]
+        },
+        "inlineArrays": {
+          "count": 3,
+          "description": "Arrays inline que causan re-renders",
+          "severity": "media",
+          "examples": [
+            "= []",
+            "= []",
+            "= []"
+          ]
+        },
+        "inlineHandlers": {
+          "count": 1,
+          "description": "Event handlers inline",
+          "severity": "alta",
+          "examples": [
+            "onClick={() => accion.onClick(fila)}"
+          ]
+        }
+      },
+      "puntuacion": 0,
+      "recomendaciones": [
+        "Usar useCallback() para event handlers",
+        "Usar useMemo() para cálculos pesados",
+        "Mover objetos fuera del render o usar useMemo()",
+        "Extraer event handlers y usar useCallback()"
+      ]
+    },
+    {
+      "archivo": "useFormularioGarantias.js",
+      "ruta": "C:\\Users\\pc1\\Desktop\\login\\my-app\\src\\components\\Finanzas\\Garantias\\useFormularioGarantias.js",
+      "lineas": 88,
+      "practicasEncontradas": {
+        "useReactMemo": {
+          "count": 0,
+          "found": false,
+          "description": "Uso de React.memo para evitar re-renders",
+          "importance": "alta"
+        },
+        "useCallback": {
+          "count": 0,
+          "found": false,
+          "description": "Uso de useCallback para event handlers",
+          "importance": "alta"
+        },
+        "useMemo": {
+          "count": 0,
+          "found": false,
+          "description": "Uso de useMemo para cálculos pesados",
+          "importance": "alta"
+        },
+        "useReducer": {
+          "count": 0,
+          "found": false,
+          "description": "Uso de useReducer para estado complejo",
+          "importance": "media"
+        },
+        "useContext": {
+          "count": 0,
+          "found": false,
+          "description": "Uso de Context API para estado global",
+          "importance": "media"
+        },
+        "keyProp": {
+          "count": 0,
+          "found": false,
+          "description": "Uso de key prop en listas",
+          "importance": "alta"
+        },
+        "customHooks": {
+          "count": 5,
+          "found": true,
+          "description": "Uso de custom hooks",
+          "importance": "media"
+        },
+        "errorBoundary": {
+          "count": 0,
+          "found": false,
+          "description": "Implementación de Error Boundaries",
+          "importance": "media"
+        },
+        "lazyLoading": {
+          "count": 0,
+          "found": false,
+          "description": "Uso de lazy loading",
+          "importance": "media"
+        },
+        "suspense": {
+          "count": 0,
+          "found": false,
+          "description": "Uso de Suspense",
+          "importance": "media"
+        }
+      },
+      "practicasFaltantes": {
+        "useMemo": {
+          "pattern": {},
+          "description": "Uso de useMemo para cálculos pesados",
+          "importance": "alta"
+        }
+      },
+      "antiPatronesEncontrados": {
+        "inlineObjects": {
+          "count": 3,
+          "description": "Objetos inline que causan re-renders",
+          "severity": "alta",
+          "examples": [
+            "= {}",
+            "= {}",
+            "= {}"
+          ]
+        }
+      },
+      "puntuacion": 55,
+      "recomendaciones": [
+        "Usar useMemo() para cálculos pesados",
+        "Mover objetos fuera del render o usar useMemo()"
+      ]
+    },
+    {
+      "archivo": "index.js",
+      "ruta": "C:\\Users\\pc1\\Desktop\\login\\my-app\\src\\components\\Finanzas\\index.js",
+      "lineas": 10,
+      "practicasEncontradas": {
+        "useReactMemo": {
+          "count": 0,
+          "found": false,
+          "description": "Uso de React.memo para evitar re-renders",
+          "importance": "alta"
+        },
+        "useCallback": {
+          "count": 0,
+          "found": false,
+          "description": "Uso de useCallback para event handlers",
+          "importance": "alta"
+        },
+        "useMemo": {
+          "count": 0,
+          "found": false,
+          "description": "Uso de useMemo para cálculos pesados",
+          "importance": "alta"
+        },
+        "useReducer": {
+          "count": 0,
+          "found": false,
+          "description": "Uso de useReducer para estado complejo",
+          "importance": "media"
+        },
+        "useContext": {
+          "count": 0,
+          "found": false,
+          "description": "Uso de Context API para estado global",
+          "importance": "media"
+        },
+        "keyProp": {
+          "count": 0,
+          "found": false,
+          "description": "Uso de key prop en listas",
+          "importance": "alta"
+        },
+        "customHooks": {
+          "count": 0,
+          "found": false,
+          "description": "Uso de custom hooks",
+          "importance": "media"
+        },
+        "errorBoundary": {
+          "count": 0,
+          "found": false,
+          "description": "Implementación de Error Boundaries",
+          "importance": "media"
+        },
+        "lazyLoading": {
+          "count": 0,
+          "found": false,
+          "description": "Uso de lazy loading",
+          "importance": "media"
+        },
+        "suspense": {
+          "count": 0,
+          "found": false,
+          "description": "Uso de Suspense",
+          "importance": "media"
+        }
+      },
+      "practicasFaltantes": {},
+      "antiPatronesEncontrados": {},
+      "puntuacion": 100,
+      "recomendaciones": []
+    },
+    {
+      "archivo": "index.js",
+      "ruta": "C:\\Users\\pc1\\Desktop\\login\\my-app\\src\\components\\Finanzas\\MovimientoCaja\\index.js",
+      "lineas": 7,
+      "practicasEncontradas": {
+        "useReactMemo": {
+          "count": 0,
+          "found": false,
+          "description": "Uso de React.memo para evitar re-renders",
+          "importance": "alta"
+        },
+        "useCallback": {
+          "count": 0,
+          "found": false,
+          "description": "Uso de useCallback para event handlers",
+          "importance": "alta"
+        },
+        "useMemo": {
+          "count": 0,
+          "found": false,
+          "description": "Uso de useMemo para cálculos pesados",
+          "importance": "alta"
+        },
+        "useReducer": {
+          "count": 0,
+          "found": false,
+          "description": "Uso de useReducer para estado complejo",
+          "importance": "media"
+        },
+        "useContext": {
+          "count": 0,
+          "found": false,
+          "description": "Uso de Context API para estado global",
+          "importance": "media"
+        },
+        "keyProp": {
+          "count": 0,
+          "found": false,
+          "description": "Uso de key prop en listas",
+          "importance": "alta"
+        },
+        "customHooks": {
+          "count": 0,
+          "found": false,
+          "description": "Uso de custom hooks",
+          "importance": "media"
+        },
+        "errorBoundary": {
+          "count": 0,
+          "found": false,
+          "description": "Implementación de Error Boundaries",
+          "importance": "media"
+        },
+        "lazyLoading": {
+          "count": 0,
+          "found": false,
+          "description": "Uso de lazy loading",
+          "importance": "media"
+        },
+        "suspense": {
+          "count": 0,
+          "found": false,
+          "description": "Uso de Suspense",
+          "importance": "media"
+        }
+      },
+      "practicasFaltantes": {},
+      "antiPatronesEncontrados": {},
+      "puntuacion": 100,
+      "recomendaciones": []
+    },
+    {
+      "archivo": "ModalArqueoFinanzas.jsx",
+      "ruta": "C:\\Users\\pc1\\Desktop\\login\\my-app\\src\\components\\Finanzas\\MovimientoCaja\\ModalArqueoFinanzas.jsx",
+      "lineas": 282,
+      "practicasEncontradas": {
+        "useReactMemo": {
+          "count": 0,
+          "found": false,
+          "description": "Uso de React.memo para evitar re-renders",
+          "importance": "alta"
+        },
+        "useCallback": {
+          "count": 0,
+          "found": false,
+          "description": "Uso de useCallback para event handlers",
+          "importance": "alta"
+        },
+        "useMemo": {
+          "count": 0,
+          "found": false,
+          "description": "Uso de useMemo para cálculos pesados",
+          "importance": "alta"
+        },
+        "useReducer": {
+          "count": 0,
+          "found": false,
+          "description": "Uso de useReducer para estado complejo",
+          "importance": "media"
+        },
+        "useContext": {
+          "count": 0,
+          "found": false,
+          "description": "Uso de Context API para estado global",
+          "importance": "media"
+        },
+        "keyProp": {
+          "count": 2,
+          "found": true,
+          "description": "Uso de key prop en listas",
+          "importance": "alta"
+        },
+        "customHooks": {
+          "count": 6,
+          "found": true,
+          "description": "Uso de custom hooks",
+          "importance": "media"
+        },
+        "errorBoundary": {
+          "count": 0,
+          "found": false,
+          "description": "Implementación de Error Boundaries",
+          "importance": "media"
+        },
+        "lazyLoading": {
+          "count": 0,
+          "found": false,
+          "description": "Uso de lazy loading",
+          "importance": "media"
+        },
+        "suspense": {
+          "count": 0,
+          "found": false,
+          "description": "Uso de Suspense",
+          "importance": "media"
+        }
+      },
+      "practicasFaltantes": {
+        "useCallback": {
+          "pattern": {},
+          "description": "Uso de useCallback para event handlers",
+          "importance": "alta"
+        },
+        "useMemo": {
+          "pattern": {},
+          "description": "Uso de useMemo para cálculos pesados",
+          "importance": "alta"
+        }
+      },
+      "antiPatronesEncontrados": {
+        "inlineObjects": {
+          "count": 11,
+          "description": "Objetos inline que causan re-renders",
+          "severity": "alta",
+          "examples": [
+            "={onClose}",
+            "={fechaSeleccionada}",
+            "={(e) => setFechaSeleccionada(e.target.value)}"
+          ]
+        },
+        "inlineHandlers": {
+          "count": 4,
+          "description": "Event handlers inline",
+          "severity": "alta",
+          "examples": [
+            "onClick={onClose}",
+            "onChange={(e) => setFechaSeleccionada(e.target.value)}",
+            "onClick={cargarArqueo}"
+          ]
+        },
+        "consoleLogs": {
+          "count": 1,
+          "description": "Console logs en producción",
+          "severity": "baja",
+          "examples": [
+            "console.error"
+          ]
+        }
+      },
+      "puntuacion": 0,
+      "recomendaciones": [
+        "Usar useCallback() para event handlers",
+        "Usar useMemo() para cálculos pesados",
+        "Mover objetos fuera del render o usar useMemo()",
+        "Extraer event handlers y usar useCallback()",
+        "Remover console.log() para producción"
+      ]
+    },
+    {
+      "archivo": "ModalEgresoFinanzas.jsx",
+      "ruta": "C:\\Users\\pc1\\Desktop\\login\\my-app\\src\\components\\Finanzas\\MovimientoCaja\\ModalEgresoFinanzas.jsx",
+      "lineas": 885,
+      "practicasEncontradas": {
+        "useReactMemo": {
+          "count": 0,
+          "found": false,
+          "description": "Uso de React.memo para evitar re-renders",
+          "importance": "alta"
+        },
+        "useCallback": {
+          "count": 0,
+          "found": false,
+          "description": "Uso de useCallback para event handlers",
+          "importance": "alta"
+        },
+        "useMemo": {
+          "count": 0,
+          "found": false,
+          "description": "Uso de useMemo para cálculos pesados",
+          "importance": "alta"
+        },
+        "useReducer": {
+          "count": 0,
+          "found": false,
+          "description": "Uso de useReducer para estado complejo",
+          "importance": "media"
+        },
+        "useContext": {
+          "count": 0,
+          "found": false,
+          "description": "Uso de Context API para estado global",
+          "importance": "media"
+        },
+        "keyProp": {
+          "count": 8,
+          "found": true,
+          "description": "Uso de key prop en listas",
+          "importance": "alta"
+        },
+        "customHooks": {
+          "count": 12,
+          "found": true,
+          "description": "Uso de custom hooks",
+          "importance": "media"
+        },
+        "errorBoundary": {
+          "count": 0,
+          "found": false,
+          "description": "Implementación de Error Boundaries",
+          "importance": "media"
+        },
+        "lazyLoading": {
+          "count": 0,
+          "found": false,
+          "description": "Uso de lazy loading",
+          "importance": "media"
+        },
+        "suspense": {
+          "count": 0,
+          "found": false,
+          "description": "Uso de Suspense",
+          "importance": "media"
+        }
+      },
+      "practicasFaltantes": {
+        "useCallback": {
+          "pattern": {},
+          "description": "Uso de useCallback para event handlers",
+          "importance": "alta"
+        },
+        "useMemo": {
+          "pattern": {},
+          "description": "Uso de useMemo para cálculos pesados",
+          "importance": "alta"
+        },
+        "useReducer": {
+          "pattern": {},
+          "description": "Uso de useReducer para estado complejo",
+          "importance": "media"
+        }
+      },
+      "antiPatronesEncontrados": {
+        "inlineObjects": {
+          "count": 83,
+          "description": "Objetos inline que causan re-renders",
+          "severity": "alta",
+          "examples": [
+            "= { ...prev }",
+            "= {\n                ...formData,\n                monto: parseFloat(formData.monto),\n                // 🔧 Agregar flag de integración bancaria\n                afectaCuentaBancaria: !!(formData.cuentaBancariaId && formData.cuentaBancariaId.trim())\n            }",
+            "={onClose}"
+          ]
+        },
+        "inlineHandlers": {
+          "count": 32,
+          "description": "Event handlers inline",
+          "severity": "alta",
+          "examples": [
+            "onClick={onClose}",
+            "onSubmit={handleSubmit}",
+            "onChange={(e) => handleInputChange('monto', e.target.value)}"
+          ]
+        },
+        "consoleLogs": {
+          "count": 14,
+          "description": "Console logs en producción",
+          "severity": "baja",
+          "examples": [
+            "console.log",
+            "console.log",
+            "console.log"
+          ]
+        }
+      },
+      "puntuacion": 0,
+      "recomendaciones": [
+        "Usar useCallback() para event handlers",
+        "Usar useMemo() para cálculos pesados",
+        "Considerar useReducer() para estado complejo",
+        "Mover objetos fuera del render o usar useMemo()",
+        "Extraer event handlers y usar useCallback()",
+        "Remover console.log() para producción"
+      ]
+    },
+    {
+      "archivo": "ModalIngresoFinanzas.jsx",
+      "ruta": "C:\\Users\\pc1\\Desktop\\login\\my-app\\src\\components\\Finanzas\\MovimientoCaja\\ModalIngresoFinanzas.jsx",
+      "lineas": 934,
+      "practicasEncontradas": {
+        "useReactMemo": {
+          "count": 0,
+          "found": false,
+          "description": "Uso de React.memo para evitar re-renders",
+          "importance": "alta"
+        },
+        "useCallback": {
+          "count": 0,
+          "found": false,
+          "description": "Uso de useCallback para event handlers",
+          "importance": "alta"
+        },
+        "useMemo": {
+          "count": 0,
+          "found": false,
+          "description": "Uso de useMemo para cálculos pesados",
+          "importance": "alta"
+        },
+        "useReducer": {
+          "count": 0,
+          "found": false,
+          "description": "Uso de useReducer para estado complejo",
+          "importance": "media"
+        },
+        "useContext": {
+          "count": 0,
+          "found": false,
+          "description": "Uso de Context API para estado global",
+          "importance": "media"
+        },
+        "keyProp": {
+          "count": 6,
+          "found": true,
+          "description": "Uso de key prop en listas",
+          "importance": "alta"
+        },
+        "customHooks": {
+          "count": 11,
+          "found": true,
+          "description": "Uso de custom hooks",
+          "importance": "media"
+        },
+        "errorBoundary": {
+          "count": 0,
+          "found": false,
+          "description": "Implementación de Error Boundaries",
+          "importance": "media"
+        },
+        "lazyLoading": {
+          "count": 0,
+          "found": false,
+          "description": "Uso de lazy loading",
+          "importance": "media"
+        },
+        "suspense": {
+          "count": 0,
+          "found": false,
+          "description": "Uso de Suspense",
+          "importance": "media"
+        }
+      },
+      "practicasFaltantes": {
+        "useCallback": {
+          "pattern": {},
+          "description": "Uso de useCallback para event handlers",
+          "importance": "alta"
+        },
+        "useMemo": {
+          "pattern": {},
+          "description": "Uso de useMemo para cálculos pesados",
+          "importance": "alta"
+        },
+        "useReducer": {
+          "pattern": {},
+          "description": "Uso de useReducer para estado complejo",
+          "importance": "media"
+        }
+      },
+      "antiPatronesEncontrados": {
+        "inlineObjects": {
+          "count": 72,
+          "description": "Objetos inline que causan re-renders",
+          "severity": "alta",
+          "examples": [
+            "= {\r\n                    ingresos: categoriasRes.data.ingresos.map(cat => ({\r\n                        value: cat,\r\n                        label: formatearLabelCategoria(cat)\r\n                    }",
+            "= {\r\n            'venta_producto': 'Venta de Producto',\r\n            'venta_servicio': 'Venta de Servicio',\r\n            'cobro_cliente': 'Cobro a Cliente',\r\n            'prestamo_recibido': 'Préstamo Recibido',\r\n            'devolucion': 'Devolución',\r\n            'otros_ingresos': 'Otros Ingresos'\r\n        }",
+            "= {\r\n            'efectivo': 'Efectivo',\r\n            'yape': 'Yape',\r\n            'plin': 'Plin',\r\n            'transferencia': 'Transferencia',\r\n            'tarjeta': 'Tarjeta'\r\n        }"
+          ]
+        },
+        "inlineHandlers": {
+          "count": 29,
+          "description": "Event handlers inline",
+          "severity": "alta",
+          "examples": [
+            "onClick={onClose}",
+            "onSubmit={handleSubmit}",
+            "onClick={() => handleInputChange('tipoMovimiento', 'efectivo')}"
+          ]
+        },
+        "consoleLogs": {
+          "count": 9,
+          "description": "Console logs en producción",
+          "severity": "baja",
+          "examples": [
+            "console.log",
+            "console.log",
+            "console.log"
+          ]
+        }
+      },
+      "puntuacion": 0,
+      "recomendaciones": [
+        "Usar useCallback() para event handlers",
+        "Usar useMemo() para cálculos pesados",
+        "Considerar useReducer() para estado complejo",
+        "Mover objetos fuera del render o usar useMemo()",
+        "Extraer event handlers y usar useCallback()",
+        "Remover console.log() para producción"
+      ]
+    },
+    {
+      "archivo": "MovimientosCajaFinanzas.jsx",
+      "ruta": "C:\\Users\\pc1\\Desktop\\login\\my-app\\src\\components\\Finanzas\\MovimientoCaja\\MovimientosCajaFinanzas.jsx",
+      "lineas": 402,
+      "practicasEncontradas": {
+        "useReactMemo": {
+          "count": 0,
+          "found": false,
+          "description": "Uso de React.memo para evitar re-renders",
+          "importance": "alta"
+        },
+        "useCallback": {
+          "count": 0,
+          "found": false,
+          "description": "Uso de useCallback para event handlers",
+          "importance": "alta"
+        },
+        "useMemo": {
+          "count": 0,
+          "found": false,
+          "description": "Uso de useMemo para cálculos pesados",
+          "importance": "alta"
+        },
+        "useReducer": {
+          "count": 0,
+          "found": false,
+          "description": "Uso de useReducer para estado complejo",
+          "importance": "media"
+        },
+        "useContext": {
+          "count": 0,
+          "found": false,
+          "description": "Uso de Context API para estado global",
+          "importance": "media"
+        },
+        "keyProp": {
+          "count": 0,
+          "found": false,
+          "description": "Uso de key prop en listas",
+          "importance": "alta"
+        },
+        "customHooks": {
+          "count": 10,
+          "found": true,
+          "description": "Uso de custom hooks",
+          "importance": "media"
+        },
+        "errorBoundary": {
+          "count": 0,
+          "found": false,
+          "description": "Implementación de Error Boundaries",
+          "importance": "media"
+        },
+        "lazyLoading": {
+          "count": 0,
+          "found": false,
+          "description": "Uso de lazy loading",
+          "importance": "media"
+        },
+        "suspense": {
+          "count": 0,
+          "found": false,
+          "description": "Uso de Suspense",
+          "importance": "media"
+        }
+      },
+      "practicasFaltantes": {
+        "useCallback": {
+          "pattern": {},
+          "description": "Uso de useCallback para event handlers",
+          "importance": "alta"
+        },
+        "useMemo": {
+          "pattern": {},
+          "description": "Uso de useMemo para cálculos pesados",
+          "importance": "alta"
+        },
+        "useReducer": {
+          "pattern": {},
+          "description": "Uso de useReducer para estado complejo",
+          "importance": "media"
+        }
+      },
+      "antiPatronesEncontrados": {
+        "inlineObjects": {
+          "count": 31,
+          "description": "Objetos inline que causan re-renders",
+          "severity": "alta",
+          "examples": [
+            "={() => setModalIngreso(true)}",
+            "={() => setModalEgreso(true)}",
+            "={() => setModalArqueo(true)}"
+          ]
+        },
+        "inlineHandlers": {
+          "count": 17,
+          "description": "Event handlers inline",
+          "severity": "alta",
+          "examples": [
+            "onClick={() => setModalIngreso(true)}",
+            "onClick={() => setModalEgreso(true)}",
+            "onClick={() => setModalArqueo(true)}"
+          ]
+        },
+        "consoleLogs": {
+          "count": 5,
+          "description": "Console logs en producción",
+          "severity": "baja",
+          "examples": [
+            "console.error",
+            "console.warn",
+            "console.error"
+          ]
+        }
+      },
+      "puntuacion": 0,
+      "recomendaciones": [
+        "Usar useCallback() para event handlers",
+        "Usar useMemo() para cálculos pesados",
+        "Considerar useReducer() para estado complejo",
+        "Mover objetos fuera del render o usar useMemo()",
+        "Extraer event handlers y usar useCallback()",
+        "Remover console.log() para producción"
+      ]
+    },
+    {
+      "archivo": "TablaMovimientosFinanzas.jsx",
+      "ruta": "C:\\Users\\pc1\\Desktop\\login\\my-app\\src\\components\\Finanzas\\MovimientoCaja\\TablaMovimientosFinanzas.jsx",
+      "lineas": 357,
+      "practicasEncontradas": {
+        "useReactMemo": {
+          "count": 0,
+          "found": false,
+          "description": "Uso de React.memo para evitar re-renders",
+          "importance": "alta"
+        },
+        "useCallback": {
+          "count": 0,
+          "found": false,
+          "description": "Uso de useCallback para event handlers",
+          "importance": "alta"
+        },
+        "useMemo": {
+          "count": 0,
+          "found": false,
+          "description": "Uso de useMemo para cálculos pesados",
+          "importance": "alta"
+        },
+        "useReducer": {
+          "count": 0,
+          "found": false,
+          "description": "Uso de useReducer para estado complejo",
+          "importance": "media"
+        },
+        "useContext": {
+          "count": 0,
+          "found": false,
+          "description": "Uso de Context API para estado global",
+          "importance": "media"
+        },
+        "keyProp": {
+          "count": 2,
+          "found": true,
+          "description": "Uso de key prop en listas",
+          "importance": "alta"
+        },
+        "customHooks": {
+          "count": 3,
+          "found": true,
+          "description": "Uso de custom hooks",
+          "importance": "media"
+        },
+        "errorBoundary": {
+          "count": 0,
+          "found": false,
+          "description": "Implementación de Error Boundaries",
+          "importance": "media"
+        },
+        "lazyLoading": {
+          "count": 0,
+          "found": false,
+          "description": "Uso de lazy loading",
+          "importance": "media"
+        },
+        "suspense": {
+          "count": 0,
+          "found": false,
+          "description": "Uso de Suspense",
+          "importance": "media"
+        }
+      },
+      "practicasFaltantes": {
+        "useCallback": {
+          "pattern": {},
+          "description": "Uso de useCallback para event handlers",
+          "importance": "alta"
+        },
+        "useMemo": {
+          "pattern": {},
+          "description": "Uso de useMemo para cálculos pesados",
+          "importance": "alta"
+        }
+      },
+      "antiPatronesEncontrados": {
+        "inlineObjects": {
+          "count": 14,
+          "description": "Objetos inline que causan re-renders",
+          "severity": "alta",
+          "examples": [
+            "= {\r\n            yellow: 'bg-yellow-100 text-yellow-800 border-yellow-200',\r\n            blue: 'bg-blue-100 text-blue-800 border-blue-200',\r\n            green: 'bg-green-100 text-green-800 border-green-200',\r\n            red: 'bg-red-100 text-red-800 border-red-200',\r\n            gray: 'bg-gray-100 text-gray-800 border-gray-200'\r\n        }",
+            "={`inline-flex items-center px-2 py-1 rounded-full text-xs font-medium border ${colores[config.color]}",
+            "= {\r\n            efectivo: '💵',\r\n            yape: '📱',\r\n            plin: '📲',\r\n            transferencia: '🏦',\r\n            tarjeta: '💳'\r\n        }"
+          ]
+        },
+        "inlineHandlers": {
+          "count": 6,
+          "description": "Event handlers inline",
+          "severity": "alta",
+          "examples": [
+            "onClick={() => setMenuAbierto(menuAbierto === movimiento._id ? null : movimiento._id)}",
+            "onClick={() => {\r\n                                                    setMenuAbierto(null);\r\n                                                    alert('Vista detallada - Por implementar');\r\n                                                }",
+            "onClick={() => manejarAnularMovimiento(movimiento._id)}"
+          ]
+        },
+        "consoleLogs": {
+          "count": 2,
+          "description": "Console logs en producción",
+          "severity": "baja",
+          "examples": [
+            "console.error",
+            "console.error"
+          ]
+        }
+      },
+      "puntuacion": 0,
+      "recomendaciones": [
+        "Usar useCallback() para event handlers",
+        "Usar useMemo() para cálculos pesados",
+        "Mover objetos fuera del render o usar useMemo()",
+        "Extraer event handlers y usar useCallback()",
+        "Remover console.log() para producción"
+      ]
+    },
+    {
+      "archivo": "CampoPagosFinanciamiento.jsx",
+      "ruta": "C:\\Users\\pc1\\Desktop\\login\\my-app\\src\\components\\Finanzas\\PagosFinanciamiento\\CampoPagosFinanciamiento.jsx",
+      "lineas": 163,
+      "practicasEncontradas": {
+        "useReactMemo": {
+          "count": 0,
+          "found": false,
+          "description": "Uso de React.memo para evitar re-renders",
+          "importance": "alta"
+        },
+        "useCallback": {
+          "count": 0,
+          "found": false,
+          "description": "Uso de useCallback para event handlers",
+          "importance": "alta"
+        },
+        "useMemo": {
+          "count": 0,
+          "found": false,
+          "description": "Uso de useMemo para cálculos pesados",
+          "importance": "alta"
+        },
+        "useReducer": {
+          "count": 0,
+          "found": false,
+          "description": "Uso de useReducer para estado complejo",
+          "importance": "media"
+        },
+        "useContext": {
+          "count": 0,
+          "found": false,
+          "description": "Uso de Context API para estado global",
+          "importance": "media"
+        },
+        "keyProp": {
+          "count": 1,
+          "found": true,
+          "description": "Uso de key prop en listas",
+          "importance": "alta"
+        },
+        "customHooks": {
+          "count": 0,
+          "found": false,
+          "description": "Uso de custom hooks",
+          "importance": "media"
+        },
+        "errorBoundary": {
+          "count": 0,
+          "found": false,
+          "description": "Implementación de Error Boundaries",
+          "importance": "media"
+        },
+        "lazyLoading": {
+          "count": 0,
+          "found": false,
+          "description": "Uso de lazy loading",
+          "importance": "media"
+        },
+        "suspense": {
+          "count": 0,
+          "found": false,
+          "description": "Uso de Suspense",
+          "importance": "media"
+        }
+      },
+      "practicasFaltantes": {
+        "useCallback": {
+          "pattern": {},
+          "description": "Uso de useCallback para event handlers",
+          "importance": "alta"
+        },
+        "useMemo": {
+          "pattern": {},
+          "description": "Uso de useMemo para cálculos pesados",
+          "importance": "alta"
+        }
+      },
+      "antiPatronesEncontrados": {
+        "inlineObjects": {
+          "count": 46,
+          "description": "Objetos inline que causan re-renders",
+          "severity": "alta",
+          "examples": [
+            "={name}",
+            "={value || ''}",
+            "={onChange}"
+          ]
+        },
+        "inlineArrays": {
+          "count": 1,
+          "description": "Arrays inline que causan re-renders",
+          "severity": "media",
+          "examples": [
+            "= []"
+          ]
+        },
+        "inlineHandlers": {
+          "count": 6,
+          "description": "Event handlers inline",
+          "severity": "alta",
+          "examples": [
+            "onChange={onChange}",
+            "onChange={onChange}",
+            "onChange={onChange}"
+          ]
+        }
+      },
+      "puntuacion": 0,
+      "recomendaciones": [
+        "Usar useCallback() para event handlers",
+        "Usar useMemo() para cálculos pesados",
+        "Mover objetos fuera del render o usar useMemo()",
+        "Extraer event handlers y usar useCallback()"
+      ]
+    },
+    {
+      "archivo": "index.js",
+      "ruta": "C:\\Users\\pc1\\Desktop\\login\\my-app\\src\\components\\Finanzas\\PagosFinanciamiento\\index.js",
+      "lineas": 5,
+      "practicasEncontradas": {
+        "useReactMemo": {
+          "count": 0,
+          "found": false,
+          "description": "Uso de React.memo para evitar re-renders",
+          "importance": "alta"
+        },
+        "useCallback": {
+          "count": 0,
+          "found": false,
+          "description": "Uso de useCallback para event handlers",
+          "importance": "alta"
+        },
+        "useMemo": {
+          "count": 0,
+          "found": false,
+          "description": "Uso de useMemo para cálculos pesados",
+          "importance": "alta"
+        },
+        "useReducer": {
+          "count": 0,
+          "found": false,
+          "description": "Uso de useReducer para estado complejo",
+          "importance": "media"
+        },
+        "useContext": {
+          "count": 0,
+          "found": false,
+          "description": "Uso de Context API para estado global",
+          "importance": "media"
+        },
+        "keyProp": {
+          "count": 0,
+          "found": false,
+          "description": "Uso de key prop en listas",
+          "importance": "alta"
+        },
+        "customHooks": {
+          "count": 2,
+          "found": true,
+          "description": "Uso de custom hooks",
+          "importance": "media"
+        },
+        "errorBoundary": {
+          "count": 0,
+          "found": false,
+          "description": "Implementación de Error Boundaries",
+          "importance": "media"
+        },
+        "lazyLoading": {
+          "count": 0,
+          "found": false,
+          "description": "Uso de lazy loading",
+          "importance": "media"
+        },
+        "suspense": {
+          "count": 0,
+          "found": false,
+          "description": "Uso de Suspense",
+          "importance": "media"
+        }
+      },
+      "practicasFaltantes": {},
+      "antiPatronesEncontrados": {},
+      "puntuacion": 100,
+      "recomendaciones": []
+    },
+    {
+      "archivo": "TablaPagosFinanciamiento.jsx",
+      "ruta": "C:\\Users\\pc1\\Desktop\\login\\my-app\\src\\components\\Finanzas\\PagosFinanciamiento\\TablaPagosFinanciamiento.jsx",
+      "lineas": 113,
+      "practicasEncontradas": {
+        "useReactMemo": {
+          "count": 0,
+          "found": false,
+          "description": "Uso de React.memo para evitar re-renders",
+          "importance": "alta"
+        },
+        "useCallback": {
+          "count": 0,
+          "found": false,
+          "description": "Uso de useCallback para event handlers",
+          "importance": "alta"
+        },
+        "useMemo": {
+          "count": 0,
+          "found": false,
+          "description": "Uso de useMemo para cálculos pesados",
+          "importance": "alta"
+        },
+        "useReducer": {
+          "count": 0,
+          "found": false,
+          "description": "Uso de useReducer para estado complejo",
+          "importance": "media"
+        },
+        "useContext": {
+          "count": 0,
+          "found": false,
+          "description": "Uso de Context API para estado global",
+          "importance": "media"
+        },
+        "keyProp": {
+          "count": 4,
+          "found": true,
+          "description": "Uso de key prop en listas",
+          "importance": "alta"
+        },
+        "customHooks": {
+          "count": 0,
+          "found": false,
+          "description": "Uso de custom hooks",
+          "importance": "media"
+        },
+        "errorBoundary": {
+          "count": 0,
+          "found": false,
+          "description": "Implementación de Error Boundaries",
+          "importance": "media"
+        },
+        "lazyLoading": {
+          "count": 0,
+          "found": false,
+          "description": "Uso de lazy loading",
+          "importance": "media"
+        },
+        "suspense": {
+          "count": 0,
+          "found": false,
+          "description": "Uso de Suspense",
+          "importance": "media"
+        }
+      },
+      "practicasFaltantes": {
+        "useCallback": {
+          "pattern": {},
+          "description": "Uso de useCallback para event handlers",
+          "importance": "alta"
+        },
+        "useMemo": {
+          "pattern": {},
+          "description": "Uso de useMemo para cálculos pesados",
+          "importance": "alta"
+        }
+      },
+      "antiPatronesEncontrados": {
+        "inlineObjects": {
+          "count": 8,
+          "description": "Objetos inline que causan re-renders",
+          "severity": "alta",
+          "examples": [
+            "={index}",
+            "={columnas.length + (acciones.length > 0 ? 1 : 0)}",
+            "={fila.id || fila._id || filaIndex}"
+          ]
+        },
+        "inlineArrays": {
+          "count": 3,
+          "description": "Arrays inline que causan re-renders",
+          "severity": "media",
+          "examples": [
+            "= []",
+            "= []",
+            "= []"
+          ]
+        },
+        "inlineHandlers": {
+          "count": 1,
+          "description": "Event handlers inline",
+          "severity": "alta",
+          "examples": [
+            "onClick={() => accion.onClick(fila)}"
+          ]
+        }
+      },
+      "puntuacion": 0,
+      "recomendaciones": [
+        "Usar useCallback() para event handlers",
+        "Usar useMemo() para cálculos pesados",
+        "Mover objetos fuera del render o usar useMemo()",
+        "Extraer event handlers y usar useCallback()"
+      ]
+    },
+    {
+      "archivo": "useFormularioPagosFinanciamiento.js",
+      "ruta": "C:\\Users\\pc1\\Desktop\\login\\my-app\\src\\components\\Finanzas\\PagosFinanciamiento\\useFormularioPagosFinanciamiento.js",
+      "lineas": 88,
+      "practicasEncontradas": {
+        "useReactMemo": {
+          "count": 0,
+          "found": false,
+          "description": "Uso de React.memo para evitar re-renders",
+          "importance": "alta"
+        },
+        "useCallback": {
+          "count": 0,
+          "found": false,
+          "description": "Uso de useCallback para event handlers",
+          "importance": "alta"
+        },
+        "useMemo": {
+          "count": 0,
+          "found": false,
+          "description": "Uso de useMemo para cálculos pesados",
+          "importance": "alta"
+        },
+        "useReducer": {
+          "count": 0,
+          "found": false,
+          "description": "Uso de useReducer para estado complejo",
+          "importance": "media"
+        },
+        "useContext": {
+          "count": 0,
+          "found": false,
+          "description": "Uso de Context API para estado global",
+          "importance": "media"
+        },
+        "keyProp": {
+          "count": 0,
+          "found": false,
+          "description": "Uso de key prop en listas",
+          "importance": "alta"
+        },
+        "customHooks": {
+          "count": 5,
+          "found": true,
+          "description": "Uso de custom hooks",
+          "importance": "media"
+        },
+        "errorBoundary": {
+          "count": 0,
+          "found": false,
+          "description": "Implementación de Error Boundaries",
+          "importance": "media"
+        },
+        "lazyLoading": {
+          "count": 0,
+          "found": false,
+          "description": "Uso de lazy loading",
+          "importance": "media"
+        },
+        "suspense": {
+          "count": 0,
+          "found": false,
+          "description": "Uso de Suspense",
+          "importance": "media"
+        }
+      },
+      "practicasFaltantes": {
+        "useMemo": {
+          "pattern": {},
+          "description": "Uso de useMemo para cálculos pesados",
+          "importance": "alta"
+        }
+      },
+      "antiPatronesEncontrados": {
+        "inlineObjects": {
+          "count": 3,
+          "description": "Objetos inline que causan re-renders",
+          "severity": "alta",
+          "examples": [
+            "= {}",
+            "= {}",
+            "= {}"
+          ]
+        }
+      },
+      "puntuacion": 55,
+      "recomendaciones": [
+        "Usar useMemo() para cálculos pesados",
+        "Mover objetos fuera del render o usar useMemo()"
+      ]
+    },
+    {
+      "archivo": "CampoPrestamos.jsx",
+      "ruta": "C:\\Users\\pc1\\Desktop\\login\\my-app\\src\\components\\Finanzas\\Prestamos\\CampoPrestamos.jsx",
+      "lineas": 163,
+      "practicasEncontradas": {
+        "useReactMemo": {
+          "count": 0,
+          "found": false,
+          "description": "Uso de React.memo para evitar re-renders",
+          "importance": "alta"
+        },
+        "useCallback": {
+          "count": 0,
+          "found": false,
+          "description": "Uso de useCallback para event handlers",
+          "importance": "alta"
+        },
+        "useMemo": {
+          "count": 0,
+          "found": false,
+          "description": "Uso de useMemo para cálculos pesados",
+          "importance": "alta"
+        },
+        "useReducer": {
+          "count": 0,
+          "found": false,
+          "description": "Uso de useReducer para estado complejo",
+          "importance": "media"
+        },
+        "useContext": {
+          "count": 0,
+          "found": false,
+          "description": "Uso de Context API para estado global",
+          "importance": "media"
+        },
+        "keyProp": {
+          "count": 1,
+          "found": true,
+          "description": "Uso de key prop en listas",
+          "importance": "alta"
+        },
+        "customHooks": {
+          "count": 0,
+          "found": false,
+          "description": "Uso de custom hooks",
+          "importance": "media"
+        },
+        "errorBoundary": {
+          "count": 0,
+          "found": false,
+          "description": "Implementación de Error Boundaries",
+          "importance": "media"
+        },
+        "lazyLoading": {
+          "count": 0,
+          "found": false,
+          "description": "Uso de lazy loading",
+          "importance": "media"
+        },
+        "suspense": {
+          "count": 0,
+          "found": false,
+          "description": "Uso de Suspense",
+          "importance": "media"
+        }
+      },
+      "practicasFaltantes": {
+        "useCallback": {
+          "pattern": {},
+          "description": "Uso de useCallback para event handlers",
+          "importance": "alta"
+        },
+        "useMemo": {
+          "pattern": {},
+          "description": "Uso de useMemo para cálculos pesados",
+          "importance": "alta"
+        }
+      },
+      "antiPatronesEncontrados": {
+        "inlineObjects": {
+          "count": 46,
+          "description": "Objetos inline que causan re-renders",
+          "severity": "alta",
+          "examples": [
+            "={name}",
+            "={value || ''}",
+            "={onChange}"
+          ]
+        },
+        "inlineArrays": {
+          "count": 1,
+          "description": "Arrays inline que causan re-renders",
+          "severity": "media",
+          "examples": [
+            "= []"
+          ]
+        },
+        "inlineHandlers": {
+          "count": 6,
+          "description": "Event handlers inline",
+          "severity": "alta",
+          "examples": [
+            "onChange={onChange}",
+            "onChange={onChange}",
+            "onChange={onChange}"
+          ]
+        }
+      },
+      "puntuacion": 0,
+      "recomendaciones": [
+        "Usar useCallback() para event handlers",
+        "Usar useMemo() para cálculos pesados",
+        "Mover objetos fuera del render o usar useMemo()",
+        "Extraer event handlers y usar useCallback()"
+      ]
+    },
+    {
+      "archivo": "index.js",
+      "ruta": "C:\\Users\\pc1\\Desktop\\login\\my-app\\src\\components\\Finanzas\\Prestamos\\index.js",
+      "lineas": 14,
+      "practicasEncontradas": {
+        "useReactMemo": {
+          "count": 0,
+          "found": false,
+          "description": "Uso de React.memo para evitar re-renders",
+          "importance": "alta"
+        },
+        "useCallback": {
+          "count": 0,
+          "found": false,
+          "description": "Uso de useCallback para event handlers",
+          "importance": "alta"
+        },
+        "useMemo": {
+          "count": 0,
+          "found": false,
+          "description": "Uso de useMemo para cálculos pesados",
+          "importance": "alta"
+        },
+        "useReducer": {
+          "count": 0,
+          "found": false,
+          "description": "Uso de useReducer para estado complejo",
+          "importance": "media"
+        },
+        "useContext": {
+          "count": 0,
+          "found": false,
+          "description": "Uso de Context API para estado global",
+          "importance": "media"
+        },
+        "keyProp": {
+          "count": 0,
+          "found": false,
+          "description": "Uso de key prop en listas",
+          "importance": "alta"
+        },
+        "customHooks": {
+          "count": 3,
+          "found": true,
+          "description": "Uso de custom hooks",
+          "importance": "media"
+        },
+        "errorBoundary": {
+          "count": 0,
+          "found": false,
+          "description": "Implementación de Error Boundaries",
+          "importance": "media"
+        },
+        "lazyLoading": {
+          "count": 0,
+          "found": false,
+          "description": "Uso de lazy loading",
+          "importance": "media"
+        },
+        "suspense": {
+          "count": 0,
+          "found": false,
+          "description": "Uso de Suspense",
+          "importance": "media"
+        }
+      },
+      "practicasFaltantes": {},
+      "antiPatronesEncontrados": {},
+      "puntuacion": 100,
+      "recomendaciones": []
+    },
+    {
+      "archivo": "ModalCalculadoraCuota.jsx",
+      "ruta": "C:\\Users\\pc1\\Desktop\\login\\my-app\\src\\components\\Finanzas\\Prestamos\\ModalCalculadoraCuota.jsx",
+      "lineas": 154,
+      "practicasEncontradas": {
+        "useReactMemo": {
+          "count": 0,
+          "found": false,
+          "description": "Uso de React.memo para evitar re-renders",
+          "importance": "alta"
+        },
+        "useCallback": {
+          "count": 0,
+          "found": false,
+          "description": "Uso de useCallback para event handlers",
+          "importance": "alta"
+        },
+        "useMemo": {
+          "count": 0,
+          "found": false,
+          "description": "Uso de useMemo para cálculos pesados",
+          "importance": "alta"
+        },
+        "useReducer": {
+          "count": 0,
+          "found": false,
+          "description": "Uso de useReducer para estado complejo",
+          "importance": "media"
+        },
+        "useContext": {
+          "count": 0,
+          "found": false,
+          "description": "Uso de Context API para estado global",
+          "importance": "media"
+        },
+        "keyProp": {
+          "count": 0,
+          "found": false,
+          "description": "Uso de key prop en listas",
+          "importance": "alta"
+        },
+        "customHooks": {
+          "count": 0,
+          "found": false,
+          "description": "Uso de custom hooks",
+          "importance": "media"
+        },
+        "errorBoundary": {
+          "count": 0,
+          "found": false,
+          "description": "Implementación de Error Boundaries",
+          "importance": "media"
+        },
+        "lazyLoading": {
+          "count": 0,
+          "found": false,
+          "description": "Uso de lazy loading",
+          "importance": "media"
+        },
+        "suspense": {
+          "count": 0,
+          "found": false,
+          "description": "Uso de Suspense",
+          "importance": "media"
+        }
+      },
+      "practicasFaltantes": {
+        "useCallback": {
+          "pattern": {},
+          "description": "Uso de useCallback para event handlers",
+          "importance": "alta"
+        }
+      },
+      "antiPatronesEncontrados": {
+        "inlineObjects": {
+          "count": 12,
+          "description": "Objetos inline que causan re-renders",
+          "severity": "alta",
+          "examples": [
+            "={onClose}",
+            "={manejarSubmit}",
+            "={formulario.valores.monto || ''}"
+          ]
+        },
+        "inlineHandlers": {
+          "count": 6,
+          "description": "Event handlers inline",
+          "severity": "alta",
+          "examples": [
+            "onClick={onClose}",
+            "onSubmit={manejarSubmit}",
+            "onChange={formulario.manejarCambio}"
+          ]
+        }
+      },
+      "puntuacion": 0,
+      "recomendaciones": [
+        "Usar useCallback() para event handlers",
+        "Mover objetos fuera del render o usar useMemo()",
+        "Extraer event handlers y usar useCallback()"
+      ]
+    },
+    {
+      "archivo": "ModalDetallesPrestamo.jsx",
+      "ruta": "C:\\Users\\pc1\\Desktop\\login\\my-app\\src\\components\\Finanzas\\Prestamos\\ModalDetallesPrestamo.jsx",
+      "lineas": 210,
+      "practicasEncontradas": {
+        "useReactMemo": {
+          "count": 0,
+          "found": false,
+          "description": "Uso de React.memo para evitar re-renders",
+          "importance": "alta"
+        },
+        "useCallback": {
+          "count": 0,
+          "found": false,
+          "description": "Uso de useCallback para event handlers",
+          "importance": "alta"
+        },
+        "useMemo": {
+          "count": 0,
+          "found": false,
+          "description": "Uso de useMemo para cálculos pesados",
+          "importance": "alta"
+        },
+        "useReducer": {
+          "count": 0,
+          "found": false,
+          "description": "Uso de useReducer para estado complejo",
+          "importance": "media"
+        },
+        "useContext": {
+          "count": 0,
+          "found": false,
+          "description": "Uso de Context API para estado global",
+          "importance": "media"
+        },
+        "keyProp": {
+          "count": 0,
+          "found": false,
+          "description": "Uso de key prop en listas",
+          "importance": "alta"
+        },
+        "customHooks": {
+          "count": 1,
+          "found": true,
+          "description": "Uso de custom hooks",
+          "importance": "media"
+        },
+        "errorBoundary": {
+          "count": 0,
+          "found": false,
+          "description": "Implementación de Error Boundaries",
+          "importance": "media"
+        },
+        "lazyLoading": {
+          "count": 0,
+          "found": false,
+          "description": "Uso de lazy loading",
+          "importance": "media"
+        },
+        "suspense": {
+          "count": 0,
+          "found": false,
+          "description": "Uso de Suspense",
+          "importance": "media"
+        }
+      },
+      "practicasFaltantes": {
+        "useCallback": {
+          "pattern": {},
+          "description": "Uso de useCallback para event handlers",
+          "importance": "alta"
+        }
+      },
+      "antiPatronesEncontrados": {
+        "inlineObjects": {
+          "count": 7,
+          "description": "Objetos inline que causan re-renders",
+          "severity": "alta",
+          "examples": [
+            "={onClose}",
+            "={`p-3 rounded-lg ${diasRestantes > 30 ? 'bg-blue-100' : diasRestantes > 0 ? 'bg-yellow-100' : 'bg-red-100'}",
+            "={`text-sm font-medium ${diasRestantes > 30 ? 'text-blue-700' : diasRestantes > 0 ? 'text-yellow-700' : 'text-red-700'}"
+          ]
+        },
+        "inlineHandlers": {
+          "count": 3,
+          "description": "Event handlers inline",
+          "severity": "alta",
+          "examples": [
+            "onClick={onClose}",
+            "onClick={onClose}",
+            "onClick={() => window.print()}"
+          ]
+        }
+      },
+      "puntuacion": 5,
+      "recomendaciones": [
+        "Usar useCallback() para event handlers",
+        "Mover objetos fuera del render o usar useMemo()",
+        "Extraer event handlers y usar useCallback()"
+      ]
+    },
+    {
+      "archivo": "ModalPrestamo.jsx",
+      "ruta": "C:\\Users\\pc1\\Desktop\\login\\my-app\\src\\components\\Finanzas\\Prestamos\\ModalPrestamo.jsx",
+      "lineas": 226,
+      "practicasEncontradas": {
+        "useReactMemo": {
+          "count": 0,
+          "found": false,
+          "description": "Uso de React.memo para evitar re-renders",
+          "importance": "alta"
+        },
+        "useCallback": {
+          "count": 0,
+          "found": false,
+          "description": "Uso de useCallback para event handlers",
+          "importance": "alta"
+        },
+        "useMemo": {
+          "count": 0,
+          "found": false,
+          "description": "Uso de useMemo para cálculos pesados",
+          "importance": "alta"
+        },
+        "useReducer": {
+          "count": 0,
+          "found": false,
+          "description": "Uso de useReducer para estado complejo",
+          "importance": "media"
+        },
+        "useContext": {
+          "count": 0,
+          "found": false,
+          "description": "Uso de Context API para estado global",
+          "importance": "media"
+        },
+        "keyProp": {
+          "count": 0,
+          "found": false,
+          "description": "Uso de key prop en listas",
+          "importance": "alta"
+        },
+        "customHooks": {
+          "count": 0,
+          "found": false,
+          "description": "Uso de custom hooks",
+          "importance": "media"
+        },
+        "errorBoundary": {
+          "count": 0,
+          "found": false,
+          "description": "Implementación de Error Boundaries",
+          "importance": "media"
+        },
+        "lazyLoading": {
+          "count": 0,
+          "found": false,
+          "description": "Uso de lazy loading",
+          "importance": "media"
+        },
+        "suspense": {
+          "count": 0,
+          "found": false,
+          "description": "Uso de Suspense",
+          "importance": "media"
+        }
+      },
+      "practicasFaltantes": {
+        "useCallback": {
+          "pattern": {},
+          "description": "Uso de useCallback para event handlers",
+          "importance": "alta"
+        }
+      },
+      "antiPatronesEncontrados": {
+        "inlineObjects": {
+          "count": 48,
+          "description": "Objetos inline que causan re-renders",
+          "severity": "alta",
+          "examples": [
+            "={onClose}",
+            "={onSubmit}",
+            "={formulario.valores.entidadFinanciera?.nombre || ''}"
+          ]
+        },
+        "inlineHandlers": {
+          "count": 15,
+          "description": "Event handlers inline",
+          "severity": "alta",
+          "examples": [
+            "onClick={onClose}",
+            "onSubmit={onSubmit}",
+            "onChange={formulario.manejarCambio}"
+          ]
+        }
+      },
+      "puntuacion": 0,
+      "recomendaciones": [
+        "Usar useCallback() para event handlers",
+        "Mover objetos fuera del render o usar useMemo()",
+        "Extraer event handlers y usar useCallback()"
+      ]
+    },
+    {
+      "archivo": "ModalTablaAmortizacion.jsx",
+      "ruta": "C:\\Users\\pc1\\Desktop\\login\\my-app\\src\\components\\Finanzas\\Prestamos\\ModalTablaAmortizacion.jsx",
+      "lineas": 176,
+      "practicasEncontradas": {
+        "useReactMemo": {
+          "count": 0,
+          "found": false,
+          "description": "Uso de React.memo para evitar re-renders",
+          "importance": "alta"
+        },
+        "useCallback": {
+          "count": 0,
+          "found": false,
+          "description": "Uso de useCallback para event handlers",
+          "importance": "alta"
+        },
+        "useMemo": {
+          "count": 0,
+          "found": false,
+          "description": "Uso de useMemo para cálculos pesados",
+          "importance": "alta"
+        },
+        "useReducer": {
+          "count": 0,
+          "found": false,
+          "description": "Uso de useReducer para estado complejo",
+          "importance": "media"
+        },
+        "useContext": {
+          "count": 0,
+          "found": false,
+          "description": "Uso de Context API para estado global",
+          "importance": "media"
+        },
+        "keyProp": {
+          "count": 0,
+          "found": false,
+          "description": "Uso de key prop en listas",
+          "importance": "alta"
+        },
+        "customHooks": {
+          "count": 0,
+          "found": false,
+          "description": "Uso de custom hooks",
+          "importance": "media"
+        },
+        "errorBoundary": {
+          "count": 0,
+          "found": false,
+          "description": "Implementación de Error Boundaries",
+          "importance": "media"
+        },
+        "lazyLoading": {
+          "count": 0,
+          "found": false,
+          "description": "Uso de lazy loading",
+          "importance": "media"
+        },
+        "suspense": {
+          "count": 0,
+          "found": false,
+          "description": "Uso de Suspense",
+          "importance": "media"
+        }
+      },
+      "practicasFaltantes": {
+        "useCallback": {
+          "pattern": {},
+          "description": "Uso de useCallback para event handlers",
+          "importance": "alta"
+        },
+        "useMemo": {
+          "pattern": {},
+          "description": "Uso de useMemo para cálculos pesados",
+          "importance": "alta"
+        }
+      },
+      "antiPatronesEncontrados": {
+        "inlineObjects": {
+          "count": 10,
+          "description": "Objetos inline que causan re-renders",
+          "severity": "alta",
+          "examples": [
+            "={onClose}",
+            "={`px-2 py-1 rounded-full text-xs font-medium ${\r\n                                    prestamo.estado === 'vigente' ? 'bg-green-100 text-green-800' :\r\n                                    prestamo.estado === 'aprobado' ? 'bg-blue-100 text-blue-800' :\r\n                                    'bg-yellow-100 text-yellow-800'\r\n                                }",
+            "={{ maxHeight: 'calc(90vh - 280px)' }"
+          ]
+        },
+        "inlineHandlers": {
+          "count": 4,
+          "description": "Event handlers inline",
+          "severity": "alta",
+          "examples": [
+            "onClick={onClose}",
+            "onClick={() => {\r\n                                    // TODO: Implementar exportación a PDF\r\n                                    console.log('Exportar a PDF');\r\n                                }",
+            "onClick={() => {\r\n                                    // TODO: Implementar exportación a Excel\r\n                                    console.log('Exportar a Excel');\r\n                                }"
+          ]
+        },
+        "consoleLogs": {
+          "count": 2,
+          "description": "Console logs en producción",
+          "severity": "baja",
+          "examples": [
+            "console.log",
+            "console.log"
+          ]
+        }
+      },
+      "puntuacion": 0,
+      "recomendaciones": [
+        "Usar useCallback() para event handlers",
+        "Usar useMemo() para cálculos pesados",
+        "Mover objetos fuera del render o usar useMemo()",
+        "Extraer event handlers y usar useCallback()",
+        "Remover console.log() para producción"
+      ]
+    },
+    {
+      "archivo": "prestamosConfig.jsx",
+      "ruta": "C:\\Users\\pc1\\Desktop\\login\\my-app\\src\\components\\Finanzas\\Prestamos\\prestamosConfig.jsx",
+      "lineas": 404,
+      "practicasEncontradas": {
+        "useReactMemo": {
+          "count": 0,
+          "found": false,
+          "description": "Uso de React.memo para evitar re-renders",
+          "importance": "alta"
+        },
+        "useCallback": {
+          "count": 0,
+          "found": false,
+          "description": "Uso de useCallback para event handlers",
+          "importance": "alta"
+        },
+        "useMemo": {
+          "count": 0,
+          "found": false,
+          "description": "Uso de useMemo para cálculos pesados",
+          "importance": "alta"
+        },
+        "useReducer": {
+          "count": 0,
+          "found": false,
+          "description": "Uso de useReducer para estado complejo",
+          "importance": "media"
+        },
+        "useContext": {
+          "count": 0,
+          "found": false,
+          "description": "Uso de Context API para estado global",
+          "importance": "media"
+        },
+        "keyProp": {
+          "count": 0,
+          "found": false,
+          "description": "Uso de key prop en listas",
+          "importance": "alta"
+        },
+        "customHooks": {
+          "count": 0,
+          "found": false,
+          "description": "Uso de custom hooks",
+          "importance": "media"
+        },
+        "errorBoundary": {
+          "count": 0,
+          "found": false,
+          "description": "Implementación de Error Boundaries",
+          "importance": "media"
+        },
+        "lazyLoading": {
+          "count": 0,
+          "found": false,
+          "description": "Uso de lazy loading",
+          "importance": "media"
+        },
+        "suspense": {
+          "count": 0,
+          "found": false,
+          "description": "Uso de Suspense",
+          "importance": "media"
+        }
+      },
+      "practicasFaltantes": {
+        "useCallback": {
+          "pattern": {},
+          "description": "Uso de useCallback para event handlers",
+          "importance": "alta"
+        }
+      },
+      "antiPatronesEncontrados": {
+        "inlineObjects": {
+          "count": 13,
+          "description": "Objetos inline que causan re-renders",
+          "severity": "alta",
+          "examples": [
+            "= {\r\n    'aprobado': { color: 'bg-green-100 text-green-800', label: 'Aprobado', icono: '✅' }",
+            "= {\r\n    entidadFinanciera: {\r\n        nombre: '',\r\n        codigo: '',\r\n        tipo: 'banco'\r\n    }",
+            "= {\r\n    monto: '',\r\n    tasaInteres: '',\r\n    plazoMeses: ''\r\n}"
+          ]
+        },
+        "inlineArrays": {
+          "count": 8,
+          "description": "Arrays inline que causan re-renders",
+          "severity": "media",
+          "examples": [
+            "= [\r\n    { \r\n        key: 'codigo', \r\n        titulo: 'Código', \r\n        ordenable: true,\r\n        render: (valor) => (\r\n            <span className=\"font-mono text-sm bg-gray-100 px-2 py-1 rounded\">\r\n                {valor}\r\n            </span>\r\n        )\r\n    },\r\n    { \r\n        key: 'entidadFinanciera.nombre', \r\n        titulo: 'Entidad',\r\n        ordenable: true\r\n    },\r\n    { \r\n        key: 'prestatario.nombre', \r\n        titulo: 'Prestatario',\r\n        ordenable: true\r\n    },\r\n    { \r\n        key: 'tipo', // ✅ Corregido: usar 'tipo' en lugar de 'tipoCredito'\r\n        titulo: 'Tipo',\r\n        ordenable: true,\r\n        render: (valor) => {\r\n            const tipos = {\r\n                'personal': 'Personal',\r\n                'hipotecario': 'Hipotecario', \r\n                'vehicular': 'Vehicular',\r\n                'comercial': 'Comercial',\r\n                'microempresa': 'Microempresa',\r\n                'capital_trabajo': 'Capital de Trabajo',\r\n                'inversion': 'Inversión'\r\n            };\r\n            return tipos[valor]",
+            "= [\r\n    {\r\n        label: 'Editar',\r\n        icono: '✏️',\r\n        color: 'blue',\r\n        handler: 'abrirModalEditarPrestamo',\r\n        className: 'bg-blue-500 hover:bg-blue-600 text-white p-2 rounded-md transition-colors',\r\n        tooltip: 'Editar préstamo'\r\n    },\r\n    {\r\n        label: 'Tabla',\r\n        icono: '📊',\r\n        color: 'purple',\r\n        handler: 'verTablaAmortizacion',\r\n        className: 'bg-purple-500 hover:bg-purple-600 text-white p-2 rounded-md transition-colors',\r\n        tooltip: 'Ver tabla de amortización'\r\n    },\r\n    {\r\n        label: 'Cancelar',\r\n        icono: '❌',\r\n        color: 'red',\r\n        handler: 'cancelarPrestamo',\r\n        className: 'bg-red-500 hover:bg-red-600 text-white p-2 rounded-md transition-colors',\r\n        tooltip: 'Cancelar préstamo'\r\n    }\r\n]",
+            "= [\r\n    { \r\n        key: 'cuota', \r\n        titulo: 'Cuota',\r\n        render: (valor) => (\r\n            <span className=\"font-mono text-sm bg-blue-50 px-2 py-1 rounded\">\r\n                #{valor}\r\n            </span>\r\n        )\r\n    },\r\n    { \r\n        key: 'fechaPago', \r\n        titulo: 'Fecha', \r\n        tipo: 'fecha',\r\n        render: (valor) => {\r\n            if (!valor) return '-';\r\n            return new Date(valor).toLocaleDateString('es-PE');\r\n        }\r\n    },\r\n    { \r\n        key: 'capital', \r\n        titulo: 'Capital', \r\n        render: (valor) => (\r\n            <span className=\"text-green-600 font-medium\">\r\n                S/ {parseFloat(valor || 0).toLocaleString('es-PE', { \r\n                    minimumFractionDigits: 2,\r\n                    maximumFractionDigits: 2 \r\n                })}\r\n            </span>\r\n        )\r\n    },\r\n    { \r\n        key: 'interes', \r\n        titulo: 'Interés', \r\n        render: (valor) => (\r\n            <span className=\"text-blue-600 font-medium\">\r\n                S/ {parseFloat(valor || 0).toLocaleString('es-PE', { \r\n                    minimumFractionDigits: 2,\r\n                    maximumFractionDigits: 2 \r\n                })}\r\n            </span>\r\n        )\r\n    },\r\n    { \r\n        key: 'cuotaMensual', \r\n        titulo: 'Cuota Total', \r\n        render: (valor) => (\r\n            <span className=\"text-purple-600 font-semibold\">\r\n                S/ {parseFloat(valor || 0).toLocaleString('es-PE', { \r\n                    minimumFractionDigits: 2,\r\n                    maximumFractionDigits: 2 \r\n                })}\r\n            </span>\r\n        )\r\n    },\r\n    { \r\n        key: 'saldoPendiente', \r\n        titulo: 'Saldo Pendiente', \r\n        render: (valor) => (\r\n            <span className=\"text-orange-600 font-medium\">\r\n                S/ {parseFloat(valor || 0).toLocaleString('es-PE', { \r\n                    minimumFractionDigits: 2,\r\n                    maximumFractionDigits: 2 \r\n                })}\r\n            </span>\r\n        )\r\n    }\r\n]"
+          ]
+        },
+        "inlineHandlers": {
+          "count": 3,
+          "description": "Event handlers inline",
+          "severity": "alta",
+          "examples": [
+            "onInicial = {\r\n    paginaActual: 1,\r\n    limite: 20\r\n}",
+            "onClick={() => {\r\n                                console.log('🎯 Clic en Ver Detalles - Sin fecha:', fila.codigo);\r\n                                handlers?.abrirModalDetallesPrestamo?.(fila);\r\n                            }",
+            "onClick={() => {\r\n                            console.log('🎯 Clic en Ver Detalles - Con fecha:', fila.codigo);\r\n                            handlers?.abrirModalDetallesPrestamo?.(fila);\r\n                        }"
+          ]
+        },
+        "consoleLogs": {
+          "count": 3,
+          "description": "Console logs en producción",
+          "severity": "baja",
+          "examples": [
+            "console.warn",
+            "console.log",
+            "console.log"
+          ]
+        }
+      },
+      "puntuacion": 0,
+      "recomendaciones": [
+        "Usar useCallback() para event handlers",
+        "Mover objetos fuera del render o usar useMemo()",
+        "Extraer event handlers y usar useCallback()",
+        "Remover console.log() para producción"
+      ]
+    },
+    {
+      "archivo": "PrestamosCore.jsx",
+      "ruta": "C:\\Users\\pc1\\Desktop\\login\\my-app\\src\\components\\Finanzas\\Prestamos\\PrestamosCore.jsx",
+      "lineas": 475,
+      "practicasEncontradas": {
+        "useReactMemo": {
+          "count": 0,
+          "found": false,
+          "description": "Uso de React.memo para evitar re-renders",
+          "importance": "alta"
+        },
+        "useCallback": {
+          "count": 2,
+          "found": true,
+          "description": "Uso de useCallback para event handlers",
+          "importance": "alta"
+        },
+        "useMemo": {
+          "count": 0,
+          "found": false,
+          "description": "Uso de useMemo para cálculos pesados",
+          "importance": "alta"
+        },
+        "useReducer": {
+          "count": 0,
+          "found": false,
+          "description": "Uso de useReducer para estado complejo",
+          "importance": "media"
+        },
+        "useContext": {
+          "count": 0,
+          "found": false,
+          "description": "Uso de Context API para estado global",
+          "importance": "media"
+        },
+        "keyProp": {
+          "count": 4,
+          "found": true,
+          "description": "Uso de key prop en listas",
+          "importance": "alta"
+        },
+        "customHooks": {
+          "count": 25,
+          "found": true,
+          "description": "Uso de custom hooks",
+          "importance": "media"
+        },
+        "errorBoundary": {
+          "count": 0,
+          "found": false,
+          "description": "Implementación de Error Boundaries",
+          "importance": "media"
+        },
+        "lazyLoading": {
+          "count": 0,
+          "found": false,
+          "description": "Uso de lazy loading",
+          "importance": "media"
+        },
+        "suspense": {
+          "count": 0,
+          "found": false,
+          "description": "Uso de Suspense",
+          "importance": "media"
+        }
+      },
+      "practicasFaltantes": {
+        "useMemo": {
+          "pattern": {},
+          "description": "Uso de useMemo para cálculos pesados",
+          "importance": "alta"
+        },
+        "useReducer": {
+          "pattern": {},
+          "description": "Uso de useReducer para estado complejo",
+          "importance": "media"
+        }
+      },
+      "antiPatronesEncontrados": {
+        "inlineObjects": {
+          "count": 4,
+          "description": "Objetos inline que causan re-renders",
+          "severity": "alta",
+          "examples": [
+            "= {\r\n                totalPrestamos: prestamos.length,\r\n                prestamosActivos: prestamos.filter(p => ['vigente', 'desembolsado'].includes(p.estado)).length,\r\n                prestamosVencidos: prestamos.filter(p => p.estado === 'vencido').length,\r\n                montoTotal: prestamos.reduce((sum, p) => sum + (parseFloat(p.montoAprobado || p.montoSolicitado || 0)), 0)\r\n            }",
+            "= {\r\n            entidadFinanciera: {\r\n                nombre: prestamo.entidadFinanciera?.nombre || '',\r\n                codigo: prestamo.entidadFinanciera?.codigo || '',\r\n                tipo: prestamo.entidadFinanciera?.tipo || 'banco'\r\n            }",
+            "= { ...datosFormulario }"
+          ]
+        },
+        "inlineArrays": {
+          "count": 1,
+          "description": "Arrays inline que causan re-renders",
+          "severity": "media",
+          "examples": [
+            "= []"
+          ]
+        },
+        "consoleLogs": {
+          "count": 17,
+          "description": "Console logs en producción",
+          "severity": "baja",
+          "examples": [
+            "console.log",
+            "console.error",
+            "console.error"
+          ]
+        }
+      },
+      "puntuacion": 22,
+      "recomendaciones": [
+        "Usar useMemo() para cálculos pesados",
+        "Considerar useReducer() para estado complejo",
+        "Mover objetos fuera del render o usar useMemo()",
+        "Remover console.log() para producción"
+      ]
+    },
+    {
+      "archivo": "TablaAmortizacion.jsx",
+      "ruta": "C:\\Users\\pc1\\Desktop\\login\\my-app\\src\\components\\Finanzas\\Prestamos\\TablaAmortizacion.jsx",
+      "lineas": 246,
+      "practicasEncontradas": {
+        "useReactMemo": {
+          "count": 0,
+          "found": false,
+          "description": "Uso de React.memo para evitar re-renders",
+          "importance": "alta"
+        },
+        "useCallback": {
+          "count": 0,
+          "found": false,
+          "description": "Uso de useCallback para event handlers",
+          "importance": "alta"
+        },
+        "useMemo": {
+          "count": 1,
+          "found": true,
+          "description": "Uso de useMemo para cálculos pesados",
+          "importance": "alta"
+        },
+        "useReducer": {
+          "count": 0,
+          "found": false,
+          "description": "Uso de useReducer para estado complejo",
+          "importance": "media"
+        },
+        "useContext": {
+          "count": 0,
+          "found": false,
+          "description": "Uso de Context API para estado global",
+          "importance": "media"
+        },
+        "keyProp": {
+          "count": 1,
+          "found": true,
+          "description": "Uso de key prop en listas",
+          "importance": "alta"
+        },
+        "customHooks": {
+          "count": 2,
+          "found": true,
+          "description": "Uso de custom hooks",
+          "importance": "media"
+        },
+        "errorBoundary": {
+          "count": 0,
+          "found": false,
+          "description": "Implementación de Error Boundaries",
+          "importance": "media"
+        },
+        "lazyLoading": {
+          "count": 0,
+          "found": false,
+          "description": "Uso de lazy loading",
+          "importance": "media"
+        },
+        "suspense": {
+          "count": 0,
+          "found": false,
+          "description": "Uso de Suspense",
+          "importance": "media"
+        }
+      },
+      "practicasFaltantes": {},
+      "antiPatronesEncontrados": {
+        "inlineObjects": {
+          "count": 3,
+          "description": "Objetos inline que causan re-renders",
+          "severity": "alta",
+          "examples": [
+            "={index}",
+            "={`hover:bg-gray-50 ${obtenerEstiloEstado(fila.estadoPago)}",
+            "={`inline-flex items-center px-2 py-1 rounded-full text-xs font-medium border ${obtenerEstiloEstado(fila.estadoPago)}"
+          ]
+        },
+        "inlineArrays": {
+          "count": 1,
+          "description": "Arrays inline que causan re-renders",
+          "severity": "media",
+          "examples": [
+            "= []"
+          ]
+        }
+      },
+      "puntuacion": 65,
+      "recomendaciones": [
+        "Mover objetos fuera del render o usar useMemo()"
+      ]
+    },
+    {
+      "archivo": "TablaPrestamos.jsx",
+      "ruta": "C:\\Users\\pc1\\Desktop\\login\\my-app\\src\\components\\Finanzas\\Prestamos\\TablaPrestamos.jsx",
+      "lineas": 399,
+      "practicasEncontradas": {
+        "useReactMemo": {
+          "count": 0,
+          "found": false,
+          "description": "Uso de React.memo para evitar re-renders",
+          "importance": "alta"
+        },
+        "useCallback": {
+          "count": 0,
+          "found": false,
+          "description": "Uso de useCallback para event handlers",
+          "importance": "alta"
+        },
+        "useMemo": {
+          "count": 2,
+          "found": true,
+          "description": "Uso de useMemo para cálculos pesados",
+          "importance": "alta"
+        },
+        "useReducer": {
+          "count": 0,
+          "found": false,
+          "description": "Uso de useReducer para estado complejo",
+          "importance": "media"
+        },
+        "useContext": {
+          "count": 0,
+          "found": false,
+          "description": "Uso de Context API para estado global",
+          "importance": "media"
+        },
+        "keyProp": {
+          "count": 6,
+          "found": true,
+          "description": "Uso de key prop en listas",
+          "importance": "alta"
+        },
+        "customHooks": {
+          "count": 3,
+          "found": true,
+          "description": "Uso de custom hooks",
+          "importance": "media"
+        },
+        "errorBoundary": {
+          "count": 0,
+          "found": false,
+          "description": "Implementación de Error Boundaries",
+          "importance": "media"
+        },
+        "lazyLoading": {
+          "count": 0,
+          "found": false,
+          "description": "Uso de lazy loading",
+          "importance": "media"
+        },
+        "suspense": {
+          "count": 0,
+          "found": false,
+          "description": "Uso de Suspense",
+          "importance": "media"
+        }
+      },
+      "practicasFaltantes": {
+        "useCallback": {
+          "pattern": {},
+          "description": "Uso de useCallback para event handlers",
+          "importance": "alta"
+        }
+      },
+      "antiPatronesEncontrados": {
+        "inlineObjects": {
+          "count": 17,
+          "description": "Objetos inline que causan re-renders",
+          "severity": "alta",
+          "examples": [
+            "={`${accion.handler}",
+            "={handleClick}",
+            "={accion.className}"
+          ]
+        },
+        "inlineHandlers": {
+          "count": 3,
+          "description": "Event handlers inline",
+          "severity": "alta",
+          "examples": [
+            "onClick={handleClick}",
+            "onClick={handleClick}",
+            "onClose={onCerrarModalDetalles}"
+          ]
+        },
+        "consoleLogs": {
+          "count": 8,
+          "description": "Console logs en producción",
+          "severity": "baja",
+          "examples": [
+            "console.warn",
+            "console.log",
+            "console.log"
+          ]
+        }
+      },
+      "puntuacion": 0,
+      "recomendaciones": [
+        "Usar useCallback() para event handlers",
+        "Mover objetos fuera del render o usar useMemo()",
+        "Extraer event handlers y usar useCallback()",
+        "Remover console.log() para producción"
+      ]
+    },
+    {
+      "archivo": "TablaPrestamosEspecifica.jsx",
+      "ruta": "C:\\Users\\pc1\\Desktop\\login\\my-app\\src\\components\\Finanzas\\Prestamos\\TablaPrestamosEspecifica.jsx",
+      "lineas": 113,
+      "practicasEncontradas": {
+        "useReactMemo": {
+          "count": 0,
+          "found": false,
+          "description": "Uso de React.memo para evitar re-renders",
+          "importance": "alta"
+        },
+        "useCallback": {
+          "count": 0,
+          "found": false,
+          "description": "Uso de useCallback para event handlers",
+          "importance": "alta"
+        },
+        "useMemo": {
+          "count": 0,
+          "found": false,
+          "description": "Uso de useMemo para cálculos pesados",
+          "importance": "alta"
+        },
+        "useReducer": {
+          "count": 0,
+          "found": false,
+          "description": "Uso de useReducer para estado complejo",
+          "importance": "media"
+        },
+        "useContext": {
+          "count": 0,
+          "found": false,
+          "description": "Uso de Context API para estado global",
+          "importance": "media"
+        },
+        "keyProp": {
+          "count": 4,
+          "found": true,
+          "description": "Uso de key prop en listas",
+          "importance": "alta"
+        },
+        "customHooks": {
+          "count": 0,
+          "found": false,
+          "description": "Uso de custom hooks",
+          "importance": "media"
+        },
+        "errorBoundary": {
+          "count": 0,
+          "found": false,
+          "description": "Implementación de Error Boundaries",
+          "importance": "media"
+        },
+        "lazyLoading": {
+          "count": 0,
+          "found": false,
+          "description": "Uso de lazy loading",
+          "importance": "media"
+        },
+        "suspense": {
+          "count": 0,
+          "found": false,
+          "description": "Uso de Suspense",
+          "importance": "media"
+        }
+      },
+      "practicasFaltantes": {
+        "useCallback": {
+          "pattern": {},
+          "description": "Uso de useCallback para event handlers",
+          "importance": "alta"
+        },
+        "useMemo": {
+          "pattern": {},
+          "description": "Uso de useMemo para cálculos pesados",
+          "importance": "alta"
+        }
+      },
+      "antiPatronesEncontrados": {
+        "inlineObjects": {
+          "count": 8,
+          "description": "Objetos inline que causan re-renders",
+          "severity": "alta",
+          "examples": [
+            "={index}",
+            "={columnas.length + (acciones.length > 0 ? 1 : 0)}",
+            "={fila.id || fila._id || filaIndex}"
+          ]
+        },
+        "inlineArrays": {
+          "count": 3,
+          "description": "Arrays inline que causan re-renders",
+          "severity": "media",
+          "examples": [
+            "= []",
+            "= []",
+            "= []"
+          ]
+        },
+        "inlineHandlers": {
+          "count": 1,
+          "description": "Event handlers inline",
+          "severity": "alta",
+          "examples": [
+            "onClick={() => accion.onClick(fila)}"
+          ]
+        }
+      },
+      "puntuacion": 0,
+      "recomendaciones": [
+        "Usar useCallback() para event handlers",
+        "Usar useMemo() para cálculos pesados",
+        "Mover objetos fuera del render o usar useMemo()",
+        "Extraer event handlers y usar useCallback()"
+      ]
+    },
+    {
+      "archivo": "useFormularioPrestamos.js",
+      "ruta": "C:\\Users\\pc1\\Desktop\\login\\my-app\\src\\components\\Finanzas\\Prestamos\\useFormularioPrestamos.js",
+      "lineas": 117,
+      "practicasEncontradas": {
+        "useReactMemo": {
+          "count": 0,
+          "found": false,
+          "description": "Uso de React.memo para evitar re-renders",
+          "importance": "alta"
+        },
+        "useCallback": {
+          "count": 0,
+          "found": false,
+          "description": "Uso de useCallback para event handlers",
+          "importance": "alta"
+        },
+        "useMemo": {
+          "count": 0,
+          "found": false,
+          "description": "Uso de useMemo para cálculos pesados",
+          "importance": "alta"
+        },
+        "useReducer": {
+          "count": 0,
+          "found": false,
+          "description": "Uso de useReducer para estado complejo",
+          "importance": "media"
+        },
+        "useContext": {
+          "count": 0,
+          "found": false,
+          "description": "Uso de Context API para estado global",
+          "importance": "media"
+        },
+        "keyProp": {
+          "count": 0,
+          "found": false,
+          "description": "Uso de key prop en listas",
+          "importance": "alta"
+        },
+        "customHooks": {
+          "count": 5,
+          "found": true,
+          "description": "Uso de custom hooks",
+          "importance": "media"
+        },
+        "errorBoundary": {
+          "count": 0,
+          "found": false,
+          "description": "Implementación de Error Boundaries",
+          "importance": "media"
+        },
+        "lazyLoading": {
+          "count": 0,
+          "found": false,
+          "description": "Uso de lazy loading",
+          "importance": "media"
+        },
+        "suspense": {
+          "count": 0,
+          "found": false,
+          "description": "Uso de Suspense",
+          "importance": "media"
+        }
+      },
+      "practicasFaltantes": {
+        "useMemo": {
+          "pattern": {},
+          "description": "Uso de useMemo para cálculos pesados",
+          "importance": "alta"
+        }
+      },
+      "antiPatronesEncontrados": {
+        "inlineObjects": {
+          "count": 3,
+          "description": "Objetos inline que causan re-renders",
+          "severity": "alta",
+          "examples": [
+            "= {}",
+            "= {}",
+            "= {}"
+          ]
+        }
+      },
+      "puntuacion": 55,
+      "recomendaciones": [
+        "Usar useMemo() para cálculos pesados",
+        "Mover objetos fuera del render o usar useMemo()"
+      ]
+    }
+  ],
+  "estadisticas": {
+    "totalArchivos": 37,
+    "promedioScore": "28.6",
+    "estadoGeneral": "CRÍTICO",
+    "practicasCount": {
+      "keyProp": 16,
+      "customHooks": 20,
+      "useCallback": 2,
+      "useMemo": 2
+    },
+    "antipatronesCount": {
+      "inlineObjects": 31,
+      "inlineArrays": 13,
+      "consoleLogs": 11,
+      "inlineHandlers": 23
+    }
+  },
+  "archivosCriticos": [
+    {
+      "archivo": "CampoCuentasBancarias.jsx",
+      "ruta": "C:\\Users\\pc1\\Desktop\\login\\my-app\\src\\components\\Finanzas\\CuentasBancarias\\CampoCuentasBancarias.jsx",
+      "lineas": 163,
+      "practicasEncontradas": {
+        "useReactMemo": {
+          "count": 0,
+          "found": false,
+          "description": "Uso de React.memo para evitar re-renders",
+          "importance": "alta"
+        },
+        "useCallback": {
+          "count": 0,
+          "found": false,
+          "description": "Uso de useCallback para event handlers",
+          "importance": "alta"
+        },
+        "useMemo": {
+          "count": 0,
+          "found": false,
+          "description": "Uso de useMemo para cálculos pesados",
+          "importance": "alta"
+        },
+        "useReducer": {
+          "count": 0,
+          "found": false,
+          "description": "Uso de useReducer para estado complejo",
+          "importance": "media"
+        },
+        "useContext": {
+          "count": 0,
+          "found": false,
+          "description": "Uso de Context API para estado global",
+          "importance": "media"
+        },
+        "keyProp": {
+          "count": 1,
+          "found": true,
+          "description": "Uso de key prop en listas",
+          "importance": "alta"
+        },
+        "customHooks": {
+          "count": 0,
+          "found": false,
+          "description": "Uso de custom hooks",
+          "importance": "media"
+        },
+        "errorBoundary": {
+          "count": 0,
+          "found": false,
+          "description": "Implementación de Error Boundaries",
+          "importance": "media"
+        },
+        "lazyLoading": {
+          "count": 0,
+          "found": false,
+          "description": "Uso de lazy loading",
+          "importance": "media"
+        },
+        "suspense": {
+          "count": 0,
+          "found": false,
+          "description": "Uso de Suspense",
+          "importance": "media"
+        }
+      },
+      "practicasFaltantes": {
+        "useCallback": {
+          "pattern": {},
+          "description": "Uso de useCallback para event handlers",
+          "importance": "alta"
+        },
+        "useMemo": {
+          "pattern": {},
+          "description": "Uso de useMemo para cálculos pesados",
+          "importance": "alta"
+        }
+      },
+      "antiPatronesEncontrados": {
+        "inlineObjects": {
+          "count": 46,
+          "description": "Objetos inline que causan re-renders",
+          "severity": "alta",
+          "examples": [
+            "={name}",
+            "={value || ''}",
+            "={onChange}"
+          ]
+        },
+        "inlineArrays": {
+          "count": 1,
+          "description": "Arrays inline que causan re-renders",
+          "severity": "media",
+          "examples": [
+            "= []"
+          ]
+        },
+        "inlineHandlers": {
+          "count": 6,
+          "description": "Event handlers inline",
+          "severity": "alta",
+          "examples": [
+            "onChange={onChange}",
+            "onChange={onChange}",
+            "onChange={onChange}"
+          ]
+        }
+      },
+      "puntuacion": 0,
+      "recomendaciones": [
+        "Usar useCallback() para event handlers",
+        "Usar useMemo() para cálculos pesados",
+        "Mover objetos fuera del render o usar useMemo()",
+        "Extraer event handlers y usar useCallback()"
+      ]
+    },
+    {
+      "archivo": "ModalCuentaBancaria.jsx",
+      "ruta": "C:\\Users\\pc1\\Desktop\\login\\my-app\\src\\components\\Finanzas\\CuentasBancarias\\ModalCuentaBancaria.jsx",
+      "lineas": 126,
+      "practicasEncontradas": {
+        "useReactMemo": {
+          "count": 0,
+          "found": false,
+          "description": "Uso de React.memo para evitar re-renders",
+          "importance": "alta"
+        },
+        "useCallback": {
+          "count": 0,
+          "found": false,
+          "description": "Uso de useCallback para event handlers",
+          "importance": "alta"
+        },
+        "useMemo": {
+          "count": 0,
+          "found": false,
+          "description": "Uso de useMemo para cálculos pesados",
+          "importance": "alta"
+        },
+        "useReducer": {
+          "count": 0,
+          "found": false,
+          "description": "Uso de useReducer para estado complejo",
+          "importance": "media"
+        },
+        "useContext": {
+          "count": 0,
+          "found": false,
+          "description": "Uso de Context API para estado global",
+          "importance": "media"
+        },
+        "keyProp": {
+          "count": 0,
+          "found": false,
+          "description": "Uso de key prop en listas",
+          "importance": "alta"
+        },
+        "customHooks": {
+          "count": 0,
+          "found": false,
+          "description": "Uso de custom hooks",
+          "importance": "media"
+        },
+        "errorBoundary": {
+          "count": 0,
+          "found": false,
+          "description": "Implementación de Error Boundaries",
+          "importance": "media"
+        },
+        "lazyLoading": {
+          "count": 0,
+          "found": false,
+          "description": "Uso de lazy loading",
+          "importance": "media"
+        },
+        "suspense": {
+          "count": 0,
+          "found": false,
+          "description": "Uso de Suspense",
+          "importance": "media"
+        }
+      },
+      "practicasFaltantes": {
+        "useCallback": {
+          "pattern": {},
+          "description": "Uso de useCallback para event handlers",
+          "importance": "alta"
+        }
+      },
+      "antiPatronesEncontrados": {
+        "inlineObjects": {
+          "count": 30,
+          "description": "Objetos inline que causan re-renders",
+          "severity": "alta",
+          "examples": [
+            "={isOpen}",
+            "={onClose}",
+            "={cuentaEditando ? 'Editar Cuenta' : 'Nueva Cuenta Bancaria'}"
+          ]
+        },
+        "inlineHandlers": {
+          "count": 10,
+          "description": "Event handlers inline",
+          "severity": "alta",
+          "examples": [
+            "onClose={onClose}",
+            "onSubmit={onSubmit}",
+            "onChange={formularioCuenta.manejarCambio}"
+          ]
+        }
+      },
+      "puntuacion": 0,
+      "recomendaciones": [
+        "Usar useCallback() para event handlers",
+        "Mover objetos fuera del render o usar useMemo()",
+        "Extraer event handlers y usar useCallback()"
+      ]
+    },
+    {
+      "archivo": "ModalCuentasBancariasEspecifico.jsx",
+      "ruta": "C:\\Users\\pc1\\Desktop\\login\\my-app\\src\\components\\Finanzas\\CuentasBancarias\\ModalCuentasBancariasEspecifico.jsx",
+      "lineas": 108,
+      "practicasEncontradas": {
+        "useReactMemo": {
+          "count": 0,
+          "found": false,
+          "description": "Uso de React.memo para evitar re-renders",
+          "importance": "alta"
+        },
+        "useCallback": {
+          "count": 0,
+          "found": false,
+          "description": "Uso de useCallback para event handlers",
+          "importance": "alta"
+        },
+        "useMemo": {
+          "count": 0,
+          "found": false,
+          "description": "Uso de useMemo para cálculos pesados",
+          "importance": "alta"
+        },
+        "useReducer": {
+          "count": 0,
+          "found": false,
+          "description": "Uso de useReducer para estado complejo",
+          "importance": "media"
+        },
+        "useContext": {
+          "count": 0,
+          "found": false,
+          "description": "Uso de Context API para estado global",
+          "importance": "media"
+        },
+        "keyProp": {
+          "count": 0,
+          "found": false,
+          "description": "Uso de key prop en listas",
+          "importance": "alta"
+        },
+        "customHooks": {
+          "count": 0,
+          "found": false,
+          "description": "Uso de custom hooks",
+          "importance": "media"
+        },
+        "errorBoundary": {
+          "count": 0,
+          "found": false,
+          "description": "Implementación de Error Boundaries",
+          "importance": "media"
+        },
+        "lazyLoading": {
+          "count": 0,
+          "found": false,
+          "description": "Uso de lazy loading",
+          "importance": "media"
+        },
+        "suspense": {
+          "count": 0,
+          "found": false,
+          "description": "Uso de Suspense",
+          "importance": "media"
+        }
+      },
+      "practicasFaltantes": {
+        "useCallback": {
+          "pattern": {},
+          "description": "Uso de useCallback para event handlers",
+          "importance": "alta"
+        }
+      },
+      "antiPatronesEncontrados": {
+        "inlineObjects": {
+          "count": 10,
+          "description": "Objetos inline que causan re-renders",
+          "severity": "alta",
+          "examples": [
+            "= {\r\n        xs: 'max-w-xs',\r\n        sm: 'max-w-sm', \r\n        md: 'max-w-md',\r\n        lg: 'max-w-lg',\r\n        xl: 'max-w-xl',\r\n        '2xl': 'max-w-2xl'\r\n    }",
+            "={`bg-white rounded-lg shadow-xl w-full ${sizeClasses[size]}",
+            "={onClose}"
+          ]
+        },
+        "inlineHandlers": {
+          "count": 4,
+          "description": "Event handlers inline",
+          "severity": "alta",
+          "examples": [
+            "onClick={onClose}",
+            "onSubmit={handleSubmit}",
+            "onClick={onClose}"
+          ]
+        }
+      },
+      "puntuacion": 0,
+      "recomendaciones": [
+        "Usar useCallback() para event handlers",
+        "Mover objetos fuera del render o usar useMemo()",
+        "Extraer event handlers y usar useCallback()"
+      ]
+    },
+    {
+      "archivo": "ModalMovimientoBancario.jsx",
+      "ruta": "C:\\Users\\pc1\\Desktop\\login\\my-app\\src\\components\\Finanzas\\CuentasBancarias\\ModalMovimientoBancario.jsx",
+      "lineas": 104,
+      "practicasEncontradas": {
+        "useReactMemo": {
+          "count": 0,
+          "found": false,
+          "description": "Uso de React.memo para evitar re-renders",
+          "importance": "alta"
+        },
+        "useCallback": {
+          "count": 0,
+          "found": false,
+          "description": "Uso de useCallback para event handlers",
+          "importance": "alta"
+        },
+        "useMemo": {
+          "count": 0,
+          "found": false,
+          "description": "Uso de useMemo para cálculos pesados",
+          "importance": "alta"
+        },
+        "useReducer": {
+          "count": 0,
+          "found": false,
+          "description": "Uso de useReducer para estado complejo",
+          "importance": "media"
+        },
+        "useContext": {
+          "count": 0,
+          "found": false,
+          "description": "Uso de Context API para estado global",
+          "importance": "media"
+        },
+        "keyProp": {
+          "count": 0,
+          "found": false,
+          "description": "Uso de key prop en listas",
+          "importance": "alta"
+        },
+        "customHooks": {
+          "count": 0,
+          "found": false,
+          "description": "Uso de custom hooks",
+          "importance": "media"
+        },
+        "errorBoundary": {
+          "count": 0,
+          "found": false,
+          "description": "Implementación de Error Boundaries",
+          "importance": "media"
+        },
+        "lazyLoading": {
+          "count": 0,
+          "found": false,
+          "description": "Uso de lazy loading",
+          "importance": "media"
+        },
+        "suspense": {
+          "count": 0,
+          "found": false,
+          "description": "Uso de Suspense",
+          "importance": "media"
+        }
+      },
+      "practicasFaltantes": {
+        "useCallback": {
+          "pattern": {},
+          "description": "Uso de useCallback para event handlers",
+          "importance": "alta"
+        }
+      },
+      "antiPatronesEncontrados": {
+        "inlineObjects": {
+          "count": 18,
+          "description": "Objetos inline que causan re-renders",
+          "severity": "alta",
+          "examples": [
+            "={isOpen}",
+            "={onClose}",
+            "={`${tipoMovimiento === 'deposito' ? 'Depositar en' : 'Retirar de'}"
+          ]
+        },
+        "inlineHandlers": {
+          "count": 6,
+          "description": "Event handlers inline",
+          "severity": "alta",
+          "examples": [
+            "onClose={onClose}",
+            "onSubmit={onSubmit}",
+            "onChange={formularioMovimiento.manejarCambio}"
+          ]
+        }
+      },
+      "puntuacion": 0,
+      "recomendaciones": [
+        "Usar useCallback() para event handlers",
+        "Mover objetos fuera del render o usar useMemo()",
+        "Extraer event handlers y usar useCallback()"
+      ]
+    },
+    {
+      "archivo": "TablaCuentasBancarias.jsx",
+      "ruta": "C:\\Users\\pc1\\Desktop\\login\\my-app\\src\\components\\Finanzas\\CuentasBancarias\\TablaCuentasBancarias.jsx",
+      "lineas": 441,
+      "practicasEncontradas": {
+        "useReactMemo": {
+          "count": 0,
+          "found": false,
+          "description": "Uso de React.memo para evitar re-renders",
+          "importance": "alta"
+        },
+        "useCallback": {
+          "count": 0,
+          "found": false,
+          "description": "Uso de useCallback para event handlers",
+          "importance": "alta"
+        },
+        "useMemo": {
+          "count": 0,
+          "found": false,
+          "description": "Uso de useMemo para cálculos pesados",
+          "importance": "alta"
+        },
+        "useReducer": {
+          "count": 0,
+          "found": false,
+          "description": "Uso de useReducer para estado complejo",
+          "importance": "media"
+        },
+        "useContext": {
+          "count": 0,
+          "found": false,
+          "description": "Uso de Context API para estado global",
+          "importance": "media"
+        },
+        "keyProp": {
+          "count": 4,
+          "found": true,
+          "description": "Uso de key prop en listas",
+          "importance": "alta"
+        },
+        "customHooks": {
+          "count": 3,
+          "found": true,
+          "description": "Uso de custom hooks",
+          "importance": "media"
+        },
+        "errorBoundary": {
+          "count": 0,
+          "found": false,
+          "description": "Implementación de Error Boundaries",
+          "importance": "media"
+        },
+        "lazyLoading": {
+          "count": 0,
+          "found": false,
+          "description": "Uso de lazy loading",
+          "importance": "media"
+        },
+        "suspense": {
+          "count": 0,
+          "found": false,
+          "description": "Uso de Suspense",
+          "importance": "media"
+        }
+      },
+      "practicasFaltantes": {
+        "useCallback": {
+          "pattern": {},
+          "description": "Uso de useCallback para event handlers",
+          "importance": "alta"
+        },
+        "useMemo": {
+          "pattern": {},
+          "description": "Uso de useMemo para cálculos pesados",
+          "importance": "alta"
+        }
+      },
+      "antiPatronesEncontrados": {
+        "inlineObjects": {
+          "count": 29,
+          "description": "Objetos inline que causan re-renders",
+          "severity": "alta",
+          "examples": [
+            "={`font-semibold ${saldoNum >= 0 ? 'text-green-600' : 'text-red-600'}",
+            "={`px-2 py-1 rounded-full text-xs font-medium ${\r\n            activa ? 'bg-green-100 text-green-800' : 'bg-red-100 text-red-800'\r\n        }",
+            "= {\r\n            green: 'bg-green-50 border-green-200',\r\n            blue: 'bg-blue-50 border-blue-200',\r\n            purple: 'bg-purple-50 border-purple-200',\r\n            gray: 'bg-gray-50 border-gray-200',\r\n            yellow: 'bg-yellow-50 border-yellow-200'\r\n        }"
+          ]
+        },
+        "inlineArrays": {
+          "count": 2,
+          "description": "Arrays inline que causan re-renders",
+          "severity": "media",
+          "examples": [
+            "= []",
+            "= []"
+          ]
+        },
+        "inlineHandlers": {
+          "count": 9,
+          "description": "Event handlers inline",
+          "severity": "alta",
+          "examples": [
+            "onColorClasses = {\r\n            green: 'text-green-600',\r\n            blue: 'text-blue-600',\r\n            purple: 'text-purple-600',\r\n            gray: 'text-gray-600',\r\n            yellow: 'text-yellow-600'\r\n        }",
+            "onChange={manejarSeleccionTodos}",
+            "onClick={() => manejarOrdenamiento('codigo')}"
+          ]
+        }
+      },
+      "puntuacion": 0,
+      "recomendaciones": [
+        "Usar useCallback() para event handlers",
+        "Usar useMemo() para cálculos pesados",
+        "Mover objetos fuera del render o usar useMemo()",
+        "Extraer event handlers y usar useCallback()"
+      ]
+    }
+  ]
+}

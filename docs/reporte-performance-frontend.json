@@ -1,0 +1,1376 @@
+{
+  "resultados": [
+    {
+      "archivo": "AccesosRapidosFinanzas.jsx",
+      "ruta": "C:\\Users\\pc1\\Desktop\\login\\my-app\\src\\components\\Finanzas\\AccesosRapidosFinanzas.jsx",
+      "lineas": 247,
+      "problemas": [
+        {
+          "tipo": "useEffect sin array de dependencias",
+          "severidad": "alta",
+          "descripcion": "useEffect sin array de dependencias se ejecuta en cada render"
+        },
+        {
+          "tipo": "Componente no memoizado",
+          "severidad": "media",
+          "descripcion": "Componente con props pero sin React.memo"
+        }
+      ],
+      "puntuacion": 77,
+      "recomendaciones": [
+        "Usar React.memo para componente"
+      ]
+    },
+    {
+      "archivo": "CampoCuentasBancarias.jsx",
+      "ruta": "C:\\Users\\pc1\\Desktop\\login\\my-app\\src\\components\\Finanzas\\CuentasBancarias\\CampoCuentasBancarias.jsx",
+      "lineas": 163,
+      "problemas": [
+        {
+          "tipo": "Event handlers inline",
+          "severidad": "media",
+          "descripcion": "6 handlers inline detectados (causan re-renders)",
+          "count": 6
+        },
+        {
+          "tipo": "Falta useCallback",
+          "severidad": "alta",
+          "descripcion": "Componente con handlers pero sin useCallback"
+        },
+        {
+          "tipo": "Objetos creados en render",
+          "severidad": "media",
+          "descripcion": "46 objetos posiblemente recreados en cada render",
+          "count": 46
+        },
+        {
+          "tipo": "Componente no memoizado",
+          "severidad": "media",
+          "descripcion": "Componente con props pero sin React.memo"
+        }
+      ],
+      "puntuacion": 61,
+      "recomendaciones": [
+        "Usar useCallback para event handlers",
+        "Implementar useCallback en event handlers",
+        "Mover objetos fuera del render o usar useMemo",
+        "Usar React.memo para componente"
+      ]
+    },
+    {
+      "archivo": "cuentasBancariasConfig.js",
+      "ruta": "C:\\Users\\pc1\\Desktop\\login\\my-app\\src\\components\\Finanzas\\CuentasBancarias\\cuentasBancariasConfig.js",
+      "lineas": 149,
+      "problemas": [
+        {
+          "tipo": "Objetos creados en render",
+          "severidad": "media",
+          "descripcion": "6 objetos posiblemente recreados en cada render",
+          "count": 6
+        }
+      ],
+      "puntuacion": 92,
+      "recomendaciones": [
+        "Mover objetos fuera del render o usar useMemo"
+      ]
+    },
+    {
+      "archivo": "CuentasBancariasCore.jsx",
+      "ruta": "C:\\Users\\pc1\\Desktop\\login\\my-app\\src\\components\\Finanzas\\CuentasBancarias\\CuentasBancariasCore.jsx",
+      "lineas": 216,
+      "problemas": [
+        {
+          "tipo": "useEffect sin array de dependencias",
+          "severidad": "alta",
+          "descripcion": "useEffect sin array de dependencias se ejecuta en cada render"
+        },
+        {
+          "tipo": "useEffect sin array de dependencias",
+          "severidad": "alta",
+          "descripcion": "useEffect sin array de dependencias se ejecuta en cada render"
+        },
+        {
+          "tipo": "useEffect sin array de dependencias",
+          "severidad": "alta",
+          "descripcion": "useEffect sin array de dependencias se ejecuta en cada render"
+        },
+        {
+          "tipo": "Componente no memoizado",
+          "severidad": "media",
+          "descripcion": "Componente con props pero sin React.memo"
+        }
+      ],
+      "puntuacion": 47,
+      "recomendaciones": [
+        "Usar React.memo para componente"
+      ]
+    },
+    {
+      "archivo": "index.js",
+      "ruta": "C:\\Users\\pc1\\Desktop\\login\\my-app\\src\\components\\Finanzas\\CuentasBancarias\\index.js",
+      "lineas": 10,
+      "problemas": [],
+      "puntuacion": 100,
+      "recomendaciones": []
+    },
+    {
+      "archivo": "ModalCuentaBancaria.jsx",
+      "ruta": "C:\\Users\\pc1\\Desktop\\login\\my-app\\src\\components\\Finanzas\\CuentasBancarias\\ModalCuentaBancaria.jsx",
+      "lineas": 126,
+      "problemas": [
+        {
+          "tipo": "Event handlers inline",
+          "severidad": "media",
+          "descripcion": "9 handlers inline detectados (causan re-renders)",
+          "count": 9
+        },
+        {
+          "tipo": "Falta useCallback",
+          "severidad": "alta",
+          "descripcion": "Componente con handlers pero sin useCallback"
+        },
+        {
+          "tipo": "Objetos creados en render",
+          "severidad": "media",
+          "descripcion": "30 objetos posiblemente recreados en cada render",
+          "count": 30
+        },
+        {
+          "tipo": "Componente no memoizado",
+          "severidad": "media",
+          "descripcion": "Componente con props pero sin React.memo"
+        }
+      ],
+      "puntuacion": 61,
+      "recomendaciones": [
+        "Usar useCallback para event handlers",
+        "Implementar useCallback en event handlers",
+        "Mover objetos fuera del render o usar useMemo",
+        "Usar React.memo para componente"
+      ]
+    },
+    {
+      "archivo": "ModalCuentasBancariasEspecifico.jsx",
+      "ruta": "C:\\Users\\pc1\\Desktop\\login\\my-app\\src\\components\\Finanzas\\CuentasBancarias\\ModalCuentasBancariasEspecifico.jsx",
+      "lineas": 108,
+      "problemas": [
+        {
+          "tipo": "Event handlers inline",
+          "severidad": "media",
+          "descripcion": "4 handlers inline detectados (causan re-renders)",
+          "count": 4
+        },
+        {
+          "tipo": "Falta useCallback",
+          "severidad": "alta",
+          "descripcion": "Componente con handlers pero sin useCallback"
+        },
+        {
+          "tipo": "Objetos creados en render",
+          "severidad": "media",
+          "descripcion": "10 objetos posiblemente recreados en cada render",
+          "count": 10
+        },
+        {
+          "tipo": "Componente no memoizado",
+          "severidad": "media",
+          "descripcion": "Componente con props pero sin React.memo"
+        }
+      ],
+      "puntuacion": 61,
+      "recomendaciones": [
+        "Usar useCallback para event handlers",
+        "Implementar useCallback en event handlers",
+        "Mover objetos fuera del render o usar useMemo",
+        "Usar React.memo para componente"
+      ]
+    },
+    {
+      "archivo": "ModalMovimientoBancario.jsx",
+      "ruta": "C:\\Users\\pc1\\Desktop\\login\\my-app\\src\\components\\Finanzas\\CuentasBancarias\\ModalMovimientoBancario.jsx",
+      "lineas": 104,
+      "problemas": [
+        {
+          "tipo": "Event handlers inline",
+          "severidad": "media",
+          "descripcion": "5 handlers inline detectados (causan re-renders)",
+          "count": 5
+        },
+        {
+          "tipo": "Falta useCallback",
+          "severidad": "alta",
+          "descripcion": "Componente con handlers pero sin useCallback"
+        },
+        {
+          "tipo": "Objetos creados en render",
+          "severidad": "media",
+          "descripcion": "18 objetos posiblemente recreados en cada render",
+          "count": 18
+        },
+        {
+          "tipo": "Componente no memoizado",
+          "severidad": "media",
+          "descripcion": "Componente con props pero sin React.memo"
+        }
+      ],
+      "puntuacion": 61,
+      "recomendaciones": [
+        "Usar useCallback para event handlers",
+        "Implementar useCallback en event handlers",
+        "Mover objetos fuera del render o usar useMemo",
+        "Usar React.memo para componente"
+      ]
+    },
+    {
+      "archivo": "TablaCuentasBancarias.jsx",
+      "ruta": "C:\\Users\\pc1\\Desktop\\login\\my-app\\src\\components\\Finanzas\\CuentasBancarias\\TablaCuentasBancarias.jsx",
+      "lineas": 441,
+      "problemas": [
+        {
+          "tipo": "Event handlers inline",
+          "severidad": "media",
+          "descripcion": "8 handlers inline detectados (causan re-renders)",
+          "count": 8
+        },
+        {
+          "tipo": "Falta useCallback",
+          "severidad": "alta",
+          "descripcion": "Componente con handlers pero sin useCallback"
+        },
+        {
+          "tipo": "Cálculos sin useMemo",
+          "severidad": "alta",
+          "descripcion": "5 operaciones de array sin memoizar",
+          "count": 5
+        },
+        {
+          "tipo": "Objetos creados en render",
+          "severidad": "media",
+          "descripcion": "29 objetos posiblemente recreados en cada render",
+          "count": 29
+        },
+        {
+          "tipo": "Componente no memoizado",
+          "severidad": "media",
+          "descripcion": "Componente con props pero sin React.memo"
+        }
+      ],
+      "puntuacion": 46,
+      "recomendaciones": [
+        "Usar useCallback para event handlers",
+        "Implementar useCallback en event handlers",
+        "Usar useMemo para cálculos pesados",
+        "Mover objetos fuera del render o usar useMemo",
+        "Usar React.memo para componente"
+      ]
+    },
+    {
+      "archivo": "useFormularioCuentasBancarias.js",
+      "ruta": "C:\\Users\\pc1\\Desktop\\login\\my-app\\src\\components\\Finanzas\\CuentasBancarias\\useFormularioCuentasBancarias.js",
+      "lineas": 88,
+      "problemas": [
+        {
+          "tipo": "Componente no memoizado",
+          "severidad": "media",
+          "descripcion": "Componente con props pero sin React.memo"
+        }
+      ],
+      "puntuacion": 92,
+      "recomendaciones": [
+        "Usar React.memo para componente"
+      ]
+    },
+    {
+      "archivo": "CampoGarantia.jsx",
+      "ruta": "C:\\Users\\pc1\\Desktop\\login\\my-app\\src\\components\\Finanzas\\Garantias\\CampoGarantia.jsx",
+      "lineas": 163,
+      "problemas": [
+        {
+          "tipo": "Event handlers inline",
+          "severidad": "media",
+          "descripcion": "6 handlers inline detectados (causan re-renders)",
+          "count": 6
+        },
+        {
+          "tipo": "Falta useCallback",
+          "severidad": "alta",
+          "descripcion": "Componente con handlers pero sin useCallback"
+        },
+        {
+          "tipo": "Objetos creados en render",
+          "severidad": "media",
+          "descripcion": "46 objetos posiblemente recreados en cada render",
+          "count": 46
+        },
+        {
+          "tipo": "Componente no memoizado",
+          "severidad": "media",
+          "descripcion": "Componente con props pero sin React.memo"
+        }
+      ],
+      "puntuacion": 61,
+      "recomendaciones": [
+        "Usar useCallback para event handlers",
+        "Implementar useCallback en event handlers",
+        "Mover objetos fuera del render o usar useMemo",
+        "Usar React.memo para componente"
+      ]
+    },
+    {
+      "archivo": "index.js",
+      "ruta": "C:\\Users\\pc1\\Desktop\\login\\my-app\\src\\components\\Finanzas\\Garantias\\index.js",
+      "lineas": 5,
+      "problemas": [],
+      "puntuacion": 100,
+      "recomendaciones": []
+    },
+    {
+      "archivo": "TablaGarantias.jsx",
+      "ruta": "C:\\Users\\pc1\\Desktop\\login\\my-app\\src\\components\\Finanzas\\Garantias\\TablaGarantias.jsx",
+      "lineas": 113,
+      "problemas": [
+        {
+          "tipo": "Event handlers inline",
+          "severidad": "media",
+          "descripcion": "1 handlers inline detectados (causan re-renders)",
+          "count": 1
+        },
+        {
+          "tipo": "Falta useCallback",
+          "severidad": "alta",
+          "descripcion": "Componente con handlers pero sin useCallback"
+        },
+        {
+          "tipo": "Cálculos sin useMemo",
+          "severidad": "alta",
+          "descripcion": "4 operaciones de array sin memoizar",
+          "count": 4
+        },
+        {
+          "tipo": "Objetos creados en render",
+          "severidad": "media",
+          "descripcion": "8 objetos posiblemente recreados en cada render",
+          "count": 8
+        },
+        {
+          "tipo": "Componente no memoizado",
+          "severidad": "media",
+          "descripcion": "Componente con props pero sin React.memo"
+        }
+      ],
+      "puntuacion": 46,
+      "recomendaciones": [
+        "Usar useCallback para event handlers",
+        "Implementar useCallback en event handlers",
+        "Usar useMemo para cálculos pesados",
+        "Mover objetos fuera del render o usar useMemo",
+        "Usar React.memo para componente"
+      ]
+    },
+    {
+      "archivo": "useFormularioGarantias.js",
+      "ruta": "C:\\Users\\pc1\\Desktop\\login\\my-app\\src\\components\\Finanzas\\Garantias\\useFormularioGarantias.js",
+      "lineas": 88,
+      "problemas": [
+        {
+          "tipo": "Componente no memoizado",
+          "severidad": "media",
+          "descripcion": "Componente con props pero sin React.memo"
+        }
+      ],
+      "puntuacion": 92,
+      "recomendaciones": [
+        "Usar React.memo para componente"
+      ]
+    },
+    {
+      "archivo": "index.js",
+      "ruta": "C:\\Users\\pc1\\Desktop\\login\\my-app\\src\\components\\Finanzas\\index.js",
+      "lineas": 10,
+      "problemas": [],
+      "puntuacion": 100,
+      "recomendaciones": []
+    },
+    {
+      "archivo": "index.js",
+      "ruta": "C:\\Users\\pc1\\Desktop\\login\\my-app\\src\\components\\Finanzas\\MovimientoCaja\\index.js",
+      "lineas": 7,
+      "problemas": [],
+      "puntuacion": 100,
+      "recomendaciones": []
+    },
+    {
+      "archivo": "ModalArqueoFinanzas.jsx",
+      "ruta": "C:\\Users\\pc1\\Desktop\\login\\my-app\\src\\components\\Finanzas\\MovimientoCaja\\ModalArqueoFinanzas.jsx",
+      "lineas": 282,
+      "problemas": [
+        {
+          "tipo": "useEffect sin array de dependencias",
+          "severidad": "alta",
+          "descripcion": "useEffect sin array de dependencias se ejecuta en cada render"
+        },
+        {
+          "tipo": "Event handlers inline",
+          "severidad": "media",
+          "descripcion": "4 handlers inline detectados (causan re-renders)",
+          "count": 4
+        },
+        {
+          "tipo": "Falta useCallback",
+          "severidad": "alta",
+          "descripcion": "Componente con handlers pero sin useCallback"
+        },
+        {
+          "tipo": "Objetos creados en render",
+          "severidad": "media",
+          "descripcion": "11 objetos posiblemente recreados en cada render",
+          "count": 11
+        },
+        {
+          "tipo": "Componente no memoizado",
+          "severidad": "media",
+          "descripcion": "Componente con props pero sin React.memo"
+        }
+      ],
+      "puntuacion": 46,
+      "recomendaciones": [
+        "Usar useCallback para event handlers",
+        "Implementar useCallback en event handlers",
+        "Mover objetos fuera del render o usar useMemo",
+        "Usar React.memo para componente"
+      ]
+    },
+    {
+      "archivo": "ModalEgresoFinanzas.jsx",
+      "ruta": "C:\\Users\\pc1\\Desktop\\login\\my-app\\src\\components\\Finanzas\\MovimientoCaja\\ModalEgresoFinanzas.jsx",
+      "lineas": 885,
+      "problemas": [
+        {
+          "tipo": "useEffect sin array de dependencias",
+          "severidad": "alta",
+          "descripcion": "useEffect sin array de dependencias se ejecuta en cada render"
+        },
+        {
+          "tipo": "useEffect sin array de dependencias",
+          "severidad": "alta",
+          "descripcion": "useEffect sin array de dependencias se ejecuta en cada render"
+        },
+        {
+          "tipo": "useEffect sin array de dependencias",
+          "severidad": "alta",
+          "descripcion": "useEffect sin array de dependencias se ejecuta en cada render"
+        },
+        {
+          "tipo": "Event handlers inline",
+          "severidad": "media",
+          "descripcion": "32 handlers inline detectados (causan re-renders)",
+          "count": 32
+        },
+        {
+          "tipo": "Falta useCallback",
+          "severidad": "alta",
+          "descripcion": "Componente con handlers pero sin useCallback"
+        },
+        {
+          "tipo": "Cálculos sin useMemo",
+          "severidad": "alta",
+          "descripcion": "10 operaciones de array sin memoizar",
+          "count": 10
+        },
+        {
+          "tipo": "Objetos creados en render",
+          "severidad": "media",
+          "descripcion": "83 objetos posiblemente recreados en cada render",
+          "count": 83
+        },
+        {
+          "tipo": "Componente no memoizado",
+          "severidad": "media",
+          "descripcion": "Componente con props pero sin React.memo"
+        }
+      ],
+      "puntuacion": 1,
+      "recomendaciones": [
+        "Usar useCallback para event handlers",
+        "Implementar useCallback en event handlers",
+        "Usar useMemo para cálculos pesados",
+        "Mover objetos fuera del render o usar useMemo",
+        "Usar React.memo para componente"
+      ]
+    },
+    {
+      "archivo": "ModalIngresoFinanzas.jsx",
+      "ruta": "C:\\Users\\pc1\\Desktop\\login\\my-app\\src\\components\\Finanzas\\MovimientoCaja\\ModalIngresoFinanzas.jsx",
+      "lineas": 934,
+      "problemas": [
+        {
+          "tipo": "useEffect sin array de dependencias",
+          "severidad": "alta",
+          "descripcion": "useEffect sin array de dependencias se ejecuta en cada render"
+        },
+        {
+          "tipo": "useEffect sin array de dependencias",
+          "severidad": "alta",
+          "descripcion": "useEffect sin array de dependencias se ejecuta en cada render"
+        },
+        {
+          "tipo": "Event handlers inline",
+          "severidad": "media",
+          "descripcion": "29 handlers inline detectados (causan re-renders)",
+          "count": 29
+        },
+        {
+          "tipo": "Falta useCallback",
+          "severidad": "alta",
+          "descripcion": "Componente con handlers pero sin useCallback"
+        },
+        {
+          "tipo": "Cálculos sin useMemo",
+          "severidad": "alta",
+          "descripcion": "10 operaciones de array sin memoizar",
+          "count": 10
+        },
+        {
+          "tipo": "Objetos creados en render",
+          "severidad": "media",
+          "descripcion": "72 objetos posiblemente recreados en cada render",
+          "count": 72
+        },
+        {
+          "tipo": "Componente no memoizado",
+          "severidad": "media",
+          "descripcion": "Componente con props pero sin React.memo"
+        }
+      ],
+      "puntuacion": 16,
+      "recomendaciones": [
+        "Usar useCallback para event handlers",
+        "Implementar useCallback en event handlers",
+        "Usar useMemo para cálculos pesados",
+        "Mover objetos fuera del render o usar useMemo",
+        "Usar React.memo para componente"
+      ]
+    },
+    {
+      "archivo": "MovimientosCajaFinanzas.jsx",
+      "ruta": "C:\\Users\\pc1\\Desktop\\login\\my-app\\src\\components\\Finanzas\\MovimientoCaja\\MovimientosCajaFinanzas.jsx",
+      "lineas": 402,
+      "problemas": [
+        {
+          "tipo": "useEffect sin array de dependencias",
+          "severidad": "alta",
+          "descripcion": "useEffect sin array de dependencias se ejecuta en cada render"
+        },
+        {
+          "tipo": "Event handlers inline",
+          "severidad": "media",
+          "descripcion": "11 handlers inline detectados (causan re-renders)",
+          "count": 11
+        },
+        {
+          "tipo": "Falta useCallback",
+          "severidad": "alta",
+          "descripcion": "Componente con handlers pero sin useCallback"
+        },
+        {
+          "tipo": "Objetos creados en render",
+          "severidad": "media",
+          "descripcion": "31 objetos posiblemente recreados en cada render",
+          "count": 31
+        },
+        {
+          "tipo": "Componente no memoizado",
+          "severidad": "media",
+          "descripcion": "Componente con props pero sin React.memo"
+        }
+      ],
+      "puntuacion": 46,
+      "recomendaciones": [
+        "Usar useCallback para event handlers",
+        "Implementar useCallback en event handlers",
+        "Mover objetos fuera del render o usar useMemo",
+        "Usar React.memo para componente"
+      ]
+    },
+    {
+      "archivo": "TablaMovimientosFinanzas.jsx",
+      "ruta": "C:\\Users\\pc1\\Desktop\\login\\my-app\\src\\components\\Finanzas\\MovimientoCaja\\TablaMovimientosFinanzas.jsx",
+      "lineas": 357,
+      "problemas": [
+        {
+          "tipo": "Event handlers inline",
+          "severidad": "media",
+          "descripcion": "6 handlers inline detectados (causan re-renders)",
+          "count": 6
+        },
+        {
+          "tipo": "Falta useCallback",
+          "severidad": "alta",
+          "descripcion": "Componente con handlers pero sin useCallback"
+        },
+        {
+          "tipo": "Objetos creados en render",
+          "severidad": "media",
+          "descripcion": "14 objetos posiblemente recreados en cada render",
+          "count": 14
+        },
+        {
+          "tipo": "Componente no memoizado",
+          "severidad": "media",
+          "descripcion": "Componente con props pero sin React.memo"
+        }
+      ],
+      "puntuacion": 61,
+      "recomendaciones": [
+        "Usar useCallback para event handlers",
+        "Implementar useCallback en event handlers",
+        "Mover objetos fuera del render o usar useMemo",
+        "Usar React.memo para componente"
+      ]
+    },
+    {
+      "archivo": "CampoPagosFinanciamiento.jsx",
+      "ruta": "C:\\Users\\pc1\\Desktop\\login\\my-app\\src\\components\\Finanzas\\PagosFinanciamiento\\CampoPagosFinanciamiento.jsx",
+      "lineas": 163,
+      "problemas": [
+        {
+          "tipo": "Event handlers inline",
+          "severidad": "media",
+          "descripcion": "6 handlers inline detectados (causan re-renders)",
+          "count": 6
+        },
+        {
+          "tipo": "Falta useCallback",
+          "severidad": "alta",
+          "descripcion": "Componente con handlers pero sin useCallback"
+        },
+        {
+          "tipo": "Objetos creados en render",
+          "severidad": "media",
+          "descripcion": "46 objetos posiblemente recreados en cada render",
+          "count": 46
+        },
+        {
+          "tipo": "Componente no memoizado",
+          "severidad": "media",
+          "descripcion": "Componente con props pero sin React.memo"
+        }
+      ],
+      "puntuacion": 61,
+      "recomendaciones": [
+        "Usar useCallback para event handlers",
+        "Implementar useCallback en event handlers",
+        "Mover objetos fuera del render o usar useMemo",
+        "Usar React.memo para componente"
+      ]
+    },
+    {
+      "archivo": "index.js",
+      "ruta": "C:\\Users\\pc1\\Desktop\\login\\my-app\\src\\components\\Finanzas\\PagosFinanciamiento\\index.js",
+      "lineas": 5,
+      "problemas": [],
+      "puntuacion": 100,
+      "recomendaciones": []
+    },
+    {
+      "archivo": "TablaPagosFinanciamiento.jsx",
+      "ruta": "C:\\Users\\pc1\\Desktop\\login\\my-app\\src\\components\\Finanzas\\PagosFinanciamiento\\TablaPagosFinanciamiento.jsx",
+      "lineas": 113,
+      "problemas": [
+        {
+          "tipo": "Event handlers inline",
+          "severidad": "media",
+          "descripcion": "1 handlers inline detectados (causan re-renders)",
+          "count": 1
+        },
+        {
+          "tipo": "Falta useCallback",
+          "severidad": "alta",
+          "descripcion": "Componente con handlers pero sin useCallback"
+        },
+        {
+          "tipo": "Cálculos sin useMemo",
+          "severidad": "alta",
+          "descripcion": "4 operaciones de array sin memoizar",
+          "count": 4
+        },
+        {
+          "tipo": "Objetos creados en render",
+          "severidad": "media",
+          "descripcion": "8 objetos posiblemente recreados en cada render",
+          "count": 8
+        },
+        {
+          "tipo": "Componente no memoizado",
+          "severidad": "media",
+          "descripcion": "Componente con props pero sin React.memo"
+        }
+      ],
+      "puntuacion": 46,
+      "recomendaciones": [
+        "Usar useCallback para event handlers",
+        "Implementar useCallback en event handlers",
+        "Usar useMemo para cálculos pesados",
+        "Mover objetos fuera del render o usar useMemo",
+        "Usar React.memo para componente"
+      ]
+    },
+    {
+      "archivo": "useFormularioPagosFinanciamiento.js",
+      "ruta": "C:\\Users\\pc1\\Desktop\\login\\my-app\\src\\components\\Finanzas\\PagosFinanciamiento\\useFormularioPagosFinanciamiento.js",
+      "lineas": 88,
+      "problemas": [
+        {
+          "tipo": "Componente no memoizado",
+          "severidad": "media",
+          "descripcion": "Componente con props pero sin React.memo"
+        }
+      ],
+      "puntuacion": 92,
+      "recomendaciones": [
+        "Usar React.memo para componente"
+      ]
+    },
+    {
+      "archivo": "CampoPrestamos.jsx",
+      "ruta": "C:\\Users\\pc1\\Desktop\\login\\my-app\\src\\components\\Finanzas\\Prestamos\\CampoPrestamos.jsx",
+      "lineas": 163,
+      "problemas": [
+        {
+          "tipo": "Event handlers inline",
+          "severidad": "media",
+          "descripcion": "6 handlers inline detectados (causan re-renders)",
+          "count": 6
+        },
+        {
+          "tipo": "Falta useCallback",
+          "severidad": "alta",
+          "descripcion": "Componente con handlers pero sin useCallback"
+        },
+        {
+          "tipo": "Objetos creados en render",
+          "severidad": "media",
+          "descripcion": "46 objetos posiblemente recreados en cada render",
+          "count": 46
+        },
+        {
+          "tipo": "Componente no memoizado",
+          "severidad": "media",
+          "descripcion": "Componente con props pero sin React.memo"
+        }
+      ],
+      "puntuacion": 61,
+      "recomendaciones": [
+        "Usar useCallback para event handlers",
+        "Implementar useCallback en event handlers",
+        "Mover objetos fuera del render o usar useMemo",
+        "Usar React.memo para componente"
+      ]
+    },
+    {
+      "archivo": "index.js",
+      "ruta": "C:\\Users\\pc1\\Desktop\\login\\my-app\\src\\components\\Finanzas\\Prestamos\\index.js",
+      "lineas": 14,
+      "problemas": [],
+      "puntuacion": 100,
+      "recomendaciones": []
+    },
+    {
+      "archivo": "ModalCalculadoraCuota.jsx",
+      "ruta": "C:\\Users\\pc1\\Desktop\\login\\my-app\\src\\components\\Finanzas\\Prestamos\\ModalCalculadoraCuota.jsx",
+      "lineas": 154,
+      "problemas": [
+        {
+          "tipo": "Event handlers inline",
+          "severidad": "media",
+          "descripcion": "6 handlers inline detectados (causan re-renders)",
+          "count": 6
+        },
+        {
+          "tipo": "Falta useCallback",
+          "severidad": "alta",
+          "descripcion": "Componente con handlers pero sin useCallback"
+        },
+        {
+          "tipo": "Objetos creados en render",
+          "severidad": "media",
+          "descripcion": "12 objetos posiblemente recreados en cada render",
+          "count": 12
+        },
+        {
+          "tipo": "Componente no memoizado",
+          "severidad": "media",
+          "descripcion": "Componente con props pero sin React.memo"
+        }
+      ],
+      "puntuacion": 61,
+      "recomendaciones": [
+        "Usar useCallback para event handlers",
+        "Implementar useCallback en event handlers",
+        "Mover objetos fuera del render o usar useMemo",
+        "Usar React.memo para componente"
+      ]
+    },
+    {
+      "archivo": "ModalDetallesPrestamo.jsx",
+      "ruta": "C:\\Users\\pc1\\Desktop\\login\\my-app\\src\\components\\Finanzas\\Prestamos\\ModalDetallesPrestamo.jsx",
+      "lineas": 210,
+      "problemas": [
+        {
+          "tipo": "Event handlers inline",
+          "severidad": "media",
+          "descripcion": "3 handlers inline detectados (causan re-renders)",
+          "count": 3
+        },
+        {
+          "tipo": "Falta useCallback",
+          "severidad": "alta",
+          "descripcion": "Componente con handlers pero sin useCallback"
+        },
+        {
+          "tipo": "Objetos creados en render",
+          "severidad": "media",
+          "descripcion": "7 objetos posiblemente recreados en cada render",
+          "count": 7
+        },
+        {
+          "tipo": "Componente no memoizado",
+          "severidad": "media",
+          "descripcion": "Componente con props pero sin React.memo"
+        }
+      ],
+      "puntuacion": 61,
+      "recomendaciones": [
+        "Usar useCallback para event handlers",
+        "Implementar useCallback en event handlers",
+        "Mover objetos fuera del render o usar useMemo",
+        "Usar React.memo para componente"
+      ]
+    },
+    {
+      "archivo": "ModalPrestamo.jsx",
+      "ruta": "C:\\Users\\pc1\\Desktop\\login\\my-app\\src\\components\\Finanzas\\Prestamos\\ModalPrestamo.jsx",
+      "lineas": 226,
+      "problemas": [
+        {
+          "tipo": "Event handlers inline",
+          "severidad": "media",
+          "descripcion": "15 handlers inline detectados (causan re-renders)",
+          "count": 15
+        },
+        {
+          "tipo": "Falta useCallback",
+          "severidad": "alta",
+          "descripcion": "Componente con handlers pero sin useCallback"
+        },
+        {
+          "tipo": "Objetos creados en render",
+          "severidad": "media",
+          "descripcion": "48 objetos posiblemente recreados en cada render",
+          "count": 48
+        },
+        {
+          "tipo": "Componente no memoizado",
+          "severidad": "media",
+          "descripcion": "Componente con props pero sin React.memo"
+        }
+      ],
+      "puntuacion": 61,
+      "recomendaciones": [
+        "Usar useCallback para event handlers",
+        "Implementar useCallback en event handlers",
+        "Mover objetos fuera del render o usar useMemo",
+        "Usar React.memo para componente"
+      ]
+    },
+    {
+      "archivo": "ModalTablaAmortizacion.jsx",
+      "ruta": "C:\\Users\\pc1\\Desktop\\login\\my-app\\src\\components\\Finanzas\\Prestamos\\ModalTablaAmortizacion.jsx",
+      "lineas": 176,
+      "problemas": [
+        {
+          "tipo": "Event handlers inline",
+          "severidad": "media",
+          "descripcion": "4 handlers inline detectados (causan re-renders)",
+          "count": 4
+        },
+        {
+          "tipo": "Falta useCallback",
+          "severidad": "alta",
+          "descripcion": "Componente con handlers pero sin useCallback"
+        },
+        {
+          "tipo": "Cálculos sin useMemo",
+          "severidad": "alta",
+          "descripcion": "3 operaciones de array sin memoizar",
+          "count": 3
+        },
+        {
+          "tipo": "Objetos creados en render",
+          "severidad": "media",
+          "descripcion": "10 objetos posiblemente recreados en cada render",
+          "count": 10
+        },
+        {
+          "tipo": "Componente no memoizado",
+          "severidad": "media",
+          "descripcion": "Componente con props pero sin React.memo"
+        }
+      ],
+      "puntuacion": 46,
+      "recomendaciones": [
+        "Usar useCallback para event handlers",
+        "Implementar useCallback en event handlers",
+        "Usar useMemo para cálculos pesados",
+        "Mover objetos fuera del render o usar useMemo",
+        "Usar React.memo para componente"
+      ]
+    },
+    {
+      "archivo": "prestamosConfig.jsx",
+      "ruta": "C:\\Users\\pc1\\Desktop\\login\\my-app\\src\\components\\Finanzas\\Prestamos\\prestamosConfig.jsx",
+      "lineas": 404,
+      "problemas": [
+        {
+          "tipo": "Event handlers inline",
+          "severidad": "media",
+          "descripcion": "2 handlers inline detectados (causan re-renders)",
+          "count": 2
+        },
+        {
+          "tipo": "Falta useCallback",
+          "severidad": "alta",
+          "descripcion": "Componente con handlers pero sin useCallback"
+        },
+        {
+          "tipo": "Objetos creados en render",
+          "severidad": "media",
+          "descripcion": "13 objetos posiblemente recreados en cada render",
+          "count": 13
+        }
+      ],
+      "puntuacion": 69,
+      "recomendaciones": [
+        "Usar useCallback para event handlers",
+        "Implementar useCallback en event handlers",
+        "Mover objetos fuera del render o usar useMemo"
+      ]
+    },
+    {
+      "archivo": "PrestamosCore.jsx",
+      "ruta": "C:\\Users\\pc1\\Desktop\\login\\my-app\\src\\components\\Finanzas\\Prestamos\\PrestamosCore.jsx",
+      "lineas": 475,
+      "problemas": [
+        {
+          "tipo": "useEffect sin array de dependencias",
+          "severidad": "alta",
+          "descripcion": "useEffect sin array de dependencias se ejecuta en cada render"
+        },
+        {
+          "tipo": "useEffect sin array de dependencias",
+          "severidad": "alta",
+          "descripcion": "useEffect sin array de dependencias se ejecuta en cada render"
+        },
+        {
+          "tipo": "Cálculos sin useMemo",
+          "severidad": "alta",
+          "descripcion": "3 operaciones de array sin memoizar",
+          "count": 3
+        },
+        {
+          "tipo": "Objetos creados en render",
+          "severidad": "media",
+          "descripcion": "4 objetos posiblemente recreados en cada render",
+          "count": 4
+        },
+        {
+          "tipo": "Componente no memoizado",
+          "severidad": "media",
+          "descripcion": "Componente con props pero sin React.memo"
+        }
+      ],
+      "puntuacion": 39,
+      "recomendaciones": [
+        "Usar useMemo para cálculos pesados",
+        "Mover objetos fuera del render o usar useMemo",
+        "Usar React.memo para componente"
+      ]
+    },
+    {
+      "archivo": "TablaAmortizacion.jsx",
+      "ruta": "C:\\Users\\pc1\\Desktop\\login\\my-app\\src\\components\\Finanzas\\Prestamos\\TablaAmortizacion.jsx",
+      "lineas": 246,
+      "problemas": [
+        {
+          "tipo": "Componente no memoizado",
+          "severidad": "media",
+          "descripcion": "Componente con props pero sin React.memo"
+        }
+      ],
+      "puntuacion": 92,
+      "recomendaciones": [
+        "Usar React.memo para componente"
+      ]
+    },
+    {
+      "archivo": "TablaPrestamos.jsx",
+      "ruta": "C:\\Users\\pc1\\Desktop\\login\\my-app\\src\\components\\Finanzas\\Prestamos\\TablaPrestamos.jsx",
+      "lineas": 399,
+      "problemas": [
+        {
+          "tipo": "useEffect sin array de dependencias",
+          "severidad": "alta",
+          "descripcion": "useEffect sin array de dependencias se ejecuta en cada render"
+        },
+        {
+          "tipo": "Event handlers inline",
+          "severidad": "media",
+          "descripcion": "2 handlers inline detectados (causan re-renders)",
+          "count": 2
+        },
+        {
+          "tipo": "Falta useCallback",
+          "severidad": "alta",
+          "descripcion": "Componente con handlers pero sin useCallback"
+        },
+        {
+          "tipo": "Objetos creados en render",
+          "severidad": "media",
+          "descripcion": "17 objetos posiblemente recreados en cada render",
+          "count": 17
+        },
+        {
+          "tipo": "Componente no memoizado",
+          "severidad": "media",
+          "descripcion": "Componente con props pero sin React.memo"
+        }
+      ],
+      "puntuacion": 46,
+      "recomendaciones": [
+        "Usar useCallback para event handlers",
+        "Implementar useCallback en event handlers",
+        "Mover objetos fuera del render o usar useMemo",
+        "Usar React.memo para componente"
+      ]
+    },
+    {
+      "archivo": "TablaPrestamosEspecifica.jsx",
+      "ruta": "C:\\Users\\pc1\\Desktop\\login\\my-app\\src\\components\\Finanzas\\Prestamos\\TablaPrestamosEspecifica.jsx",
+      "lineas": 113,
+      "problemas": [
+        {
+          "tipo": "Event handlers inline",
+          "severidad": "media",
+          "descripcion": "1 handlers inline detectados (causan re-renders)",
+          "count": 1
+        },
+        {
+          "tipo": "Falta useCallback",
+          "severidad": "alta",
+          "descripcion": "Componente con handlers pero sin useCallback"
+        },
+        {
+          "tipo": "Cálculos sin useMemo",
+          "severidad": "alta",
+          "descripcion": "4 operaciones de array sin memoizar",
+          "count": 4
+        },
+        {
+          "tipo": "Objetos creados en render",
+          "severidad": "media",
+          "descripcion": "8 objetos posiblemente recreados en cada render",
+          "count": 8
+        },
+        {
+          "tipo": "Componente no memoizado",
+          "severidad": "media",
+          "descripcion": "Componente con props pero sin React.memo"
+        }
+      ],
+      "puntuacion": 46,
+      "recomendaciones": [
+        "Usar useCallback para event handlers",
+        "Implementar useCallback en event handlers",
+        "Usar useMemo para cálculos pesados",
+        "Mover objetos fuera del render o usar useMemo",
+        "Usar React.memo para componente"
+      ]
+    },
+    {
+      "archivo": "useFormularioPrestamos.js",
+      "ruta": "C:\\Users\\pc1\\Desktop\\login\\my-app\\src\\components\\Finanzas\\Prestamos\\useFormularioPrestamos.js",
+      "lineas": 117,
+      "problemas": [
+        {
+          "tipo": "Cálculos sin useMemo",
+          "severidad": "alta",
+          "descripcion": "3 operaciones de array sin memoizar",
+          "count": 3
+        },
+        {
+          "tipo": "Componente no memoizado",
+          "severidad": "media",
+          "descripcion": "Componente con props pero sin React.memo"
+        }
+      ],
+      "puntuacion": 77,
+      "recomendaciones": [
+        "Usar useMemo para cálculos pesados",
+        "Usar React.memo para componente"
+      ]
+    }
+  ],
+  "resumen": {
+    "totalArchivos": 37,
+    "archivosProblematicos": 31,
+    "promedioScore": "65.5",
+    "estadoGeneral": "REGULAR"
+  },
+  "problemasComunes": {
+    "useEffect sin array de dependencias": 14,
+    "Componente no memoizado": 29,
+    "Event handlers inline": 22,
+    "Falta useCallback": 22,
+    "Objetos creados en render": 24,
+    "Cálculos sin useMemo": 9
+  },
+  "archivosCriticos": [
+    {
+      "archivo": "ModalEgresoFinanzas.jsx",
+      "ruta": "C:\\Users\\pc1\\Desktop\\login\\my-app\\src\\components\\Finanzas\\MovimientoCaja\\ModalEgresoFinanzas.jsx",
+      "lineas": 885,
+      "problemas": [
+        {
+          "tipo": "useEffect sin array de dependencias",
+          "severidad": "alta",
+          "descripcion": "useEffect sin array de dependencias se ejecuta en cada render"
+        },
+        {
+          "tipo": "useEffect sin array de dependencias",
+          "severidad": "alta",
+          "descripcion": "useEffect sin array de dependencias se ejecuta en cada render"
+        },
+        {
+          "tipo": "useEffect sin array de dependencias",
+          "severidad": "alta",
+          "descripcion": "useEffect sin array de dependencias se ejecuta en cada render"
+        },
+        {
+          "tipo": "Event handlers inline",
+          "severidad": "media",
+          "descripcion": "32 handlers inline detectados (causan re-renders)",
+          "count": 32
+        },
+        {
+          "tipo": "Falta useCallback",
+          "severidad": "alta",
+          "descripcion": "Componente con handlers pero sin useCallback"
+        },
+        {
+          "tipo": "Cálculos sin useMemo",
+          "severidad": "alta",
+          "descripcion": "10 operaciones de array sin memoizar",
+          "count": 10
+        },
+        {
+          "tipo": "Objetos creados en render",
+          "severidad": "media",
+          "descripcion": "83 objetos posiblemente recreados en cada render",
+          "count": 83
+        },
+        {
+          "tipo": "Componente no memoizado",
+          "severidad": "media",
+          "descripcion": "Componente con props pero sin React.memo"
+        }
+      ],
+      "puntuacion": 1,
+      "recomendaciones": [
+        "Usar useCallback para event handlers",
+        "Implementar useCallback en event handlers",
+        "Usar useMemo para cálculos pesados",
+        "Mover objetos fuera del render o usar useMemo",
+        "Usar React.memo para componente"
+      ]
+    },
+    {
+      "archivo": "ModalIngresoFinanzas.jsx",
+      "ruta": "C:\\Users\\pc1\\Desktop\\login\\my-app\\src\\components\\Finanzas\\MovimientoCaja\\ModalIngresoFinanzas.jsx",
+      "lineas": 934,
+      "problemas": [
+        {
+          "tipo": "useEffect sin array de dependencias",
+          "severidad": "alta",
+          "descripcion": "useEffect sin array de dependencias se ejecuta en cada render"
+        },
+        {
+          "tipo": "useEffect sin array de dependencias",
+          "severidad": "alta",
+          "descripcion": "useEffect sin array de dependencias se ejecuta en cada render"
+        },
+        {
+          "tipo": "Event handlers inline",
+          "severidad": "media",
+          "descripcion": "29 handlers inline detectados (causan re-renders)",
+          "count": 29
+        },
+        {
+          "tipo": "Falta useCallback",
+          "severidad": "alta",
+          "descripcion": "Componente con handlers pero sin useCallback"
+        },
+        {
+          "tipo": "Cálculos sin useMemo",
+          "severidad": "alta",
+          "descripcion": "10 operaciones de array sin memoizar",
+          "count": 10
+        },
+        {
+          "tipo": "Objetos creados en render",
+          "severidad": "media",
+          "descripcion": "72 objetos posiblemente recreados en cada render",
+          "count": 72
+        },
+        {
+          "tipo": "Componente no memoizado",
+          "severidad": "media",
+          "descripcion": "Componente con props pero sin React.memo"
+        }
+      ],
+      "puntuacion": 16,
+      "recomendaciones": [
+        "Usar useCallback para event handlers",
+        "Implementar useCallback en event handlers",
+        "Usar useMemo para cálculos pesados",
+        "Mover objetos fuera del render o usar useMemo",
+        "Usar React.memo para componente"
+      ]
+    },
+    {
+      "archivo": "PrestamosCore.jsx",
+      "ruta": "C:\\Users\\pc1\\Desktop\\login\\my-app\\src\\components\\Finanzas\\Prestamos\\PrestamosCore.jsx",
+      "lineas": 475,
+      "problemas": [
+        {
+          "tipo": "useEffect sin array de dependencias",
+          "severidad": "alta",
+          "descripcion": "useEffect sin array de dependencias se ejecuta en cada render"
+        },
+        {
+          "tipo": "useEffect sin array de dependencias",
+          "severidad": "alta",
+          "descripcion": "useEffect sin array de dependencias se ejecuta en cada render"
+        },
+        {
+          "tipo": "Cálculos sin useMemo",
+          "severidad": "alta",
+          "descripcion": "3 operaciones de array sin memoizar",
+          "count": 3
+        },
+        {
+          "tipo": "Objetos creados en render",
+          "severidad": "media",
+          "descripcion": "4 objetos posiblemente recreados en cada render",
+          "count": 4
+        },
+        {
+          "tipo": "Componente no memoizado",
+          "severidad": "media",
+          "descripcion": "Componente con props pero sin React.memo"
+        }
+      ],
+      "puntuacion": 39,
+      "recomendaciones": [
+        "Usar useMemo para cálculos pesados",
+        "Mover objetos fuera del render o usar useMemo",
+        "Usar React.memo para componente"
+      ]
+    },
+    {
+      "archivo": "TablaCuentasBancarias.jsx",
+      "ruta": "C:\\Users\\pc1\\Desktop\\login\\my-app\\src\\components\\Finanzas\\CuentasBancarias\\TablaCuentasBancarias.jsx",
+      "lineas": 441,
+      "problemas": [
+        {
+          "tipo": "Event handlers inline",
+          "severidad": "media",
+          "descripcion": "8 handlers inline detectados (causan re-renders)",
+          "count": 8
+        },
+        {
+          "tipo": "Falta useCallback",
+          "severidad": "alta",
+          "descripcion": "Componente con handlers pero sin useCallback"
+        },
+        {
+          "tipo": "Cálculos sin useMemo",
+          "severidad": "alta",
+          "descripcion": "5 operaciones de array sin memoizar",
+          "count": 5
+        },
+        {
+          "tipo": "Objetos creados en render",
+          "severidad": "media",
+          "descripcion": "29 objetos posiblemente recreados en cada render",
+          "count": 29
+        },
+        {
+          "tipo": "Componente no memoizado",
+          "severidad": "media",
+          "descripcion": "Componente con props pero sin React.memo"
+        }
+      ],
+      "puntuacion": 46,
+      "recomendaciones": [
+        "Usar useCallback para event handlers",
+        "Implementar useCallback en event handlers",
+        "Usar useMemo para cálculos pesados",
+        "Mover objetos fuera del render o usar useMemo",
+        "Usar React.memo para componente"
+      ]
+    },
+    {
+      "archivo": "TablaGarantias.jsx",
+      "ruta": "C:\\Users\\pc1\\Desktop\\login\\my-app\\src\\components\\Finanzas\\Garantias\\TablaGarantias.jsx",
+      "lineas": 113,
+      "problemas": [
+        {
+          "tipo": "Event handlers inline",
+          "severidad": "media",
+          "descripcion": "1 handlers inline detectados (causan re-renders)",
+          "count": 1
+        },
+        {
+          "tipo": "Falta useCallback",
+          "severidad": "alta",
+          "descripcion": "Componente con handlers pero sin useCallback"
+        },
+        {
+          "tipo": "Cálculos sin useMemo",
+          "severidad": "alta",
+          "descripcion": "4 operaciones de array sin memoizar",
+          "count": 4
+        },
+        {
+          "tipo": "Objetos creados en render",
+          "severidad": "media",
+          "descripcion": "8 objetos posiblemente recreados en cada render",
+          "count": 8
+        },
+        {
+          "tipo": "Componente no memoizado",
+          "severidad": "media",
+          "descripcion": "Componente con props pero sin React.memo"
+        }
+      ],
+      "puntuacion": 46,
+      "recomendaciones": [
+        "Usar useCallback para event handlers",
+        "Implementar useCallback en event handlers",
+        "Usar useMemo para cálculos pesados",
+        "Mover objetos fuera del render o usar useMemo",
+        "Usar React.memo para componente"
+      ]
+    }
+  ]
+}

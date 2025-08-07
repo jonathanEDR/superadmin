@@ -6,6 +6,100 @@ class MovimientosCajaFinanzasService {
     // === REGISTRAR MOVIMIENTOS ===
     
     /**
+     * Registrar ingreso automático por préstamo
+     * Este método se llama automáticamente cuando se crea un nuevo préstamo
+     * IMPORTANTE: Los préstamos NO se mezclan con cuentas bancarias
+     * Solo registra el INGRESO del dinero recibido en caja
+     */
+    static async registrarIngresoPorPrestamo(prestamo, userData) {
+        try {
+            console.log(`💰 Registrando ingreso automático por préstamo: ${prestamo.codigo}`);
+            
+            // Preparar datos del movimiento - SOLO INGRESO DE CAJA
+            const datosMovimiento = {
+                tipo: 'ingreso',
+                monto: prestamo.montoAprobado,
+                concepto: `Préstamo recibido - ${prestamo.codigo}`,
+                descripcion: `Ingreso por préstamo de ${prestamo.entidadFinanciera.nombre} - Tipo: ${prestamo.tipo}`,
+                metodoPago: {
+                    tipo: 'transferencia', // Los préstamos generalmente llegan por transferencia
+                    detalles: {
+                        numeroOperacion: `PREST-${prestamo.codigo}`,
+                        entidadOrigen: prestamo.entidadFinanciera.nombre,
+                        referencia: prestamo.entidadFinanciera.numeroCredito || prestamo.codigo
+                    }
+                },
+                categoria: 'prestamo_recibido',
+                subcategoria: prestamo.tipo,
+                documento: {
+                    tipo: 'contrato_prestamo',
+                    numero: prestamo.codigo,
+                    serie: prestamo.entidadFinanciera.numeroCredito || '',
+                    fechaEmision: prestamo.fechaAprobacion || new Date()
+                },
+                // Información de la entidad financiera (quien otorga el préstamo)
+                proveedor: {
+                    nombre: prestamo.entidadFinanciera.nombre,
+                    ruc: prestamo.entidadFinanciera.ruc || '',
+                    contacto: prestamo.entidadFinanciera.ejecutivo?.telefono || '',
+                    email: prestamo.entidadFinanciera.ejecutivo?.email || ''
+                },
+                // Distribución automática al módulo de préstamos
+                distribucion: {
+                    moduloDestino: 'prestamos',
+                    aplicado: true,
+                    fechaAplicacion: new Date(),
+                    referenciaModulo: {
+                        tipo: 'prestamo',
+                        id: prestamo._id,
+                        numero: prestamo.codigo
+                    }
+                },
+                // Observaciones con detalles del préstamo
+                observaciones: `
+                    Ingreso automático por préstamo aprobado.
+                    Entidad Financiera: ${prestamo.entidadFinanciera.nombre}
+                    Tipo de Préstamo: ${prestamo.tipo}
+                    Plazo: ${prestamo.plazoMeses} meses
+                    Tasa de Interés: ${prestamo.tasaInteres}%
+                    Prestatario: ${prestamo.prestatario.nombre}
+                    Fecha Aprobación: ${prestamo.fechaAprobacion || 'N/A'}
+                `.trim(),
+                fecha: prestamo.fechaDesembolso || new Date(),
+                // NO afecta cuentas bancarias - es ingreso puro a caja
+                afectaCuentaBancaria: false,
+                cuentaBancariaId: null
+            };
+            
+            console.log(`💵 Registrando como ingreso directo a caja - Monto: ${prestamo.montoAprobado}`);
+            
+            // Crear movimiento de caja directo (sin integración bancaria)
+            const movimiento = new MovimientoCajaFinanzas({
+                ...datosMovimiento,
+                userId: userData.userId.toString(),
+                creatorId: userData.creatorId,
+                creatorName: userData.creatorName,
+                creatorEmail: userData.creatorEmail,
+                creatorRole: userData.creatorRole,
+                estado: 'aplicado' // Los movimientos por préstamos se marcan como aplicados automáticamente
+            });
+            
+            await movimiento.save();
+            console.log(`✅ Ingreso por préstamo registrado en caja: ${movimiento.codigo}`);
+            
+            return movimiento;
+            
+        } catch (error) {
+            console.error('❌ Error registrando ingreso por préstamo:', error);
+            // No lanzamos el error para que no falle la creación del préstamo
+            // Solo lo registramos para revisión posterior
+            console.error('⚠️ ADVERTENCIA: El préstamo se creó pero el movimiento de caja falló');
+            console.error('⚠️ Detalles del error:', error.message);
+            return null;
+        }
+    }
+    
+    /**
      * Registrar nuevo ingreso
      */
     static async registrarIngreso(data, userData) {

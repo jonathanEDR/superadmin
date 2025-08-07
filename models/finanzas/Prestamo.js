@@ -238,6 +238,12 @@ const prestamoSchema = new mongoose.Schema({
         type: String,
         trim: true
     },
+    // Referencia al movimiento de caja generado automáticamente
+    movimientoCajaId: {
+        type: mongoose.Schema.Types.ObjectId,
+        ref: 'MovimientoCajaFinanzas',
+        index: true
+    },
     documentos: [{
         nombre: String,
         url: String,

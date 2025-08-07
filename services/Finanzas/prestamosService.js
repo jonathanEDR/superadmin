@@ -3,6 +3,7 @@ const PagoFinanciamiento = require('../../models/finanzas/PagoFinanciamiento');
 const Garantia = require('../../models/finanzas/Garantia');
 const CuentaBancaria = require('../../models/finanzas/CuentaBancaria');
 const MovimientoBancario = require('../../models/finanzas/MovimientoBancario');
+const MovimientosCajaFinanzasService = require('./movimientosCajaFinanzasService');
 
 class PrestamosService {
     /**
@@ -118,7 +119,9 @@ class PrestamosService {
      */
     static async crearPrestamo(datosPrestamo, userData) {
         try {
+            console.log('🚀 ============== INICIANDO CREACIÓN DE PRÉSTAMO ==============');
             console.log('➕ Creando nuevo préstamo con datos:', datosPrestamo);
+            console.log('👤 Datos del usuario:', userData);
             
             // Validaciones básicas
             if (!datosPrestamo.montoSolicitado || datosPrestamo.montoSolicitado <= 0) {
@@ -186,8 +189,53 @@ class PrestamosService {
             }
             
             await prestamo.save();
-            
             console.log('✅ Préstamo creado exitosamente:', prestamo.codigo);
+            
+            // 🔥 INTEGRACIÓN CON MOVIMIENTOS DE CAJA 🔥
+            // Registrar automáticamente el ingreso en caja
+            try {
+                console.log('💰 ============== INTEGRACIÓN CON MOVIMIENTOS DE CAJA ==============');
+                console.log('💰 Iniciando registro automático en movimientos de caja...');
+                console.log('🔍 Préstamo a registrar:', {
+                    id: prestamo._id,
+                    codigo: prestamo.codigo,
+                    monto: prestamo.montoAprobado,
+                    tipo: prestamo.tipo
+                });
+                console.log('🔍 Datos de usuario para movimiento:', userData);
+                
+                const movimientoCaja = await MovimientosCajaFinanzasService.registrarIngresoPorPrestamo(
+                    prestamo,
+                    userData
+                );
+                
+                console.log('📊 Resultado del registro en caja:', movimientoCaja);
+                
+                if (movimientoCaja) {
+                    // Actualizar el préstamo con la referencia al movimiento de caja
+                    prestamo.movimientoCajaId = movimientoCaja._id;
+                    await prestamo.save();
+                    
+                    console.log('✅ ============== INTEGRACIÓN EXITOSA ==============');
+                    console.log(`   - Préstamo: ${prestamo.codigo}`);
+                    console.log(`   - Movimiento Caja: ${movimientoCaja.codigo}`);
+                    console.log(`   - Monto: ${prestamo.montoAprobado}`);
+                    console.log('=========================================================');
+                } else {
+                    console.log('⚠️ ============== ADVERTENCIA ==============');
+                    console.log('⚠️ El movimiento de caja no se pudo crear, pero el préstamo se creó correctamente');
+                    console.log('==========================================');
+                }
+                
+            } catch (errorMovimiento) {
+                console.error('❌ ============== ERROR EN INTEGRACIÓN ==============');
+                console.error('❌ Error en integración con movimientos de caja:', errorMovimiento);
+                console.error('❌ Stack trace:', errorMovimiento.stack);
+                console.log('✅ El préstamo se creó correctamente, pero hay que revisar el movimiento de caja');
+                console.log('================================================');
+                // No lanzamos error para que no falle la creación del préstamo
+            }
+            
             return prestamo;
             
         } catch (error) {
