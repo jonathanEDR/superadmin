@@ -167,6 +167,9 @@ class PrestamosService {
             const datosCompletos = {
                 ...datosPrestamo,
                 prestatario: prestatarioCompleto,
+                estado: 'aprobado', // 🔧 SIEMPRE crear préstamos aprobados
+                montoAprobado: datosPrestamo.montoSolicitado, // 🔧 Aprobar el monto completo
+                fechaAprobacion: new Date(), // 🔧 Fecha de aprobación automática
                 ...userData
             };
             
