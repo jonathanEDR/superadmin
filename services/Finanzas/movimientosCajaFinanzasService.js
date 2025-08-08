@@ -743,6 +743,43 @@ class MovimientosCajaFinanzasService {
             throw error;
         }
     }
+
+    /**
+     * Eliminar movimiento (solo para préstamos eliminados)
+     */
+    static async eliminarMovimiento(movimientoId) {
+        try {
+            console.log('🗑️ Eliminando movimiento de caja:', movimientoId);
+            
+            const movimiento = await MovimientoCajaFinanzas.findById(movimientoId);
+            
+            if (!movimiento) {
+                console.log('⚠️ Movimiento no encontrado, posiblemente ya eliminado');
+                return { eliminado: false, razon: 'Movimiento no encontrado' };
+            }
+            
+            // Verificar que sea un movimiento relacionado con préstamos
+            if (!movimiento.categoria || movimiento.categoria !== 'prestamo_recibido') {
+                throw new Error('Solo se pueden eliminar movimientos de préstamos');
+            }
+            
+            // Eliminar el movimiento
+            await MovimientoCajaFinanzas.findByIdAndDelete(movimientoId);
+            
+            console.log('✅ Movimiento de caja eliminado exitosamente');
+            
+            return { 
+                eliminado: true, 
+                codigo: movimiento.codigo,
+                monto: movimiento.monto,
+                mensaje: 'Movimiento eliminado exitosamente' 
+            };
+            
+        } catch (error) {
+            console.error('❌ Error eliminando movimiento de caja:', error);
+            throw new Error(`Error al eliminar movimiento de caja: ${error.message}`);
+        }
+    }
 }
 
 module.exports = MovimientosCajaFinanzasService;

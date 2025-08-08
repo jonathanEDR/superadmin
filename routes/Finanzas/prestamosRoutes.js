@@ -15,7 +15,7 @@ router.use(authenticate);
 router.get('/', async (req, res) => {
     try {
         const filtros = {
-            userId: req.user.id, // ✅ Corregido: usar req.user.id en lugar de req.user.userId
+            userId: req.user.clerk_id, // 🔧 Usar clerk_id para consistencia con la creación de préstamos
             estado: req.query.estado,
             tipo: req.query.tipo,
             entidad: req.query.entidad,

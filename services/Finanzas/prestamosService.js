@@ -310,14 +310,37 @@ class PrestamosService {
                 throw new Error('No se puede eliminar un préstamo con pagos asociados');
             }
             
+            // Eliminar movimiento de caja asociado
+            if (prestamo.movimientoCajaId) {
+                try {
+                    console.log('💰 Eliminando movimiento de caja asociado:', prestamo.movimientoCajaId);
+                    
+                    const resultadoMovimiento = await MovimientosCajaFinanzasService.eliminarMovimiento(
+                        prestamo.movimientoCajaId
+                    );
+                    
+                    console.log('✅ Movimiento de caja eliminado exitosamente');
+                    
+                } catch (errorMovimiento) {
+                    console.error('❌ Error eliminando movimiento de caja:', errorMovimiento);
+                    // No lanzamos error para que la eliminación del préstamo continúe
+                }
+            }
+            
             // Eliminar garantías asociadas
-            await Garantia.deleteMany({ prestamoId: id });
+            const garantiasEliminadas = await Garantia.deleteMany({ prestamoId: id });
+            console.log(`✅ ${garantiasEliminadas.deletedCount} garantías eliminadas`);
             
             // Eliminar préstamo
             await Prestamo.findByIdAndDelete(id);
             
-            console.log('✅ Préstamo eliminado exitosamente');
-            return { id, mensaje: 'Préstamo eliminado exitosamente' };
+            console.log(`✅ Préstamo ${prestamo.codigo} eliminado exitosamente`);
+            
+            return { 
+                id, 
+                codigo: prestamo.codigo,
+                mensaje: 'Préstamo y referencias eliminados exitosamente' 
+            };
             
         } catch (error) {
             console.error('❌ Error eliminando préstamo:', error);
