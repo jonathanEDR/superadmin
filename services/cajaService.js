@@ -94,17 +94,35 @@ class CajaService {
   }
 
   // Obtener resumen de la caja
-  static async obtenerResumenCaja(userId, periodo = 'day', userRole = 'user') {
+  static async obtenerResumenCaja(userId, periodo = 'day', userRole = 'user', fechaInicio = null, fechaFin = null) {
     try {
-      const fechaInicio = this.calcularFechaInicio(periodo);
+      let fechaInicioCalculada;
+      
+      // Si se proporcionan fechas personalizadas, usarlas; sino usar período
+      if (fechaInicio && fechaFin) {
+        fechaInicioCalculada = new Date(fechaInicio);
+        fechaInicioCalculada.setHours(0, 0, 0, 0);
+      } else {
+        fechaInicioCalculada = this.calcularFechaInicio(periodo);
+      }
       
       // Obtener saldo actual
       const saldoActual = await this.obtenerSaldoActual(userId, userRole);
       
       // Configurar query según el rol
       let movimientosQuery = {
-        fecha: { $gte: fechaInicio }
+        fecha: { $gte: fechaInicioCalculada }
       };
+      
+      // Si se proporciona fechaFin, agregar límite superior
+      if (fechaInicio && fechaFin) {
+        const fechaFinCalculada = new Date(fechaFin);
+        fechaFinCalculada.setHours(23, 59, 59, 999);
+        movimientosQuery.fecha = { 
+          $gte: fechaInicioCalculada, 
+          $lte: fechaFinCalculada 
+        };
+      }
       
       // Solo filtrar por userId si no es admin o super_admin
       if (!['admin', 'super_admin'].includes(userRole)) {

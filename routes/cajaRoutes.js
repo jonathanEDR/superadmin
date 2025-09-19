@@ -13,9 +13,9 @@ router.get('/resumen', authenticate, async (req, res) => {
   try {
     const userId = req.user.id;
     const role = req.user.role;
-    const { periodo = 'day' } = req.query;
+    const { periodo = 'day', fechaInicio, fechaFin } = req.query;
 
-    const resumen = await CajaService.obtenerResumenCaja(userId, periodo, role);
+    const resumen = await CajaService.obtenerResumenCaja(userId, periodo, role, fechaInicio, fechaFin);
     res.json(resumen);
 
   } catch (error) {
