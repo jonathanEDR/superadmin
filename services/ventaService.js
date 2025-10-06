@@ -21,13 +21,21 @@ const createVenta = async (data) => {
       }));
     }
     
-    // Crear nueva venta
-    const venta = new Venta({
+    // Preparar datos de la venta
+    const ventaData = {
       numeroVenta,
       ...data,
       fechaVenta: new Date(),
       estadoVenta: 'completada'
-    });
+    };
+
+    // Si es una venta sin registro, asegurarse de incluir clienteNombre
+    if (data.userId === 'sin-registro' && data.clienteNombre) {
+      ventaData.clienteNombre = data.clienteNombre;
+    }
+    
+    // Crear nueva venta
+    const venta = new Venta(ventaData);
 
     // Guardar venta
     const savedVenta = await venta.save();

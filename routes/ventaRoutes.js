@@ -422,7 +422,7 @@ router.get('/', authenticate, requireUser, async (req, res) => {
 
 // Ruta para crear una nueva venta 
 router.post('/', authenticate, requireUser, validateVentaAssignment, async (req, res) => {
-  const { productos, montoTotal, estadoPago, cantidadPagada, fechadeVenta, targetUserId } = req.body;
+  const { productos, montoTotal, estadoPago, cantidadPagada, fechadeVenta, targetUserId, clienteNombre } = req.body;
   const creatorId = req.user.clerk_id; // Usar el ID del usuario autenticado
   let userId = creatorId;
 
@@ -457,7 +457,7 @@ router.post('/', authenticate, requireUser, validateVentaAssignment, async (req,
     }
 
     // Validar que el usuario tenga permisos si intenta crear una venta para otro usuario
-    if (targetUserId && targetUserId !== creatorId) {
+    if (targetUserId && targetUserId !== creatorId && targetUserId !== 'sin-registro') {
       // Obtener el rol del usuario objetivo
       const targetUser = await User.findOne({ clerk_id: targetUserId });
       if (!targetUser) {
@@ -499,6 +499,11 @@ router.post('/', authenticate, requireUser, validateVentaAssignment, async (req,
       cantidadPagada,
       fechadeVenta: fechadeVenta ? new Date(fechadeVenta) : new Date()
     };
+
+    // Si es venta sin registro, incluir nombre del cliente
+    if (userId === 'sin-registro' && clienteNombre) {
+      ventaData.clienteNombre = clienteNombre;
+    }
 
     const nuevaVenta = await createVentaService(ventaData);
 

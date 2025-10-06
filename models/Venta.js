@@ -7,13 +7,19 @@ const counterSchema = new mongoose.Schema({
 
 const ventaSchema = new mongoose.Schema({
   userId: {
-    type: String,  // Clerk ID del propietario de la venta
+    type: String,  // Clerk ID del propietario de la venta (puede ser 'sin-registro')
     required: true,
     index: true
-  },  creatorId: {
+  },
+  creatorId: {
     type: String,  // Clerk ID del usuario que creó la venta
     required: true,
     index: true
+  },
+  clienteNombre: {
+    type: String,  // Nombre del cliente cuando userId = 'sin-registro'
+    required: false,
+    default: null
   },
   productos: [{
     productoId: {
