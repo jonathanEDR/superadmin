@@ -38,6 +38,7 @@ const estadisticasRoutes = require('./routes/estadisticasRoutes');
 const categoryRoutes = require('./routes/categoryRoutes');
 const inventarioEntradaRoutes = require('./routes/inventarioEntradaRoutes');
 const inventarioRoutes = require('./routes/inventarioRoutes');
+const inventarioUnificadoRoutes = require('./routes/inventarioUnificadoRoutes');
 const inventarioProductoRoutes = require('./routes/inventarioProductoRoutes');
 const debugRoutes = require('./routes/debugRoutes');
 
@@ -160,6 +161,7 @@ app.use('/api/estadisticas', estadisticasRoutes);
 app.use('/api/categories', categoryRoutes);
 app.use('/api/inventario', inventarioRoutes);
 app.use('/api/inventario-producto', inventarioProductoRoutes);
+app.use('/api/inventario-unificado', inventarioUnificadoRoutes);
 
 // Rutas del módulo de finanzas
 // ...existing code...
