@@ -3,6 +3,97 @@ const router = express.Router();
 const productService = require('../services/productService');
 const { authenticate, requireAdmin, requireUser } = require('../middleware/authenticate');
 const { getCleanupStats, manualCleanup, checkAndClean } = require('../middleware/autoCleanupMiddleware');
+const upload = require('../config/multerConfig');
+const bulkUploadService = require('../services/bulkUploadService');
+
+// === RUTAS DE CARGA MASIVA ===
+
+// Ruta 1: Descargar Excel pre-poblado con todas las combinaciones disponibles
+router.get('/bulk-upload/export-template',
+  authenticate,
+  requireAdmin,
+  async (req, res) => {
+    try {
+      console.log('[bulkUpload] Generando plantilla pre-poblada para:', req.user.email);
+
+      const { buffer, stats } = await bulkUploadService.generatePrePopulatedExcel();
+
+      res.setHeader(
+        'Content-Type',
+        'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet'
+      );
+      res.setHeader(
+        'Content-Disposition',
+        `attachment; filename=productos_disponibles_${Date.now()}.xlsx`
+      );
+      res.setHeader(
+        'X-Template-Stats',
+        JSON.stringify(stats)
+      );
+
+      console.log('[bulkUpload] Plantilla generada exitosamente:', stats);
+
+      res.send(buffer);
+
+    } catch (error) {
+      console.error('[bulkUpload] Error al generar plantilla:', error);
+      res.status(error.status || 500).json({
+        message: error.message || 'Error al generar plantilla',
+        details: error.details
+      });
+    }
+  }
+);
+
+// Ruta 2: Importar Excel completado por el usuario
+router.post('/bulk-upload/import',
+  authenticate,
+  requireAdmin,
+  upload.single('file'),
+  async (req, res) => {
+    try {
+      console.log('[bulkUpload] Importando productos para:', req.user.email);
+
+      if (!req.file) {
+        return res.status(400).json({
+          message: 'No se proporcionó ningún archivo'
+        });
+      }
+
+      const userData = {
+        userId: req.user.clerk_id,
+        creatorId: req.user.clerk_id,
+        creatorName: req.user.fullName || req.user.email.split('@')[0],
+        creatorEmail: req.user.email,
+        creatorRole: req.user.role
+      };
+
+      const results = await bulkUploadService.processCompletedExcel(
+        req.file.buffer,
+        userData
+      );
+
+      // Status 207 (Multi-Status) si hay errores parciales, 200 si todo OK
+      const statusCode = results.summary.failed > 0 ? 207 : 200;
+
+      console.log('[bulkUpload] Importación completada:', results.summary);
+
+      res.status(statusCode).json({
+        success: true,
+        message: 'Procesamiento completado',
+        results: results
+      });
+
+    } catch (error) {
+      console.error('[bulkUpload] Error:', error);
+      res.status(error.status || 500).json({
+        success: false,
+        message: error.message || 'Error al procesar el archivo',
+        details: error.details
+      });
+    }
+  }
+);
 
 // === RUTAS DE AUTO-LIMPIEZA ===
 
